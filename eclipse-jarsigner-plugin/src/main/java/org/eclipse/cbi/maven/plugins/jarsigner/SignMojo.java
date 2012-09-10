@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
+import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -98,6 +101,13 @@ public class SignMojo
                 return;
             }
 
+            if ( !shouldSign( file ) )
+            {
+                getLog().info( "Signing of " + artifact
+                                   + " is disabled in META-INF/eclipse.inf, the artifact is not signed." );
+                return;
+            }
+
             final long start = System.currentTimeMillis();
 
             workdir.mkdirs();
@@ -122,6 +132,41 @@ public class SignMojo
         {
             throw new MojoExecutionException( "Could not sign artifact " + artifact, e );
         }
+    }
+
+    private boolean shouldSign( File file )
+        throws IOException
+    {
+        boolean sign = true;
+
+        JarFile jar = new JarFile( file );
+        try
+        {
+            ZipEntry entry = jar.getEntry( "META-INF/eclipse.inf" );
+            if ( entry != null )
+            {
+                InputStream is = jar.getInputStream( entry );
+                Properties eclipseInf = new Properties();
+                try
+                {
+                    eclipseInf.load( is );
+                }
+                finally
+                {
+                    is.close();
+                }
+
+                sign =
+                    !Boolean.parseBoolean( eclipseInf.getProperty( "jarprocessor.exclude" ) )
+                        && !Boolean.parseBoolean( eclipseInf.getProperty( "jarprocessor.exclude.sign" ) );
+            }
+        }
+        finally
+        {
+            jar.close();
+        }
+
+        return sign;
     }
 
     private void signFile( File source, File target )

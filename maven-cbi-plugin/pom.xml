@@ -62,4 +62,17 @@
     </repository>
   </repositories>
 
+  <distributionManagement>
+	  <repository>
+		  <id>localhost</id>
+		  <name>Local Nexus Repository - Releases</name>
+		  <url>http://localhost:8081/nexus/content/repositories/releases/</url>
+	  </repository>
+	  <snapshotRepository>
+		  <id>localhost</id>
+		  <name>Local Nexus Repository - Snapshots</name>
+		  <url>http://localhost:8081/nexus/content/repositories/snapshots/</url>
+	  </snapshotRepository>
+  </distributionManagement>
+
 </project>

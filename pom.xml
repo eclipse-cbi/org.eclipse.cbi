@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+       Copyright (c) 2012 Eclipse Foundation.
+  All rights reserved. This program and the accompanying materials
+  are made available under the terms of the Eclipse Distribution License v1.0
+  which accompanies this distribution, and is available at
+  http://www.eclipse.org/org/documents/edl-v10.php
+ 
+  Contributors:
+     Igor Fedorenko - initial implementation
+-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.eclipse.cbi.maven.plugins</groupId>
+  <artifactId>eclipse-cbi-parent</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <properties>
+    <maven.version>3.0</maven.version>
+    <tycho.version>0.16.0</tycho.version>
+    <tycho-repo.url>https://oss.sonatype.org/content/groups/public/</tycho-repo.url>
+  </properties>
+
+  <repositories>
+    <repository>
+      <id>tycho</id>
+      <url>${tycho-repo.url}</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
+  <modules>
+    <module>eclipse-cbi-plugin</module>
+    <module>eclipse-jarsigner-plugin</module>
+  </modules>
+
+  <distributionManagement>
+    <repository>
+      <id>repo.eclipse.org</id>
+      <name>Eclipse CBI Nexus Repository - Releases</name>
+      <url>http://repo.eclipse.org/content/repositories/cbi-releases/</url>
+    </repository>
+    <snapshotRepository>
+      <id>repo.eclipse.org</id>
+      <name>Ecilpse CBI Nexus Repository - Snapshots</name>
+      <url>http://repo.eclipse.org/content/repositories/cbi-snapshots/</url>
+    </snapshotRepository>
+  </distributionManagement>
+</project>
+

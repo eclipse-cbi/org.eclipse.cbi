@@ -13,16 +13,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>eclipse-cbi-parent</artifactId>
+    <groupId>org.eclipse.cbi.maven.plugins</groupId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+
   <groupId>org.eclipse.cbi.maven.plugins</groupId>
   <artifactId>eclipse-cbi-plugin</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
-
-  <properties>
-    <maven.version>3.0</maven.version>
-    <tycho.version>0.15.0</tycho.version>
-    <tycho-repo.url>https://oss.sonatype.org/content/groups/public/</tycho-repo.url>
-  </properties>
 
   <dependencies>
     <dependency>
@@ -46,33 +46,5 @@
       <artifactId>decentxml</artifactId>
       <version>1.3</version>
     </dependency>
-
   </dependencies>
-
-  <repositories>
-    <repository>
-      <id>tycho</id>
-      <url>${tycho-repo.url}</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
-
-  <distributionManagement>
-	  <repository>
-		  <id>localhost</id>
-		  <name>Local Nexus Repository - Releases</name>
-		  <url>http://localhost:8081/nexus/content/repositories/releases/</url>
-	  </repository>
-	  <snapshotRepository>
-		  <id>localhost</id>
-		  <name>Local Nexus Repository - Snapshots</name>
-		  <url>http://localhost:8081/nexus/content/repositories/snapshots/</url>
-	  </snapshotRepository>
-  </distributionManagement>
-
 </project>

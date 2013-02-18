@@ -46,12 +46,12 @@
     <repository>
       <id>repo.eclipse.org</id>
       <name>Eclipse CBI Nexus Repository - Releases</name>
-      <url>http://repo.eclipse.org/content/repositories/cbi-releases/</url>
+      <url>https://repo.eclipse.org/content/repositories/cbi-releases/</url>
     </repository>
     <snapshotRepository>
       <id>repo.eclipse.org</id>
       <name>Ecilpse CBI Nexus Repository - Snapshots</name>
-      <url>http://repo.eclipse.org/content/repositories/cbi-snapshots/</url>
+      <url>https://repo.eclipse.org/content/repositories/cbi-snapshots/</url>
     </snapshotRepository>
   </distributionManagement>
 </project>

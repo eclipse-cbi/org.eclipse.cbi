@@ -1,68 +1,30 @@
-package org.eclipse.tycho.pomgenerator;
+package org.eclipse.cbi.mojo;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.StringTokenizer;
 
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Node;
-import org.w3c.dom.Element;
-import org.xml.sax.SAXException;
+import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.model.Build;
-import org.apache.maven.model.Model;
-import org.apache.maven.model.Parent;
-import org.apache.maven.model.Plugin;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.ReaderFactory;
-import org.codehaus.plexus.util.xml.XmlStreamReader;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
-import org.codehaus.plexus.util.xml.Xpp3DomBuilder;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
-import org.eclipse.osgi.framework.adaptor.FilePath;
-import org.eclipse.osgi.service.resolver.BundleDescription;
-import org.eclipse.osgi.service.resolver.State;
-import org.eclipse.tycho.ArtifactDescriptor;
+import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.tycho.ArtifactKey;
+import org.eclipse.tycho.core.BundleProject;
 import org.eclipse.tycho.core.TychoProject;
-import org.eclipse.tycho.core.osgitools.BundleReader;
-import org.eclipse.tycho.core.osgitools.DefaultArtifactKey;
 import org.eclipse.tycho.core.osgitools.DefaultReactorProject;
-import org.eclipse.tycho.core.osgitools.DependencyComputer;
-import org.eclipse.tycho.core.osgitools.EquinoxResolver;
-import org.eclipse.tycho.core.osgitools.OsgiManifest;
-import org.eclipse.tycho.core.osgitools.OsgiManifestParserException;
-import org.eclipse.tycho.core.osgitools.targetplatform.DefaultTargetPlatform;
-import org.eclipse.tycho.model.Feature;
-import org.eclipse.tycho.model.FeatureRef;
-import org.eclipse.tycho.model.PluginRef;
-import org.eclipse.tycho.model.UpdateSite;
-import org.osgi.framework.BundleException;
+import org.eclipse.tycho.core.osgitools.OsgiBundleProject;
+import org.eclipse.tycho.core.osgitools.project.BuildOutputJar;
+import org.eclipse.tycho.core.osgitools.project.EclipsePluginProject;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /**
  * @goal generate-api-build-xml
@@ -79,7 +41,13 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
      * @readonly
      */
     protected MavenProject project;
-    
+
+    /**
+     * @parameter expression="${buildQualifier}"
+     * @readonly
+     */
+    private String qualifier;
+
     /**
      * @component role="org.eclipse.tycho.core.TychoProject"
      */
@@ -87,7 +55,7 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
     
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		File dotProject = new File(project.getBasedir(), ".project");
-		if (!dotProject.exists()) {
+		if (!isRelevantPackaging(project.getPackaging()) || !dotProject.exists()) {
 			// no .project
 			project.getProperties().setProperty("eclipserun.skip", "true");
 			return;
@@ -97,6 +65,10 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
 		} else {
 			project.getProperties().setProperty("eclipserun.skip", "true");
 		}
+	}
+
+	private boolean isRelevantPackaging(String packaging) {
+		return "eclipse-plugin".equals(packaging)|| "eclipse-test-plugin".equals(packaging);
 	}
 	
 	private boolean dotProjectContainsApiNature(File f){
@@ -123,19 +95,24 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
 		return false;
 	}
 	
-	private void generateBuildXML(){
+	private void generateBuildXML() throws MojoExecutionException{
+		System.out.println("Generating target/.apibuild.xml");
+		File targetDir = new File(project.getBuild().getDirectory());
+		if (!targetDir.isDirectory()) {
+			targetDir.mkdirs();
+		}
+		BufferedWriter bw = null;
 		try {
-			System.out.println("Generating .apibuild.xml");
-			File dotApiBuildXML = new File(project.getBasedir(), API_BUILD_XML_FILE);
-			BufferedWriter bw = new BufferedWriter(new FileWriter(dotApiBuildXML));
+			File dotApiBuildXML = new File(targetDir, API_BUILD_XML_FILE);
+			bw = new BufferedWriter(new FileWriter(dotApiBuildXML));
 			bw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 			bw.write("<project name=\"apigen\" default=\"apigen\">\n");
 			bw.write("  <target name=\"apigen\">\n");
 			bw.write("  	<apitooling.apigeneration    \n");
 			bw.write("      	projectname=\"" + calculateName() + "\"\n");
 			bw.write("      	project=\"" + project.getBasedir() + "\"\n");
-			bw.write("      	binary=\"" + project.getBuild().getDirectory() + "\"\n");
-			bw.write("      	target=\"" + project.getBuild().getDirectory() + "/classes\"\n");
+			bw.write("      	binary=\"" + getOutputFoldersAsPath() + "\"\n");
+			bw.write("      	target=\"" + targetDir + "\"\n");
 			bw.write("      	debug=\"true\"\n");
 			bw.write("      \n");
 			bw.write("      />\n");
@@ -144,15 +121,49 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
 			bw.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			IOUtil.close(bw);
 		}
 	}
 	
+	private String getOutputFoldersAsPath() throws MojoExecutionException {
+		StringBuilder path = new StringBuilder();
+		List<BuildOutputJar> outputJars = getEclipsePluginProject()
+				.getOutputJars();
+		for (int i = 0; i < outputJars.size(); i++) {
+			if (i > 0) {
+				path.append(File.pathSeparator);
+			}
+			path.append(outputJars.get(i).getOutputDirectory().getAbsolutePath());
+		}
+		return path.toString();
+	}
+
+    private EclipsePluginProject getEclipsePluginProject() throws MojoExecutionException {
+        return ((OsgiBundleProject) getBundleProject()).getEclipsePluginProject(DefaultReactorProject.adapt(project));
+    }
+
+    private BundleProject getBundleProject() throws MojoExecutionException {
+        TychoProject projectType = projectTypes.get(project.getPackaging());
+        if (!(projectType instanceof BundleProject)) {
+            throw new MojoExecutionException("Not a bundle project " + project.toString());
+        }
+        return (BundleProject) projectType;
+    }
+
 	private String calculateName() {
 		TychoProject projectType = projectTypes.get(project.getPackaging());
 		ArtifactKey artifactKey = projectType
 				.getArtifactKey(DefaultReactorProject.adapt(project));
 		String symbolicName = artifactKey.getId();
-		String version = artifactKey.getVersion();
+        // see org.eclipse.tycho.buildversion.BuildQualifierMojo
+		String version = project.getProperties().getProperty(
+				"unqualifiedVersion");
+		String qualifier = project.getProperties()
+				.getProperty("buildQualifier");
+		if (qualifier != null && qualifier.length() > 0) {
+			version = version + "." + qualifier;
+		}
 		return symbolicName + "_" + version;
 	}
 }

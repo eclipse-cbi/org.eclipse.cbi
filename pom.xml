@@ -40,6 +40,7 @@
   <modules>
     <module>eclipse-cbi-plugin</module>
     <module>eclipse-jarsigner-plugin</module>
+    <module>eclipse-winsigner-plugin</module>
   </modules>
 
   <distributionManagement>

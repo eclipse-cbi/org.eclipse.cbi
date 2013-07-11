@@ -81,6 +81,13 @@ public class SignMojo
     private File workdir;
 
     /**
+     * Set this to true to skip execution of this plugin
+     *
+     * @parameter expression="${cbi.jarsigner.skip}" default-value="false"
+     */
+    private boolean skip;
+
+    /**
      * Project types which this plugin supports.
      * 
      * @parameter
@@ -94,6 +101,12 @@ public class SignMojo
     public void execute()
         throws MojoExecutionException, MojoFailureException
     {
+        if ( skip )
+        {
+            getLog().info( "Skipping artifact signing" );
+            return;
+        }
+
         if ( !supportedProjectTypes.contains( project.getPackaging() ) )
         {
             getLog().debug( "Ignore unsupported project " + project );

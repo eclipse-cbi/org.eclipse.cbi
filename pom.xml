@@ -21,21 +21,22 @@
   <properties>
     <maven.version>3.0.5</maven.version>
     <tycho.version>0.18.0</tycho.version>
-    <tycho-repo.url>https://oss.sonatype.org/content/repositories/public/</tycho-repo.url>
+    <cbi-plugins.version>1.0.4-SNAPSHOT</cbi-plugins.version>
+    <eclipse-maven-repo.url>https://repo.eclipse.org/content/repositories/releases/</eclipse-maven-repo.url>
   </properties>
 
-  <repositories>
-    <repository>
-      <id>tycho</id>
-      <url>${tycho-repo.url}</url>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>eclipse-maven</id>
+      <url>${eclipse-maven-repo.url}</url>
       <releases>
         <enabled>true</enabled>
       </releases>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
-    </repository>
-  </repositories>
+    </pluginRepository>
+  </pluginRepositories>
 
   <modules>
     <module>eclipse-cbi-plugin</module>
@@ -56,5 +57,29 @@
       <url>https://repo.eclipse.org/content/repositories/cbi-snapshots/</url>
     </snapshotRepository>
   </distributionManagement>
+
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.eclipse.cbi.maven.plugins</groupId>
+            <artifactId>eclipse-jarsigner-plugin</artifactId>
+            <version>${cbi-plugins.version}</version>
+            <executions>
+              <execution>
+                <id>sign</id>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+                <phase>verify</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
 

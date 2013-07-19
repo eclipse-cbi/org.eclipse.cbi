@@ -59,7 +59,7 @@ public class SignMojo
      * Official eclipse signer service url as described in
      * http://wiki.eclipse.org/IT_Infrastructure_Doc#Sign_my_plugins.2FZIP_files.3F
      *
-     * @parameter default-value="http://build.eclipse.org:31338/sign" )
+     * @parameter expression="${cbi.jarsigner.signerUrl}" default-value="http://build.eclipse.org:31338/sign"
      * @required
      * @readonly
      */

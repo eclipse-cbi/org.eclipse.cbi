@@ -44,8 +44,12 @@ public class SignMojo
 	/**
      * Official eclipse signer service url as described in
      * http://wiki.eclipse.org/IT_Infrastructure_Doc#Sign_my_plugins.2FZIP_files.3F
+     *
+     * @parameter expression="${cbi.winsigner.signerUrl}" default-value="http://build.eclipse.org:31338/winsign.php" )
+     * @required
+     * @readonly
      */
-    private String signerUrl = "http://build.eclipse.org:31338/winsign.php";
+    private String signerUrl;
     
     /**
      * @parameter expression="${project.build.directory}"

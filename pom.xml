@@ -21,7 +21,7 @@
   <properties>
     <maven.version>3.0.5</maven.version>
     <tycho.version>0.18.0</tycho.version>
-    <cbi-plugins.version>1.0.4-SNAPSHOT</cbi-plugins.version>
+    <cbi-plugins.version>1.0.3</cbi-plugins.version>
     <eclipse-maven-repo.url>https://repo.eclipse.org/content/repositories/releases/</eclipse-maven-repo.url>
   </properties>
 

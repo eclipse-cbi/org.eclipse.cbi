@@ -84,6 +84,7 @@ public class SignMojo
      */
     private List<String> supportedProjectTypes = Arrays.asList( "jar", // standard jars
                                                                 "bundle", // felix/bnd bundles
+                                                                "maven-plugin", // maven plugins
                                                                 // tycho
                                                                 "eclipse-plugin", "eclipse-test-plugin",
                                                                 "eclipse-feature" );

@@ -175,7 +175,7 @@ An alternate configuration is:
         <configuration>
           <baseSearchDir>${project.build.directory}/products/org.eclipse.sdk.ide</baseSearchDir>        
           <fileNames>
-            <fileName>eclipse.app<</fileName>
+            <fileName>eclipse.app</fileName>
           </fileNames>
         </configuration>
 

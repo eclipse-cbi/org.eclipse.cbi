@@ -190,6 +190,18 @@ If the ${signFiles} variable is set then the plugin will only sign those
 specific directories (if they exists) and nothing else, even if
 ${fileNames} and  ${baseSearchDir} are set.
 
+Please note that only the "Contents" folder will be added to a zip archive
+and sent to the signing service for signing because only that folder is
+relevant for Mac OS code signing. After signing, the signed archive will
+be received from the download service and extracted back into the app
+folder.
+
+In case you need to provide custom rules for resource signing to the signing
+service please create a standard CodeResources file in 
+"..app/Contents/_CodeSignature" folder. The Eclipse signing service will 
+detect an existing file and use it as input for the the Mac OS code signing 
+tool to specify rules such as which resources should be excluded, etc. 
+
 
 It is possible to override the default signing URL to use a service outside
 of the Eclipse Infrastructure. There are 2 ways to accomplish this.

@@ -17,12 +17,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
-import java.nio.file.Files;
-import java.nio.file.attribute.PosixFilePermissions;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -30,15 +33,13 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.io.RawInputStreamFacade;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 
 /**
  * Signs project main and attached artifact using 
@@ -97,11 +98,6 @@ public class SignMojo
      * List of executable files on the .app file to be signed.
      */
     private static ArrayList<String> executableFiles = new ArrayList<String>();
-
-    /**
-     * The name that the pre-signed .app is renamed to before it is deleted.
-     */
-    private static final String RENAMEAPP = "old.app";
 
     /**
      * Part of the unsigned zip file name. 
@@ -291,7 +287,13 @@ public class SignMojo
         Deque<File> dir_stack = new LinkedList<File>();
         dir_stack.push(dir);
         
+        // base path is the parent of the "Application.app" folder
+        // it will be used to make "Application.app" the top-level folder in the zip
         String base_path = getParentDirAbsolutePath(dir);
+
+        // verify that "dir" actually id the ".app" folder
+        if(!dir.getName().endsWith(".app"))
+        	throw new IOException("Please verify the configuration. Directory does not end with '.app': " + dir);
         
         while (!dir_stack.isEmpty()) {
             
@@ -299,9 +301,13 @@ public class SignMojo
             File[] files = file.listFiles();
             
             for (File f : files) {
-                if (f.isFile()) 
+            	String name = f.getAbsolutePath().substring(base_path.length());
+            	getLog().debug("Found: " + name);
+            	
+                if (f.isFile() && isInContentsFolder(name)) 
                 { 
-                    String name = f.getAbsolutePath().substring(base_path.length());
+                	getLog().debug("Adding to zip file for signing: " + f);
+                	
                     ZipArchiveEntry entry = new ZipArchiveEntry(name);
                     zip.putArchiveEntry(entry);
 
@@ -317,17 +323,22 @@ public class SignMojo
                     is.close();
                     zip.closeArchiveEntry();
                 }
-                else if (f.isDirectory()) 
+                else if (f.isDirectory() && isInContentsFolder(name)) 
                 { //add directory entry
                     dir_stack.push(f);
                 }
                 else 
                 {
-                    getLog().warn(f + " is a not a file or a directory and was not included in the zip file to be signed.");
+                    getLog().debug(f + " was not included in the zip file to be signed.");
                 }
             }
         }
     }
+
+	private boolean isInContentsFolder(String name) {
+		String[] segments = name.split("/");
+		return segments.length > 1 && segments[0].endsWith(".app") && segments[1].equals("Contents");
+	}
 
     /**
      * Helper method. Returns the absolute path of a file's parent.
@@ -402,9 +413,7 @@ public class SignMojo
             String base_path = getParentDirAbsolutePath(file);
             File zipDir = new File(base_path);
             File tempSigned = File.createTempFile(SIGNED_ZIP_FILE_NAME, ZIP_EXT, workdir );
-            File eclipseOld = new File(getParentDirAbsolutePath(file) + File.separator + RENAMEAPP);
             File tempSignedCopy = new File(base_path + File.separator + tempSigned.getName());
-            boolean couldRename = false;
             
             if (tempSignedCopy.exists()) {
                 throw new MojoExecutionException("Could not copy signed file because a file with the same name already exists: " + 
@@ -422,11 +431,6 @@ public class SignMojo
                     throw new MojoExecutionException( "Could not sign artifact " + file );
                 }
                 
-                couldRename =  file.renameTo(eclipseOld);
-                if (!couldRename) 
-                {
-                    getLog().warn("Overwriting files in " + file);
-                }
                 // unzipping response
                 getLog().info("Decompressing zip: " + file);
                 unZip(tempSigned, zipDir);
@@ -445,10 +449,6 @@ public class SignMojo
                 {
                     getLog().warn("Temporary file failed to delete: " + tempSignedCopy);
                 }
-                
-                if (couldRename) {
-                    FileUtils.deleteDirectory(eclipseOld);
-                }
             }
             
             getLog().info( "Signed " + file + " in " + ( ( System.currentTimeMillis() - start ) / 1000 )
@@ -456,7 +456,7 @@ public class SignMojo
         }
         catch ( IOException e )
         {
-            throw new MojoExecutionException( "Could not sign file " + file, e );
+            throw new MojoExecutionException( "Could not sign file " + file + ": " + e.getMessage(), e );
         } 
         finally
         {
@@ -474,17 +474,21 @@ public class SignMojo
     private void postFile( File source, File target )
         throws IOException, MojoExecutionException
     {
+    	getLog().debug("Sending file " + source + " to: " + signerUrl);
+    	
         HttpClient client = new DefaultHttpClient();
         HttpPost post = new HttpPost( signerUrl );
-
+        
         MultipartEntity reqEntity = new MultipartEntity();
         reqEntity.addPart( "file", new FileBody( source ) );
         post.setEntity( reqEntity );
 
         HttpResponse response = client.execute( post );
-        int statusCode = response.getStatusLine().getStatusCode();
+        getLog().debug("Signer replied: " + response.getStatusLine());
 
+        int statusCode = response.getStatusLine().getStatusCode();
         HttpEntity resEntity = response.getEntity();
+
         if ( statusCode >= 200 && statusCode <= 299 && resEntity != null )
         {
             InputStream is = resEntity.getContent();
@@ -499,7 +503,31 @@ public class SignMojo
         }
         else
         {
-            throw new MojoExecutionException( "Signer replied " + response.getStatusLine() );
+        	String responseMessage = getResponseAsText(resEntity);
+        	if(responseMessage != null)	
+        	{
+        		getLog().debug("Content received from signer:\n" + EntityUtils.toString(resEntity));
+        	} else 
+        	{
+        		getLog().debug("No content received from signer.");
+        	}
+            throw new MojoExecutionException( this, "Signer replied " + response.getStatusLine(), responseMessage );
         }
     }
+
+	private String getResponseAsText(HttpEntity resEntity) {
+		if(resEntity != null) 
+		{
+			try 
+			{
+				return EntityUtils.toString(resEntity);
+			} catch (Exception e) 
+			{
+				getLog().debug("Error reading response.");
+				getLog().debug(e);
+				return null;
+			}
+		}
+		return null;
+	}
 }

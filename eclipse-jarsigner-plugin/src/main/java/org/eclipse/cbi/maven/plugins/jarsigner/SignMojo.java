@@ -4,20 +4,30 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
- *    Eclipse Foundation - initial API and implementation
+ *   Eclipse Foundation - initial API and implementation
+ *   Thanh Ha (Eclipse Foundation) - Add support for signing inner jars
  *******************************************************************************/
 
 package org.eclipse.cbi.maven.plugins.jarsigner;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.jar.JarFile;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
 import org.apache.http.HttpEntity;
@@ -76,6 +86,18 @@ public class SignMojo
      * @parameter expression="${cbi.jarsigner.skip}" default-value="false"
      */
     private boolean skip;
+
+    /**
+     * Set this to true to exclude signing inner jars.
+     *
+     * Example:
+     *     <configuration>
+     *       <excludeInnerJars>true</excludeInnerJars>
+     *     </configuration>
+     *
+     * @parameter default-value="false"
+     */
+    private boolean excludeInnerJars;
 
     /**
      * Project types which this plugin supports.
@@ -137,9 +159,37 @@ public class SignMojo
                 return;
             }
 
+            List<String> innerJars = new ArrayList<String>();
+            if ( excludeInnerJars ) {
+                getLog().info( "Signing of inner jars for " + artifact
+                        + " is disabled, inner jars will not be signed.");
+            } else {
+                // Check if there are inner jars to sign
+                getLog().info( "Searching " + file.getName() + " for inner jars..." );
+                JarFile jar = new JarFile(file);
+                Enumeration<JarEntry> jarEntries = jar.entries();
+                while (jarEntries.hasMoreElements())
+                {
+                    JarEntry entry = jarEntries.nextElement();
+                    if ( "jar".equals(FileUtils.getExtension(entry.getName() ) ) )
+                    {
+                        getLog().debug( "Inner jar found: " + entry.getName() );
+                        innerJars.add(entry.getName());
+                    }
+                }
+            }
+
             final long start = System.currentTimeMillis();
 
             workdir.mkdirs();
+
+            // Sign inner jars if there are any
+            if ( !excludeInnerJars && innerJars.size() > 0) {
+                signInnerJars(file, innerJars);
+            }
+
+            // Sign Artifact
+
             File tempSigned = File.createTempFile( file.getName(), ".signed-jar", workdir );
             try
             {
@@ -154,6 +204,7 @@ public class SignMojo
             {
                 tempSigned.delete();
             }
+
             getLog().info( "Signed " + artifact + " in " + ( ( System.currentTimeMillis() - start ) / 1000 )
                                + " seconds." );
         }
@@ -228,5 +279,128 @@ public class SignMojo
         {
             throw new MojoExecutionException( "Signer replied " + response.getStatusLine() );
         }
+    }
+
+    /**
+     * Signs the inner jars in a jar file
+     *
+     * @param file jar file containing inner jars to be signed
+     * @param innerJars A list of inner jars that needs to be signed
+     */
+    private void signInnerJars(File file, List<String> innerJars)
+        throws IOException, FileNotFoundException, MojoExecutionException
+    {
+        JarFile jar = new JarFile(file);
+        File nestedWorkdir = new File(workdir + File.separator + "sign-innner-jars");
+        nestedWorkdir.mkdirs();
+
+        Enumeration<JarEntry> extractFiles = jar.entries();
+        while (extractFiles.hasMoreElements()) {
+
+            JarEntry entry = extractFiles.nextElement();
+            File f = new File(nestedWorkdir + File.separator + entry.getName());
+
+            // Create directory if entry is a directory
+            if (entry.isDirectory()) {
+                f.mkdir();
+                continue;
+            }
+
+            // Extract files from jar
+            InputStream is = jar.getInputStream(entry);
+            FileOutputStream fos = new FileOutputStream(f);
+            while (is.available() > 0) {
+                fos.write(is.read());
+            }
+
+            // cleanup
+            fos.close();
+            is.close();
+        }
+
+        // Sign inner jars
+        for ( Iterator<String> it = innerJars.iterator(); it.hasNext(); )
+        {
+            final long start = System.currentTimeMillis();
+
+            String jarToSign = it.next();
+            File unsignedJar = new File( nestedWorkdir, jarToSign );
+            File tempSignedJar = new File( nestedWorkdir, jarToSign + ".signed-jar" );
+
+            signFile( unsignedJar, tempSignedJar );
+            FileUtils.copyFile( tempSignedJar, unsignedJar );
+
+            // cleanup
+            tempSignedJar.delete();
+
+            getLog().info( "Signed " + jarToSign + " in " + ( ( System.currentTimeMillis() - start ) / 1000 )
+                    + " seconds." );
+        }
+
+        // create new jar containing the signed inner jars
+        File tempJar = File.createTempFile( file.getName(), ".create-jar", workdir );
+        try
+        {
+            getLog().debug( "Creating jar " + file.getName() );
+            createJar(tempJar, nestedWorkdir);
+            if ( !tempJar.canRead() || tempJar.length() <= 0 )
+            {
+                throw new MojoExecutionException( "Could not create jar " + file.getName() );
+            }
+            FileUtils.copyFile( tempJar, file );
+        }
+        finally
+        {
+            tempJar.delete();
+        }
+
+        // cleanup
+        FileUtils.deleteDirectory(nestedWorkdir);
+    }
+
+    /**
+     * Creates a jar file from a directory
+     *
+     * @param jarFile filename of jar being created
+     * @param jarDir directory to jar
+     */
+    private void createJar( File jarFile, File jarDir )
+        throws IOException, FileNotFoundException
+    {
+        JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile));
+
+        for (File f : FileUtils.getFiles(jarDir, "**/*", "", false))
+        {
+            getLog().debug( "   " + f.getPath());
+
+            if (f.isDirectory())
+            {
+                // Directories need to end with a forward slash
+                JarEntry entry = new JarEntry(f.getPath().replace("\\", "/") + "/");
+                entry.setTime(f.lastModified());
+                jos.putNextEntry(entry);
+                getLog().info("Directory: " + entry.getName());
+            }
+            else
+            {
+                JarEntry entry = new JarEntry(f.getPath().replace("\\", "/"));
+                entry.setTime(f.lastModified());
+                jos.putNextEntry(entry);
+
+                // Write to file
+                File writeFile = new File(jarDir, f.getPath());
+                BufferedInputStream in = new BufferedInputStream(new FileInputStream(writeFile));
+                byte[] buffer = new byte[1024];
+                while (true)
+                {
+                    int count = in.read(buffer);
+                    if (count == -1) break;
+                    jos.write(buffer, 0, count);
+                }
+                if (in != null) in.close();
+            }
+            jos.closeEntry();    // Don't forget to close the file entry
+        }
+        jos.close(); // Close the jar
     }
 }

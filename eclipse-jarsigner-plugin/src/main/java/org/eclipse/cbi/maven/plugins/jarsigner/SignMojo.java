@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 Eclipse Foundation and others 
+ * Copyright (c) 2012, 2013 Eclipse Foundation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -50,7 +50,7 @@ import org.codehaus.plexus.util.io.RawInputStreamFacade;
  * Signs project main and attached artifact using <a
  * href="http://wiki.eclipse.org/IT_Infrastructure_Doc#Sign_my_plugins.2FZIP_files.3F">Eclipse jarsigner webservice</a>.
  * Only artifacts that have extension ``.jar'', other artifacts are not signed with a debug log message.
- * 
+ *
  * @goal sign
  * @phase package
  * @requiresProject
@@ -101,7 +101,7 @@ public class SignMojo
 
     /**
      * Project types which this plugin supports.
-     * 
+     *
      * @parameter
      */
     private List<String> supportedProjectTypes = Arrays.asList( "jar", // standard jars
@@ -307,6 +307,9 @@ public class SignMojo
             }
 
             // Extract files from jar
+            if (f.getParentFile().mkdirs()) { // Ensure the parent directory exists
+                getLog().debug( "Created missing directory " + f.getParent() );
+            }
             InputStream is = jar.getInputStream(entry);
             FileOutputStream fos = new FileOutputStream(f);
             while (is.available() > 0) {

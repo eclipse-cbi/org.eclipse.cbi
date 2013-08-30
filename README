@@ -12,8 +12,8 @@ Add the CBI repository to your Maven <pluginRepositories> section
 
     https://repo.eclipse.org/content/repositories/cbi-snapshots/
 
-    *** Note the macsigner and winsigner plugins currently only
-        available via version 1.0.4-SNAPSHOTS.
+    *** Note the macsigner and winsigner plugins are available
+        starting with version 1.0.4 or later.
 
 
 Using eclipse-jarsigner-plugin
@@ -30,7 +30,7 @@ jars can be done by adding a section.
           <plugin>
             <groupId>org.eclipse.cbi.maven.plugins</groupId>
             <artifactId>eclipse-jarsigner-plugin</artifactId>
-            <version>1.0.4-SNAPSHOT</version>
+            <version>1.0.4</version>
             <executions>
               <execution>
                 <id>sign</id>
@@ -93,7 +93,7 @@ eclipse-jarsigner-plugin as follows:
           <plugin>
             <groupId>org.eclipse.cbi.maven.plugins</groupId>
             <artifactId>eclipse-jarsigner-plugin</artifactId>
-            <version>1.0.4-SNAPSHOT</version>
+            <version>1.0.4</version>
             <executions>
               <execution>
                 <id>sign</id>
@@ -152,7 +152,7 @@ Here is the standard POM configuration:
   <plugin>
     <groupId>org.eclipse.cbi.maven.plugins</groupId>
     <artifactId>eclipse-macsigner-plugin</artifactId>
-    <version>1.0.4-SNAPSHOT</version>
+    <version>1.0.4</version>
     <executions>
       <execution>
         <id>sign</id>
@@ -224,8 +224,8 @@ Here is the standard POM configuration:
 
   <plugin>
     <groupId>org.eclipse.cbi.maven.plugins</groupId>
-    <artifactId>eclipse-macsigner-plugin</artifactId>
-    <version>1.0.4-SNAPSHOT</version>
+    <artifactId>eclipse-winsigner-plugin</artifactId>
+    <version>1.0.4</version>
     <executions>
       <execution>
         <id>sign</id>

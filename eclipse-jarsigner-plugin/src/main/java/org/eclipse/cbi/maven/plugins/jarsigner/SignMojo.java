@@ -140,7 +140,7 @@ public class SignMojo
         try
         {
             File file = artifact.getFile();
-            if ( !file.isFile() || !file.canRead() )
+            if ( file == null || !file.isFile() || !file.canRead() )
             {
                 getLog().warn( "Could not read artifact file, the artifact is not signed " + artifact );
                 return;

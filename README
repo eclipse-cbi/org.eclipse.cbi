@@ -10,7 +10,7 @@ Using the plugins
 
 Add the CBI repository to your Maven <pluginRepositories> section
 
-    https://repo.eclipse.org/content/repositories/cbi-snapshots/
+    https://repo.eclipse.org/content/repositories/cbi-releases/
 
     *** Note the macsigner and winsigner plugins are available
         starting with version 1.0.4 or later.

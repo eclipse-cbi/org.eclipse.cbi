@@ -19,6 +19,13 @@ Add the CBI repository to your Maven <pluginRepositories> section
 Using eclipse-jarsigner-plugin
 ==============================
 
+This plugin will sign your artifacts during the build and product signed jar
+jar files. The implementation of this plugin signs the artifacts during when
+a each specific artifact is built so they are signed individually allowing
+Maven and Tycho to gather the already signed artifacts when creating
+repositories or products. As such a signing profile should be created in your
+parent pom to enable this plugin.
+
 If your project is a Maven project using the plugin to sign your Maven
 jars can be done by adding a section.
 

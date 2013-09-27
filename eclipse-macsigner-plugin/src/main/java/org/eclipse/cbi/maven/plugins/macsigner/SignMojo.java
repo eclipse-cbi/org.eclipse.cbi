@@ -134,7 +134,7 @@ public class SignMojo
                 fileNames[0] = "Eclipse.app";
             }
             File searchDir = getSearchDir();
-            getLog().info("Searching: " + searchDir);
+            getLog().debug("Searching: " + searchDir);
             
             if (searchDir != null) { 
                 traverseDirectory(searchDir);
@@ -400,7 +400,7 @@ public class SignMojo
             workdir.mkdirs();
             
             //zipping the directory
-            getLog().info("Building zip: " + file);
+            getLog().debug("Building zip: " + file);
             File zipFile = File.createTempFile(UNSIGNED_ZIP_FILE_NAME, ZIP_EXT, workdir);
             ZipArchiveOutputStream zos = new ZipArchiveOutputStream(new FileOutputStream(zipFile));
             
@@ -432,7 +432,7 @@ public class SignMojo
                 }
                 
                 // unzipping response
-                getLog().info("Decompressing zip: " + file);
+                getLog().debug("Decompressing zip: " + file);
                 unZip(tempSigned, zipDir);
             }
             finally

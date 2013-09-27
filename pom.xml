@@ -17,6 +17,7 @@
   <artifactId>eclipse-cbi-parent</artifactId>
   <version>1.0.5-SNAPSHOT</version>
   <packaging>pom</packaging>
+  <name>Eclipse :: CBI :: The Eclipse CBI Parent Pom</name>
 
   <properties>
     <maven.version>3.0.5</maven.version>

@@ -23,7 +23,7 @@
   <artifactId>eclipse-winsigner-plugin</artifactId>
   <version>1.0.5-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
-  <name>Eclipse :: CBI :: The New Eclipse Windows Signing Maven Plugin</name>
+  <name>Eclipse :: CBI :: The Eclipse Windows Signing Maven Plugin</name>
   <description>Plugin for signing windows executables on the eclipse build servers using exe signing webservice.</description>
 
   <properties>

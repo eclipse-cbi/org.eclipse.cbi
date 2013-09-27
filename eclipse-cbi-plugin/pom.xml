@@ -23,6 +23,7 @@
   <artifactId>eclipse-cbi-plugin</artifactId>
   <version>1.0.5-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
+  <name>Eclipse :: CBI :: The Eclipse CBI Maven Plugin</name>
 
   <dependencies>
     <dependency>

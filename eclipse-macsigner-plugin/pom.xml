@@ -23,7 +23,7 @@
   <artifactId>eclipse-macsigner-plugin</artifactId>
   <version>1.0.5-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
-  <name>Eclipse :: CBI :: The New Eclipse Mac Signing Maven Plugin</name>
+  <name>Eclipse :: CBI :: The Eclipse Mac Signing Maven Plugin</name>
   <description>Plugin for signing Macintosh apps on the eclipse build servers using app signing webservice.</description>
 
   <properties>

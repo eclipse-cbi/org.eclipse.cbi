@@ -134,7 +134,7 @@ public class SignMojo
                 fileNames[0] = "Eclipse.app";
             }
             File searchDir = getSearchDir();
-            getLog().info("Seraching: " + searchDir);
+            getLog().info("Searching: " + searchDir);
             
             if (searchDir != null) { 
                 traverseDirectory(searchDir);

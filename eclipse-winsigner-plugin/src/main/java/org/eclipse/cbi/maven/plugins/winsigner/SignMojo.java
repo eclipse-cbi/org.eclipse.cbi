@@ -1,10 +1,10 @@
 /*******************************************************************************
- * Copyright (c) 2013 Eclipse Foundation and others 
+ * Copyright (c) 2013 Eclipse Foundation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Caroline McQuatt, Mike Lim - initial implementation
  *******************************************************************************/
@@ -30,9 +30,9 @@ import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.io.RawInputStreamFacade;
 
 /**
- * Signs project main and attached artifact using 
+ * Signs project main and attached artifact using
  * <a>href="http://wiki.eclipse.org/IT_Infrastructure_Doc#Sign_my_plugins.2FZIP_files.3F">Eclipse winsigner webservice</a>.
- * 
+ *
  * @goal sign
  * @phase package
  * @requiresProject
@@ -50,41 +50,41 @@ public class SignMojo
      * @readonly
      */
     private String signerUrl;
-    
+
     /**
      * @parameter expression="${project.build.directory}"
      */
     private File workdir;
-    
+
     /**
      * @parameter expression="${project.artifactId}"
      */
     private String artifactID;
-    
+
     /**
      * List of full executable paths.
      * If configured only these executables will be signed.
      * @parameter expression="${signFiles}"
      */
     private String[] signFiles;
-    
+
     /**
      * Base dir to search for executables to sign.
      * If NOT configured baseSearchDir is ${project.build.directory}/products/${project.artifactId/}
      * @parameter expression="${baseSearchDir}
      */
     private String baseSearchDir;
-    
+
     /**
      * List of file names to sign.
-     * If NOT configured 'eclipse.exe' and 'eclipsec.exe' are signed. 
+     * If NOT configured 'eclipse.exe' and 'eclipsec.exe' are signed.
      * @parameter expression="${fileNames}
      */
     private String[] fileNames;
 
     public void execute()
         throws MojoExecutionException, MojoFailureException
-    {    	
+    {
     	//exe paths are configured
     	if (signFiles != null && !(signFiles.length == 0)) {
         	for (String path : signFiles) {
@@ -98,15 +98,15 @@ public class SignMojo
         		fileNames[1] = "eclipsec.exe";
         	}
     		File searchDir = getSearchDir();
-    		if (searchDir != null) { 
+    		if (searchDir != null) {
     			traverseDirectory(searchDir);
     		}
     	}
 
     }
-    
+
     /**
-     * @return Directory to start the search from or 
+     * @return Directory to start the search from or
      * 		   null if the directory cannot be found. A file
      * 		   will not be returned.
      */
@@ -129,7 +129,7 @@ public class SignMojo
     		path.append("/products/");
     		path.append(artifactID);
     		File dir = new File(path.toString());
-    		
+
     		if(dir.isDirectory()) {
     			return dir;
     		}else {
@@ -138,7 +138,7 @@ public class SignMojo
     		}
     	}
     }
-    
+
     /**
      * Recursive method. Searches the base directory for files to sign.
      * @param files

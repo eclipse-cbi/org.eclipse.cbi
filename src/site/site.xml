@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Eclipse CBI Plugins">
+  <bannerLeft>
+    <name>Eclipse</name>
+    <src>https://eclipse.org/eclipse.org-common/themes/Nova/images/eclipse.png</src>
+    <href>https://eclipse.org</href>
+  </bannerLeft>
+  <body>
+    <menu name="CBI Plugins" inherit="top">
+      <item name="Project Info" href="project-info.html"/>
+      <item name="Eclipse Jar Signing Plugin" href="eclipse-jarsigner-plugin/plugin-info.html" />
+      <item name="Eclipse Mac Signing Plugin" href="eclipse-macsigner-plugin/plugin-info.html" />
+      <item name="Eclipse Windows Signing Plugin" href="eclipse-winsigner-plugin/plugin-info.html" />
+    </menu>
+  </body>
+  <skin>
+    <groupId>org.apache.maven.skins</groupId>
+    <artifactId>maven-fluido-skin</artifactId>
+    <version>1.3.0</version>
+  </skin>
+</project>

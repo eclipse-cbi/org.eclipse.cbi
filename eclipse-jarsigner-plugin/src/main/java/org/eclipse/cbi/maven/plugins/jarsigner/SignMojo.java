@@ -61,46 +61,81 @@ public class SignMojo
 {
 
     /**
+     * Maven Project
+     *
      * @parameter expression="${project}"
+     * @readonly
      */
     private MavenProject project;
 
     /**
-     * Official eclipse signer service url as described in
-     * http://wiki.eclipse.org/IT_Infrastructure_Doc#Sign_my_plugins.2FZIP_files.3F
+     * The signing service URL for signing Jar files
+     *
+     * <p>This service should return a signed jar file.</p>
+     *
+     * <p>The Official Eclipse signer service URL as described in the
+     * <a href="http://wiki.eclipse.org/IT_Infrastructure_Doc#Sign_my_plugins.2FZIP_files.3F">
+     * wiki</a>.</p>
+     *
+     * <p><b>Configuration via Maven commandline</b></p>
+     * <pre>-Dcbi.jarsigner.signerUrl=http://localhost/sign.php</pre>
+     *
+     * <p><b>Configuration via pom.xml</b></p>
+     * <pre>{@code
+     * <configuration>
+     *   <signerUrl>http://localhost/sign</signerUrl>
+     * </configuration>
+     * }</pre>
      *
      * @parameter expression="${cbi.jarsigner.signerUrl}" default-value="http://build.eclipse.org:31338/sign"
      * @required
-     * @readonly
+     * @since 1.0.4
      */
     private String signerUrl;
 
     /**
+     * Maven build directory
+     *
      * @parameter expression="${project.build.directory}"
+     * @readonly
      */
     private File workdir;
 
     /**
-     * Set this to true to skip execution of this plugin
+     * Skips the execution of this plugin
      *
      * @parameter expression="${cbi.jarsigner.skip}" default-value="false"
+     * @since 1.0.4
      */
     private boolean skip;
 
     /**
-     * Set this to true to exclude signing inner jars.
+     * Excludes signing inner jars
      *
-     * Example:
-     *     <configuration>
-     *       <excludeInnerJars>true</excludeInnerJars>
-     *     </configuration>
+     * <p><b>Configuration via pom.xml</b></p>
+     * <pre>{@code
+     * <configuration>
+     *   <excludeInnerJars>true</excludeInnerJars>
+     * </configuration>
+     * }</pre>
      *
      * @parameter default-value="false"
+     * @since 1.0.5
      */
     private boolean excludeInnerJars;
 
     /**
-     * Project types which this plugin supports.
+     * Project types which this plugin supports
+     *
+     * <p><b>Default Types Supported</b></p>
+     * <pre>
+     * jar                 : standard jars
+     * bundle              : felix/bnd bundles
+     * maven-plugin        : maven plugins
+     * eclipse-plugin      : Tycho eclipse-plugin
+     * eclipse-test-plugin : Tycho eclipse-test-plugin
+     * eclipse-feature     : Tycho eclipse-feature
+     * </pre>
      *
      * @parameter
      */

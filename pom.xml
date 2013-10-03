@@ -5,9 +5,10 @@
   are made available under the terms of the Eclipse Distribution License v1.0
   which accompanies this distribution, and is available at
   http://www.eclipse.org/org/documents/edl-v10.php
- 
+
   Contributors:
-     Igor Fedorenko - initial implementation
+    Igor Fedorenko - initial implementation
+    Thanh Ha (Eclipse Foundation) - maintenance
 -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -17,7 +18,65 @@
   <artifactId>eclipse-cbi-parent</artifactId>
   <version>1.0.5-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Eclipse :: CBI :: The Eclipse CBI Parent Pom</name>
+  <name>The Eclipse CBI Plugins Project</name>
+  <url>http://wiki.eclipse.org/CBI</url>
+  <description>
+      CBI plugins are created to enable the Eclipse community to use
+      various services at Eclipse including the signing infrastructure.
+  </description>
+
+  <licenses>
+    <license>
+      <name>Eclipse Public License, Version 1.0</name>
+      <url>http://www.eclipse.org/legal/epl-v10.html</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <mailingLists>
+    <mailingList>
+      <name>cbi-dev</name>
+      <subscribe>https://dev.eclipse.org/mailman/listinfo/cbi-dev</subscribe>
+      <unsubscribe>https://dev.eclipse.org/mailman/listinfo/cbi-dev</unsubscribe>
+      <post>cbi-dev@eclipse.org</post>
+      <archive>http://dev.eclipse.org/mhonarc/lists/cbi-dev/</archive>
+    </mailingList>
+  </mailingLists>
+
+  <issueManagement>
+    <system>Bugzilla</system>
+    <url>https://bugs.eclipse.org/bugs/enter_bug.cgi?product=CBI</url>
+  </issueManagement>
+
+  <organization>
+    <name>Eclipse Foundation</name>
+    <url>http://eclipse.org/</url>
+  </organization>
+
+  <developers>
+    <developer>
+      <id>tha</id>
+      <name>Thanh Ha</name>
+      <email>thanh.ha@eclipse.org</email>
+      <organization>Eclipse Foundation</organization>
+      <organizationUrl>http://eclipse.org/</organizationUrl>
+      <roles>
+        <role>Release Engineer</role>
+        <role>Developer</role>
+      </roles>
+      <timezone>America/Montreal</timezone>
+      <properties>
+        <picUrl>http://www.eclipse.org/org/foundation/hat%20photos/thanh.jpg</picUrl>
+      </properties>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git://git.eclipse.org/gitroot/cbi/org.eclipse.cbi.maven.plugins</connection>
+    <developerConnection>scm:git:ssh://user@git.eclipse.org:29418/cbi/org.eclipse.cbi.maven.plugins</developerConnection>
+    <tag>master</tag>
+    <url>http://git.eclipse.org/c/cbi/org.eclipse.cbi.maven.plugins.git/</url>
+  </scm>
 
   <properties>
     <maven.version>3.0.5</maven.version>
@@ -61,7 +120,42 @@
       <name>Ecilpse CBI Nexus Repository - Snapshots</name>
       <url>https://repo.eclipse.org/content/repositories/cbi-snapshots/</url>
     </snapshotRepository>
+    <site>
+      <id>cbi-plugins.site</id>
+      <name>CBI Plugins Site</name>
+      <url>staging</url>
+    </site>
   </distributionManagement>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>3.0</version>
+        <configuration>
+          <relativizeDecorationLinks>false</relativizeDecorationLinks>
+          <reportPlugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-plugin-plugin</artifactId>
+              <version>2.9</version>
+              <configuration>
+                <requirements>
+                  <maven>${maven-version}</maven>
+                </requirements>
+              </configuration>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-project-info-reports-plugin</artifactId>
+              <version>2.4</version>
+            </plugin>
+          </reportPlugins>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
   <profiles>
     <profile>

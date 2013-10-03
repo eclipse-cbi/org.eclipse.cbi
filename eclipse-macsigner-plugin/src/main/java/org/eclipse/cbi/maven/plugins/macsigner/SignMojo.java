@@ -43,7 +43,7 @@ import org.codehaus.plexus.util.io.RawInputStreamFacade;
 
 /**
  * Signs project main and attached artifact using
- * <a>href="http://wiki.eclipse.org/IT_Infrastructure_Doc#Sign_my_plugins.2FZIP_files.3F">Eclipse macsigner webservice</a>.
+ * <a href="http://wiki.eclipse.org/IT_Infrastructure_Doc#Sign_my_plugins.2FZIP_files.3F">Eclipse macsigner webservice</a>.
  *
  * @goal sign
  * @phase package
@@ -54,38 +54,81 @@ public class SignMojo
     extends AbstractMojo
 {
     /**
-     * Official eclipse signer service url as described in
-     * http://wiki.eclipse.org/IT_Infrastructure_Doc#Sign_my_plugins.2FZIP_files.3F
+     * The signing service URL for signing Mac binaries
+     *
+     * <p>The signing service should return a signed zip file. Containing
+     * the Mac *.app directory.</p>
+     *
+     * <p>The Official Eclipse signer service URL as described in the
+     * <a href="http://wiki.eclipse.org/IT_Infrastructure_Doc#Sign_my_plugins.2FZIP_files.3F">
+     * wiki</a>.</p>
+     *
+     * <p><b>Configuration via Maven commandline</b></p>
+     * <pre>-Dcbi.macsigner.signerUrl=http://localhost/macsign.php</pre>
+     *
+     * <p><b>Configuration via pom.xml</b></p>
+     * <pre>{@code
+     * <configuration>
+     *   <signerUrl>http://localhost/macsign</signerUrl>
+     * </configuration>
+     * }</pre>
      *
      * @parameter expression="${cbi.macsigner.signerUrl}" default-value="http://build.eclipse.org:31338/macsign.php"
      * @required
-     * @readonly
+     * @since 1.0.4
      */
     private String signerUrl;
 
     /**
+     * Maven build directory
+     *
      * @parameter expression="${project.build.directory}"
+     * @readonly
+     * @since 1.0.4
      */
     private File workdir;
 
     /**
-     * List of full .app paths.
-     * If configured only these executables will be signed.
+     * A list of full paths to the Mac directory *.app
+     *
+     * <p>If configured only these executables will be signed.</p>
+     * <p><b><i>
+     *    NOTE: If this is configured "baseSearchDir" and "fileNames"
+     *    do NOT need to be configured.
+     * </i></b></p>
+     *
+     * <p><b>Configuration via pom.xml</b></p>
+     * <pre>{@code
+     * <configuration>
+     *   <signFiles>
+     *     <signFile>}${project.build.directory}/products/org.eclipse.sdk.ide/macosx/cocoa/x86/eclipse/Eclipse.app{@code</signFile>
+     *     <signFile>}${project.build.directory}/products/org.eclipse.sdk.ide/macosx/cocoa/x86_64/eclipse/Eclipse.app{@code</signFile>
+     *   </signFiles>
+     * </configuration>
+     * }</pre>
+     *
      * @parameter expression="${signFiles}"
+     * @since 1.0.4
      */
     private String[] signFiles;
 
     /**
-     * Base dir to search for executables to sign.
-     * If NOT configured baseSearchDir is ${project.build.directory}/products/
+     * The base directory to search for executables to sign
+     *
+     * <p>If NOT configured baseSearchDir is ${project.build.directory}/products/</p>
+     *
      * @parameter expression="${baseSearchDir}" default-value="${project.build.directory}/products/"
+     * @since 1.0.4
      */
     private String baseSearchDir;
 
     /**
-     * List of file names to sign.
-     * If NOT configured 'eclipse.app' is signed.
+     * A list of *.app filenames to sign
+     *
+     * <p>If NOT configured 'Eclipse.app' is signed.</p>
+     *
      * @parameter expression="${fileNames}
+     * @since 1.0.4
      */
     private String[] fileNames;
 

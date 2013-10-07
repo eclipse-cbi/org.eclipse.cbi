@@ -69,11 +69,6 @@ public class SignMojo
     private File workdir;
 
     /**
-     * @parameter expression="${project.artifactId}"
-     */
-    private String artifactID;
-
-    /**
      * List of full .app paths.
      * If configured only these executables will be signed.
      * @parameter expression="${signFiles}"
@@ -82,8 +77,8 @@ public class SignMojo
 
     /**
      * Base dir to search for executables to sign.
-     * If NOT configured baseSearchDir is ${project.build.directory}/products/${project.artifactId/}
-     * @parameter expression="${baseSearchDir}
+     * If NOT configured baseSearchDir is ${project.build.directory}/products/
+     * @parameter expression="${baseSearchDir}" default-value="${project.build.directory}/products/"
      */
     private String baseSearchDir;
 
@@ -133,48 +128,10 @@ public class SignMojo
                 fileNames = new String[1];
                 fileNames[0] = "Eclipse.app";
             }
-            File searchDir = getSearchDir();
+
+            File searchDir = new File(baseSearchDir);
             getLog().debug("Searching: " + searchDir);
-
-            if (searchDir != null) {
-                traverseDirectory(searchDir);
-            }
-        }
-
-    }
-
-    /**
-     * @return Directory to start the search from or
-     *         null if the directory cannot be found. A file
-     *         will not be returned.
-     */
-    private File getSearchDir() {
-        //base search dir is set
-        if (baseSearchDir != null && !baseSearchDir.isEmpty()) {
-            File dir = new File(baseSearchDir);
-            if(dir.isDirectory()) {
-                return dir;
-            }else {
-                getLog().error(dir + " is not a valid directory, failed to sign artifacts.");
-                return null;
-            }
-        } else { //deriving search path
-            getLog().info("Deriving base directory to search for artifacts to sign.");
-            if (artifactID == null || artifactID.isEmpty()) {
-                getLog().error("${project.artifactID} is not available, failed to sign artifacts.");
-                return null;
-            }
-            StringBuffer path = new StringBuffer(workdir.getPath());
-            path.append("/products/");
-            path.append(artifactID);
-            File dir = new File(path.toString());
-
-            if(dir.isDirectory()) {
-                return dir;
-            }else {
-                getLog().error("Derived directory: " + dir + " is not a valid directory, failed to sign artifacts.");
-                return null;
-            }
+            traverseDirectory(searchDir);
         }
     }
 

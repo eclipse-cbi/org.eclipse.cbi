@@ -110,6 +110,24 @@ public class SignMojo
     private boolean skip;
 
     /**
+     * Continue the build even if signing fails
+     *
+     * <p><b>Configuration via Maven commandline</b></p>
+     * <pre>-DcontinueOnFail=true</pre>
+     *
+     * <p><b>Configuration via pom.xml</b></p>
+     * <pre>{@code
+     * <configuration>
+     *   <continueOnFail>true</continueOnFail>
+     * </configuration>
+     * }</pre>
+     *
+     * @parameter expression="${continueOnFail}" default-value="false"
+     * @since 1.0.5
+     */
+    private boolean continueOnFail;
+
+    /**
      * Excludes signing inner jars
      *
      * <p><b>Configuration via pom.xml</b></p>
@@ -231,7 +249,16 @@ public class SignMojo
                 signFile( file, tempSigned );
                 if ( !tempSigned.canRead() || tempSigned.length() <= 0 )
                 {
-                    throw new MojoExecutionException( "Could not sign artifact " + artifact );
+                    String msg = "Could not sign artifact " + artifact;
+
+                    if (continueOnFail)
+                    {
+                        getLog().warn(msg);
+                    }
+                    else
+                    {
+                        throw new MojoExecutionException(msg);
+                    }
                 }
                 FileUtils.copyFile( tempSigned, file );
             }
@@ -245,7 +272,16 @@ public class SignMojo
         }
         catch ( IOException e )
         {
-            throw new MojoExecutionException( "Could not sign artifact " + artifact, e );
+            String msg = "Could not sign artifact " + artifact;
+
+            if (continueOnFail)
+            {
+                getLog().warn(msg);
+            }
+            else
+            {
+                throw new MojoExecutionException(msg, e);
+            }
         }
     }
 

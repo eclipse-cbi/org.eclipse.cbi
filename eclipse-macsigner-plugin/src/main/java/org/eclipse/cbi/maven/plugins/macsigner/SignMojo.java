@@ -133,6 +133,24 @@ public class SignMojo
     private String[] fileNames;
 
     /**
+     * Continue the build even if signing fails
+     *
+     * <p><b>Configuration via Maven commandline</b></p>
+     * <pre>-DcontinueOnFail=true</pre>
+     *
+     * <p><b>Configuration via pom.xml</b></p>
+     * <pre>{@code
+     * <configuration>
+     *   <continueOnFail>true</continueOnFail>
+     * </configuration>
+     * }</pre>
+     *
+     * @parameter expression="${continueOnFail}" default-value="false"
+     * @since 1.0.5
+     */
+    private boolean continueOnFail;
+
+    /**
      * List of executable files on the .app file to be signed.
      */
     private static ArrayList<String> executableFiles = new ArrayList<String>();
@@ -416,8 +434,16 @@ public class SignMojo
             File tempSignedCopy = new File(base_path + File.separator + tempSigned.getName());
 
             if (tempSignedCopy.exists()) {
-                throw new MojoExecutionException("Could not copy signed file because a file with the same name already exists: " +
-                                            tempSignedCopy);
+                String msg = "Could not copy signed file because a file with the same name already exists: " + tempSignedCopy;
+
+                if (continueOnFail)
+                {
+                    getLog().warn(msg);
+                }
+                else
+                {
+                    throw new MojoExecutionException(msg);
+                }
             }
             tempSignedCopy.createNewFile();
 
@@ -428,7 +454,16 @@ public class SignMojo
                 postFile( zipFile, tempSigned );
                 if ( !tempSigned.canRead() || tempSigned.length() <= 0 )
                 {
-                    throw new MojoExecutionException( "Could not sign artifact " + file );
+                    String msg = "Could not sign artifact " + file;
+
+                    if (continueOnFail)
+                    {
+                        getLog().warn(msg);
+                    }
+                    else
+                    {
+                        throw new MojoExecutionException(msg);
+                    }
                 }
 
                 // unzipping response
@@ -456,7 +491,16 @@ public class SignMojo
         }
         catch ( IOException e )
         {
-            throw new MojoExecutionException( "Could not sign file " + file + ": " + e.getMessage(), e );
+            String msg = "Could not sign file " + file + ": " + e.getMessage();
+
+            if (continueOnFail)
+            {
+                getLog().warn(msg);
+            }
+            else
+            {
+                throw new MojoExecutionException(msg, e);
+            }
         }
         finally
         {

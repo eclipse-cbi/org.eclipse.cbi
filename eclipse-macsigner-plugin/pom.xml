@@ -16,12 +16,12 @@
   <parent>
     <artifactId>eclipse-cbi-parent</artifactId>
     <groupId>org.eclipse.cbi.maven.plugins</groupId>
-    <version>1.0.5-SNAPSHOT</version>
+    <version>1.0.5</version>
   </parent>
 
   <groupId>org.eclipse.cbi.maven.plugins</groupId>
   <artifactId>eclipse-macsigner-plugin</artifactId>
-  <version>1.0.5-SNAPSHOT</version>
+  <version>1.0.5</version>
   <packaging>maven-plugin</packaging>
   <name>Eclipse :: CBI :: The Eclipse Mac Signing Maven Plugin</name>
   <description>Plugin for signing Macintosh apps on the eclipse build servers using app signing webservice.</description>

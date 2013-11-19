@@ -37,7 +37,7 @@ jars can be done by adding a section.
           <plugin>
             <groupId>org.eclipse.cbi.maven.plugins</groupId>
             <artifactId>eclipse-jarsigner-plugin</artifactId>
-            <version>1.0.4</version>
+            <version>1.0.5</version>
             <executions>
               <execution>
                 <id>sign</id>
@@ -100,7 +100,7 @@ eclipse-jarsigner-plugin as follows:
           <plugin>
             <groupId>org.eclipse.cbi.maven.plugins</groupId>
             <artifactId>eclipse-jarsigner-plugin</artifactId>
-            <version>1.0.4</version>
+            <version>1.0.5</version>
             <executions>
               <execution>
                 <id>sign</id>
@@ -159,7 +159,7 @@ Here is the standard POM configuration:
   <plugin>
     <groupId>org.eclipse.cbi.maven.plugins</groupId>
     <artifactId>eclipse-macsigner-plugin</artifactId>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
     <executions>
       <execution>
         <id>sign</id>
@@ -232,7 +232,7 @@ Here is the standard POM configuration:
   <plugin>
     <groupId>org.eclipse.cbi.maven.plugins</groupId>
     <artifactId>eclipse-winsigner-plugin</artifactId>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
     <executions>
       <execution>
         <id>sign</id>

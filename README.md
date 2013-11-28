@@ -61,7 +61,7 @@ of the Eclipse Infrastructure. There are 2 ways to accomplish this.
 
 ### Method 1: via commandline
 
-eclipse-jarsigner-plugin: -Dcbi.jarsigner.signerUrl=http://localhost
+    -Dcbi.jarsigner.signerUrl=http://localhost
 
 ### Method 2: via pom.xml
 
@@ -218,7 +218,7 @@ of the Eclipse Infrastructure. There are 2 ways to accomplish this.
 
 ### Method 1: via commandline
 
-  -Dcbi.macsigner.signerUrl=http://localhost
+    -Dcbi.macsigner.signerUrl=http://localhost
 
 ### Method 2: via pom.xml
 
@@ -279,7 +279,7 @@ of the Eclipse Infrastructure. There are 2 ways to accomplish this.
 
 ### Method 1: via commandline
 
-  -Dcbi.winsigner.signerUrl=http://localhost
+    -Dcbi.winsigner.signerUrl=http://localhost
 
 ### Method 2: via pom.xml
 

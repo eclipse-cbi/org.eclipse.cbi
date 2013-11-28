@@ -2,7 +2,9 @@ CBI plugins is a set of Maven plugins that enable projects to use the
 Eclipse infrastructure to sign their build artifacts via Maven.
 
 wiki: http://wiki.eclipse.org/CBI
+
 mailing list: https://dev.eclipse.org/mailman/listinfo/cbi-dev
+
 bugzilla: https://bugs.eclipse.org/bugs/buglist.cgi?list_id=6321580&classification=Eclipse%20Foundation&query_format=advanced&bug_status=UNCONFIRMED&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&product=CBI
 
 Using the plugins
@@ -29,6 +31,7 @@ parent pom to enable this plugin.
 If your project is a Maven project using the plugin to sign your Maven
 jars can be done by adding a section.
 
+<pre>
   <profiles>
     <profile>
       <id>sign</id>
@@ -52,24 +55,28 @@ jars can be done by adding a section.
       </build>
     </profile>
   </profiles>
+</pre>
 
 It is possible to override the default signing URL to use a service outside
 of the Eclipse Infrastructure. There are 2 ways to accomplish this.
 
-Method 1: via commandline
+### Method 1: via commandline
 
 eclipse-jarsigner-plugin: -Dcbi.jarsigner.signerUrl=http://localhost
 
-Method 2: via pom.xml
+### Method 2: via pom.xml
 
+<pre>
   <configuration>
     <signerUrl>http://localhost</signerUrl>
   </configuration>
+</pre>
 
 If your project's a Tycho project that needs pack200 to be included in
 in your p2 repository you can use the Tycho pack200 plugin along with the
 eclipse-jarsigner-plugin as follows:
 
+<pre>
   <profilse>
     <profile>
       <id>eclipse-sign</id>
@@ -146,6 +153,7 @@ eclipse-jarsigner-plugin as follows:
       </build>
     </profile>
   </profiles>
+</pre>
 
 More details on Tycho pack200 can be found on the Tycho wiki page:
     http://wiki.eclipse.org/Tycho/Pack200
@@ -156,6 +164,7 @@ Using eclipse-macsigner-plugin
 
 Here is the standard POM configuration:
 
+<pre>
   <plugin>
     <groupId>org.eclipse.cbi.maven.plugins</groupId>
     <artifactId>eclipse-macsigner-plugin</artifactId>
@@ -176,15 +185,18 @@ Here is the standard POM configuration:
       </execution>
     </executions>
   </plugin>
+</pre>
 
 An alternate configuration is:
 
+<pre>
         <configuration>
           <baseSearchDir>${project.build.directory}/products/org.eclipse.sdk.ide</baseSearchDir>        
           <fileNames>
             <fileName>eclipse.app</fileName>
           </fileNames>
         </configuration>
+</pre>
 
 ${fileNames} sets the app names that you would like signed and
 ${baseSearchDir} sets the directory that the plugin will recursively
@@ -205,7 +217,7 @@ folder.
 
 In case you need to provide custom rules for resource signing to the signing
 service please create a standard CodeResources file in 
-"..app/Contents/_CodeSignature" folder. The Eclipse signing service will 
+"..app/Contents/\_CodeSignature" folder. The Eclipse signing service will 
 detect an existing file and use it as input for the the Mac OS code signing 
 tool to specify rules such as which resources should be excluded, etc. 
 
@@ -213,15 +225,17 @@ tool to specify rules such as which resources should be excluded, etc.
 It is possible to override the default signing URL to use a service outside
 of the Eclipse Infrastructure. There are 2 ways to accomplish this.
 
-Method 1: via commandline
+### Method 1: via commandline
 
   -Dcbi.macsigner.signerUrl=http://localhost
 
-Method 2: via pom.xml
+### Method 2: via pom.xml
 
+<pre>
   <configuration>
     <signerUrl>http://localhost</signerUrl>
   </configuration>
+</pre>
 
 
 Using eclipse-winsigner-plugin
@@ -229,6 +243,7 @@ Using eclipse-winsigner-plugin
 
 Here is the standard POM configuration:
 
+<pre>
   <plugin>
     <groupId>org.eclipse.cbi.maven.plugins</groupId>
     <artifactId>eclipse-winsigner-plugin</artifactId>
@@ -249,9 +264,11 @@ Here is the standard POM configuration:
       </execution>
     </executions>
   </plugin>
+</pre>
 
 An alternate configuration is:
 
+<pre>
         <configuration>
           <baseSearchDir>${project.build.directory}/products/org.eclipse.sdk.ide</baseSearchDir>
           <fileNames>
@@ -259,6 +276,7 @@ An alternate configuration is:
             <fileName>eclipsec.exe</fileName>
           </fileNames>
         </configuration>
+</pre>
 
 ${fileNames} sets the executable names that you would like signed and
 ${baseSearchDir} sets the directory that the plugin will recursively
@@ -274,13 +292,15 @@ and ${baseSearchDir} are set.
 It is possible to override the default signing URL to use a service outside
 of the Eclipse Infrastructure. There are 2 ways to accomplish this.
 
-Method 1: via commandline
+### Method 1: via commandline
 
   -Dcbi.winsigner.signerUrl=http://localhost
 
-Method 2: via pom.xml
+### Method 2: via pom.xml
 
+<pre>
   <configuration>
     <signerUrl>http://localhost</signerUrl>
   </configuration>
+</pre>
 

@@ -10,7 +10,7 @@ bugzilla: https://bugs.eclipse.org/bugs/buglist.cgi?list_id=6321580&classificati
 Using the plugins
 =================
 
-Add the CBI repository to your Maven <pluginRepositories> section
+Add the CBI repository to your Maven &lt;pluginRepositories&gt; section
 
     https://repo.eclipse.org/content/repositories/cbi-releases/
 

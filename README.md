@@ -73,7 +73,7 @@ If your project's a Tycho project that needs pack200 to be included in
 in your p2 repository you can use the Tycho pack200 plugin along with the
 eclipse-jarsigner-plugin as follows:
 
-    <profilse>
+    <profiles>
       <profile>
         <id>eclipse-sign</id>
         <build>

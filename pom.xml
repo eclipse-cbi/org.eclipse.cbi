@@ -103,6 +103,7 @@
   </pluginRepositories>
 
   <modules>
+    <module>common</module>
     <module>eclipse-cbi-plugin</module>
     <module>eclipse-jarsigner-plugin</module>
     <module>eclipse-macsigner-plugin</module>

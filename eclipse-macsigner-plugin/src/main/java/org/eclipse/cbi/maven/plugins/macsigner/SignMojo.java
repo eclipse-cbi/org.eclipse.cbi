@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Eclipse Foundation and others.
+ * Copyright (c) 2013, 2014 Eclipse Foundation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,24 +22,20 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.mime.MultipartEntity;
-import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
+import org.apache.http.NoHttpResponseException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.io.RawInputStreamFacade;
+
+import org.eclipse.cbi.common.signing.Signer;
 
 /**
  * Signs project main and attached artifact using
@@ -149,6 +145,20 @@ public class SignMojo
      * @since 1.0.5
      */
     private boolean continueOnFail;
+
+    /**
+     * Number of times to retry signing if server fails to sign
+     *
+     * @parameter expression="${retryLimit}" default-value="3"
+     */
+    private int retryLimit;
+
+    /**
+     * Number of seconds to wait before retrying to sign
+     *
+     * @parameter expression="${retryTimer}" default-value="30"
+     */
+    private int retryTimer;
 
     /**
      * List of executable files on the .app file to be signed.
@@ -451,7 +461,7 @@ public class SignMojo
 
             try
             {
-                postFile( zipFile, tempSigned );
+                signFile( zipFile, tempSigned );
                 if ( !tempSigned.canRead() || tempSigned.length() <= 0 )
                 {
                     String msg = "Could not sign artifact " + file;
@@ -515,63 +525,34 @@ public class SignMojo
      * @throws IOException
      * @throws MojoExecutionException
      */
-    private void postFile( File source, File target )
-        throws IOException, MojoExecutionException
+    private void signFile( File source, File target )
+            throws IOException, MojoExecutionException
     {
-    	getLog().debug("Sending file " + source + " to: " + signerUrl);
+        int retry = 0;
 
-        HttpClient client = new DefaultHttpClient();
-        HttpPost post = new HttpPost( signerUrl );
-
-        MultipartEntity reqEntity = new MultipartEntity();
-        reqEntity.addPart( "file", new FileBody( source ) );
-        post.setEntity( reqEntity );
-
-        HttpResponse response = client.execute( post );
-        getLog().debug("Signer replied: " + response.getStatusLine());
-
-        int statusCode = response.getStatusLine().getStatusCode();
-        HttpEntity resEntity = response.getEntity();
-
-        if ( statusCode >= 200 && statusCode <= 299 && resEntity != null )
+        while ( retry++ <= retryLimit )
         {
-            InputStream is = resEntity.getContent();
             try
             {
-                FileUtils.copyStreamToFile( new RawInputStreamFacade( is ), target );
+                Signer.signFile( source, target, signerUrl );
+                return;
             }
-            finally
+            catch ( NoHttpResponseException e )
             {
-                IOUtil.close( is );
+                if ( retry <= retryLimit ) {
+                    getLog().info("Failed to sign with server. Retrying...");
+                    try
+                    {
+                        TimeUnit.SECONDS.sleep(retryTimer);
+                    }
+                    catch ( InterruptedException ie ) {
+                        // Do nothing
+                    }
+                }
             }
         }
-        else
-        {
-        	String responseMessage = getResponseAsText(resEntity);
-        	if(responseMessage != null)
-        	{
-        		getLog().debug("Content received from signer:\n" + EntityUtils.toString(resEntity));
-        	} else
-        	{
-        		getLog().debug("No content received from signer.");
-        	}
-            throw new MojoExecutionException( this, "Signer replied " + response.getStatusLine(), responseMessage );
-        }
-    }
 
-	private String getResponseAsText(HttpEntity resEntity) {
-		if(resEntity != null)
-		{
-			try
-			{
-				return EntityUtils.toString(resEntity);
-			} catch (Exception e)
-			{
-				getLog().debug("Error reading response.");
-				getLog().debug(e);
-				return null;
-			}
-		}
-		return null;
-	}
+        // If we make it here then signing has failed.
+        throw new MojoExecutionException( "Failed to sign file." );
+    }
 }

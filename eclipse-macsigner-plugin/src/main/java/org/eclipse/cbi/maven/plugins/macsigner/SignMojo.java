@@ -69,7 +69,7 @@ public class SignMojo
      * </configuration>
      * }</pre>
      *
-     * @parameter expression="${cbi.macsigner.signerUrl}" default-value="http://build.eclipse.org:31338/macsign.php"
+     * @parameter property="cbi.macsigner.signerUrl" default-value="http://build.eclipse.org:31338/macsign.php"
      * @required
      * @since 1.0.4
      */
@@ -78,7 +78,7 @@ public class SignMojo
     /**
      * Maven build directory
      *
-     * @parameter expression="${project.build.directory}"
+     * @parameter property="project.build.directory"
      * @readonly
      * @since 1.0.4
      */
@@ -103,7 +103,7 @@ public class SignMojo
      * </configuration>
      * }</pre>
      *
-     * @parameter expression="${signFiles}"
+     * @parameter property="signFiles"
      * @since 1.0.4
      */
     private String[] signFiles;
@@ -113,7 +113,7 @@ public class SignMojo
      *
      * <p>If NOT configured baseSearchDir is ${project.build.directory}/products/</p>
      *
-     * @parameter expression="${baseSearchDir}" default-value="${project.build.directory}/products/"
+     * @parameter property="baseSearchDir" default-value="${project.build.directory}/products/"
      * @since 1.0.4
      */
     private String baseSearchDir;
@@ -123,7 +123,7 @@ public class SignMojo
      *
      * <p>If NOT configured 'Eclipse.app' is signed.</p>
      *
-     * @parameter expression="${fileNames}
+     * @parameter property="fileNames"
      * @since 1.0.4
      */
     private String[] fileNames;
@@ -141,7 +141,7 @@ public class SignMojo
      * </configuration>
      * }</pre>
      *
-     * @parameter expression="${continueOnFail}" default-value="false"
+     * @parameter property="continueOnFail" default-value="false"
      * @since 1.0.5
      */
     private boolean continueOnFail;
@@ -149,14 +149,14 @@ public class SignMojo
     /**
      * Number of times to retry signing if server fails to sign
      *
-     * @parameter expression="${retryLimit}" default-value="3"
+     * @parameter property="retryLimit" default-value="3"
      */
     private int retryLimit;
 
     /**
      * Number of seconds to wait before retrying to sign
      *
-     * @parameter expression="${retryTimer}" default-value="30"
+     * @parameter property="retryTimer" default-value="30"
      */
     private int retryTimer;
 

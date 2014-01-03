@@ -54,7 +54,7 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
     protected MavenProject project;
 
     /**
-     * @parameter expression="${buildQualifier}"
+     * @parameter property="buildQualifier"
      * @readonly
      */
     private String qualifier;

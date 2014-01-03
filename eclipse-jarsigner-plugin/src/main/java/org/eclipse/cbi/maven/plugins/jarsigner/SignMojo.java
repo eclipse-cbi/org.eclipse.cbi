@@ -61,7 +61,7 @@ public class SignMojo
     /**
      * Maven Project
      *
-     * @parameter expression="${project}"
+     * @parameter property="project"
      * @readonly
      */
     private MavenProject project;
@@ -85,7 +85,7 @@ public class SignMojo
      * </configuration>
      * }</pre>
      *
-     * @parameter expression="${cbi.jarsigner.signerUrl}" default-value="http://build.eclipse.org:31338/sign"
+     * @parameter property="cbi.jarsigner.signerUrl" default-value="http://build.eclipse.org:31338/sign"
      * @required
      * @since 1.0.4
      */
@@ -94,7 +94,7 @@ public class SignMojo
     /**
      * Maven build directory
      *
-     * @parameter expression="${project.build.directory}"
+     * @parameter property="project.build.directory"
      * @readonly
      */
     private File workdir;
@@ -102,7 +102,7 @@ public class SignMojo
     /**
      * Skips the execution of this plugin
      *
-     * @parameter expression="${cbi.jarsigner.skip}" default-value="false"
+     * @parameter property="cbi.jarsigner.skip" default-value="false"
      * @since 1.0.4
      */
     private boolean skip;
@@ -120,7 +120,7 @@ public class SignMojo
      * </configuration>
      * }</pre>
      *
-     * @parameter expression="${continueOnFail}" default-value="false"
+     * @parameter property="continueOnFail" default-value="false"
      * @since 1.0.5
      */
     private boolean continueOnFail;
@@ -128,14 +128,14 @@ public class SignMojo
     /**
      * Number of times to retry signing if server fails to sign
      *
-     * @parameter expression="${retryLimit}" default-value="3"
+     * @parameter property="retryLimit" default-value="3"
      */
     private int retryLimit;
 
     /**
      * Number of seconds to wait before retrying to sign
      *
-     * @parameter expression="${retryTimer}" default-value="30"
+     * @parameter property="retryTimer" default-value="30"
      */
     private int retryTimer;
 

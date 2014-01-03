@@ -140,6 +140,7 @@ public class SignMojo
      * Number of times to retry signing if server fails to sign
      *
      * @parameter property="retryLimit" default-value="3"
+     * @since 1.1.0
      */
     private int retryLimit;
 
@@ -147,6 +148,7 @@ public class SignMojo
      * Number of seconds to wait before retrying to sign
      *
      * @parameter property="retryTimer" default-value="30"
+     * @since 1.1.0
      */
     private int retryTimer;
 

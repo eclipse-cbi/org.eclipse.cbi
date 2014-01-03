@@ -14,14 +14,12 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <artifactId>eclipse-cbi-parent</artifactId>
     <groupId>org.eclipse.cbi.maven.plugins</groupId>
+    <artifactId>eclipse-cbi-parent</artifactId>
     <version>1.1.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>org.eclipse.cbi.maven.plugins</groupId>
   <artifactId>eclipse-winsigner-plugin</artifactId>
-  <version>1.1.0-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
   <name>Eclipse :: CBI :: The Eclipse Windows Signing Maven Plugin</name>
   <description>Plugin for signing windows executables on the eclipse build servers using exe signing webservice.</description>
@@ -47,7 +45,7 @@
     <dependency>
       <groupId>org.eclipse.cbi.maven.plugins</groupId>
       <artifactId>org.eclipse.cbi.common</artifactId>
-      <version>1.1.0-SNAPSHOT</version>
+      <version>${project.parent.version}</version>
     </dependency>
   </dependencies>
 

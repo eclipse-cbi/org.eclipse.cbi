@@ -79,14 +79,14 @@
   </scm>
 
   <properties>
-    <maven.version>3.0.5</maven.version>
+    <maven.version>3.1.1</maven.version>
     <tycho.version>0.19.0</tycho.version>
     <cbi-plugins.version>1.0.5</cbi-plugins.version>
     <eclipse-maven-repo.url>https://repo.eclipse.org/content/repositories/releases/</eclipse-maven-repo.url>
   </properties>
 
   <prerequisites>
-    <maven>3.0.5</maven>
+    <maven>3.1.1</maven>
   </prerequisites>
 
   <pluginRepositories>

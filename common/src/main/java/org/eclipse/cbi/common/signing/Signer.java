@@ -11,24 +11,19 @@
 
 package org.eclipse.cbi.common.signing;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.InterruptedException;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
@@ -49,12 +44,14 @@ public class Signer
     public static void signFile( File source, File target, String signerUrl )
             throws IOException, MojoExecutionException
     {
-        HttpClient client = new DefaultHttpClient();
+        HttpClient client = HttpClientBuilder.create().build();
         HttpPost post = new HttpPost( signerUrl );
 
-        MultipartEntity reqEntity = new MultipartEntity();
-        reqEntity.addPart( "file", new FileBody( source ) );
-        post.setEntity( reqEntity );
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create(); 
+        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+
+        builder.addPart( "file", new FileBody( source ) );
+        post.setEntity( builder.build() );
 
 
         HttpResponse response = client.execute( post );

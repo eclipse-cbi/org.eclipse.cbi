@@ -148,6 +148,7 @@ public class SignMojo
      */
     private int retryTimer;
 
+    @Override
     public void execute()
         throws MojoExecutionException, MojoFailureException
     {

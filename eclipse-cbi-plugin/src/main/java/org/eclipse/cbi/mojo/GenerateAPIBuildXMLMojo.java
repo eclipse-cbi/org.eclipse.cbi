@@ -65,6 +65,7 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
      */
     private Map<String, TychoProject> projectTypes;
     
+	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		File dotProject = new File(project.getBasedir(), ".project");
 		if (!isRelevantPackaging(project.getPackaging()) || !dotProject.exists()) {

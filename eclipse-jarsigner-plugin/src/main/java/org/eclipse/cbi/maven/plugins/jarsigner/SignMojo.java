@@ -174,6 +174,7 @@ public class SignMojo
                                                                 "eclipse-plugin", "eclipse-test-plugin",
                                                                 "eclipse-feature" );
 
+    @Override
     public void execute()
         throws MojoExecutionException, MojoFailureException
     {

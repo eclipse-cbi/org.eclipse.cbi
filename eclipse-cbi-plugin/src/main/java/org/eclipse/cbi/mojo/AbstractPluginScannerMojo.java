@@ -40,6 +40,7 @@ abstract class AbstractPluginScannerMojo
     /** @component */
     protected BundleReader bundleReader;
 
+    @Override
     public void execute()
         throws MojoExecutionException, MojoFailureException
     {

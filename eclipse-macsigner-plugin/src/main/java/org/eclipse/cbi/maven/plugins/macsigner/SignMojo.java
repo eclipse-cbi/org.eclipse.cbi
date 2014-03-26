@@ -184,6 +184,7 @@ public class SignMojo
      */
     private static final int BUFFER_SIZE = 1024;
 
+    @Override
     public void execute()
         throws MojoExecutionException, MojoFailureException
     {

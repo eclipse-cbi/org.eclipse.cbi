@@ -168,6 +168,7 @@ public class SignMojo
      * @parameter
      */
     private List<String> supportedProjectTypes = Arrays.asList( "jar",  // standard jars
+                                                                "war",  // java war files
                                                                 "bundle",  // felix/bnd bundles
                                                                 "maven-plugin",  // maven plugins
                                                                 // tycho

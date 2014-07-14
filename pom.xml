@@ -131,7 +131,7 @@
     <site>
       <id>cbi-plugins.site</id>
       <name>CBI Plugins Site</name>
-      <url>staging</url>
+      <url>${project.baseUri}/target/sitedocs</url>
     </site>
   </distributionManagement>
 

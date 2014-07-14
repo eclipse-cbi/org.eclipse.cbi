@@ -131,7 +131,7 @@
     <site>
       <id>cbi-plugins.site</id>
       <name>CBI Plugins Site</name>
-      <url>${project.baseUri}/target/sitedocs</url>
+      <url>file:///${user.dir}/target/sitedocs</url>
     </site>
   </distributionManagement>
 

@@ -27,7 +27,7 @@ import java.util.zip.ZipEntry;
 import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.osgi.util.ManifestElement;
 import org.eclipse.tycho.ArtifactKey;
-import org.eclipse.tycho.core.osgitools.DefaultArtifactKey;
+import org.eclipse.tycho.DefaultArtifactKey;
 import org.eclipse.tycho.core.osgitools.OsgiManifest;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
@@ -174,7 +174,7 @@ public class TestPropertiesMojo
     private ArtifactKey newArtifactKey( Plugin plugin )
     {
         OsgiManifest m = plugin.getManifest();
-        return new DefaultArtifactKey( ArtifactKey.TYPE_ECLIPSE_PLUGIN, m.getBundleSymbolicName(), m.getBundleVersion() );
+        return new DefaultArtifactKey( "eclipse-plugin", m.getBundleSymbolicName(), m.getBundleVersion() );
     }
 
     private TestType getTestType( File plugin )

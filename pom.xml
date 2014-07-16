@@ -85,7 +85,7 @@
 
   <properties>
     <maven.version>3.1.1</maven.version>
-    <tycho.version>0.20.0</tycho.version>
+    <tycho.version>0.21.0</tycho.version>
     <cbi-plugins.version>1.1.0</cbi-plugins.version>
     <eclipse-maven-repo.url>https://repo.eclipse.org/content/repositories/releases/</eclipse-maven-repo.url>
 
@@ -95,6 +95,13 @@
   <prerequisites>
     <maven>3.1.1</maven>
   </prerequisites>
+
+  <repositories>
+    <repository>
+      <id>tycho-staged</id>
+      <url>https://oss.sonatype.org/content/repositories/orgeclipsetycho-1018/</url>
+    </repository>
+  </repositories>
 
   <pluginRepositories>
     <pluginRepository>

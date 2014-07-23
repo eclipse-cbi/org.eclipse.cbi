@@ -96,13 +96,6 @@
     <maven>3.1.1</maven>
   </prerequisites>
 
-  <repositories>
-    <repository>
-      <id>tycho-staged</id>
-      <url>https://oss.sonatype.org/content/repositories/orgeclipsetycho-1018/</url>
-    </repository>
-  </repositories>
-
   <pluginRepositories>
     <pluginRepository>
       <id>eclipse-maven</id>

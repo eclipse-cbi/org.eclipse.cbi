@@ -73,7 +73,9 @@ public class Signer
         }
         else if ( statusCode >= 500 && statusCode <= 599)
         {
-            throw new NoHttpResponseException( "Server failed with " + response.getStatusLine() );
+            InputStream is = resEntity.getContent();
+            String message = IOUtil.toString(is, "UTF-8");
+            throw new NoHttpResponseException( "Server failed with " + message );
         }
         else
         {

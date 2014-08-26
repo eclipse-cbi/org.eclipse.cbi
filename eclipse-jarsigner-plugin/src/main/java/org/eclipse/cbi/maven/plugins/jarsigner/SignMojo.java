@@ -348,7 +348,8 @@ public class SignMojo
             catch ( NoHttpResponseException e )
             {
                 if ( retry <= retryLimit ) {
-                    getLog().info("Failed to sign with server. Retrying...");
+                    getLog().debug(e.toString());
+                    getLog().info("Failed to sign " + source.getName() + " with server. Retrying...");
                     try
                     {
                         TimeUnit.SECONDS.sleep(retryTimer);

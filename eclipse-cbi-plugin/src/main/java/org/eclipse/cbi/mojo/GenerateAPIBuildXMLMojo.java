@@ -24,7 +24,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.tycho.ArtifactKey;
@@ -66,7 +65,7 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
     private Map<String, TychoProject> projectTypes;
     
 	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException {
+	public void execute() throws MojoExecutionException {
 		File dotProject = new File(project.getBasedir(), ".project");
 		if (!isRelevantPackaging(project.getPackaging()) || !dotProject.exists()) {
 			// no .project
@@ -80,11 +79,11 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
 		}
 	}
 
-	private boolean isRelevantPackaging(String packaging) {
+	private static boolean isRelevantPackaging(String packaging) {
 		return "eclipse-plugin".equals(packaging)|| "eclipse-test-plugin".equals(packaging);
 	}
 	
-	private boolean dotProjectContainsApiNature(File f){
+	private static boolean dotProjectContainsApiNature(File f){
 		try{
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();

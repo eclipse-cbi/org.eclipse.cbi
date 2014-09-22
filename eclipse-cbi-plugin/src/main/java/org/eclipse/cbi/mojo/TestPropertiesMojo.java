@@ -46,7 +46,7 @@ public class TestPropertiesMojo
     private static enum TestType
     {
         NONE, TEST, PERFTEST
-    };
+    }
 
     private static class Plugin
     {
@@ -171,13 +171,13 @@ public class TestPropertiesMojo
         }
     }
 
-    private ArtifactKey newArtifactKey( Plugin plugin )
+    private static ArtifactKey newArtifactKey( Plugin plugin )
     {
         OsgiManifest m = plugin.getManifest();
         return new DefaultArtifactKey( "eclipse-plugin", m.getBundleSymbolicName(), m.getBundleVersion() );
     }
 
-    private TestType getTestType( File plugin )
+    private static TestType getTestType( File plugin )
         throws IOException
     {
         JarFile jar = new JarFile( plugin );

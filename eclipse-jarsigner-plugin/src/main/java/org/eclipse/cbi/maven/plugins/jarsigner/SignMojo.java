@@ -35,7 +35,6 @@ import org.apache.http.NoHttpResponseException;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 import org.eclipse.cbi.common.signing.Signer;
@@ -178,7 +177,7 @@ public class SignMojo
 
     @Override
     public void execute()
-        throws MojoExecutionException, MojoFailureException
+        throws MojoExecutionException
     {
         if ( skip )
         {
@@ -298,7 +297,7 @@ public class SignMojo
         }
     }
 
-    private boolean shouldSign( File file )
+    private static boolean shouldSign( File file )
         throws IOException
     {
         boolean sign = true;

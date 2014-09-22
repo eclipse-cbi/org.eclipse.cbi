@@ -30,7 +30,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.http.NoHttpResponseException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.codehaus.plexus.util.FileUtils;
 import org.eclipse.cbi.common.signing.Signer;
 
@@ -186,7 +185,7 @@ public class SignMojo
 
     @Override
     public void execute()
-        throws MojoExecutionException, MojoFailureException
+        throws MojoExecutionException
     {
         //app paths are configured
         if (signFiles != null && !(signFiles.length == 0)) {
@@ -245,7 +244,7 @@ public class SignMojo
      * @throws IOException
      * @throws MojoExecutionException
      */
-    private void unZip(File zipFile, File output_dir) throws IOException, MojoExecutionException
+    private static void unZip(File zipFile, File output_dir) throws IOException, MojoExecutionException
     {
 
         ZipArchiveInputStream zis = new ZipArchiveInputStream(new FileInputStream(zipFile));
@@ -363,7 +362,7 @@ public class SignMojo
         }
     }
 
-	private boolean isInContentsFolder(String name) {
+	private static boolean isInContentsFolder(String name) {
 		String[] segments = name.split("/");
 		return segments.length > 1 && segments[0].endsWith(".app") && segments[1].equals("Contents");
 	}
@@ -374,7 +373,7 @@ public class SignMojo
      * @return          The absolute path of a file's parent.
      *                  Returns the empty string if there is no parent directory.
      */
-    private String getParentDirAbsolutePath(File file)
+    private static String getParentDirAbsolutePath(File file)
     {
         return getParentDirAbsolutePath(file.getAbsolutePath());
     }
@@ -385,7 +384,7 @@ public class SignMojo
      * @return          The absolute path of a file's parent.
      *                  Returns the empty string if there is no parent directory.
      */
-    private String getParentDirAbsolutePath(String name)
+    private static String getParentDirAbsolutePath(String name)
     {
         int index = name.lastIndexOf(File.separator);
         return name.substring(0, index + 1);
@@ -397,7 +396,7 @@ public class SignMojo
      * @param zip                   The OutputStream.
      * @throws IOException
      */
-    private void copyInputStreamToOutputStream(InputStream fis, OutputStream zip) throws IOException {
+    private static void copyInputStreamToOutputStream(InputStream fis, OutputStream zip) throws IOException {
         byte[] buff = new byte[BUFFER_SIZE];
 
         while(true) {

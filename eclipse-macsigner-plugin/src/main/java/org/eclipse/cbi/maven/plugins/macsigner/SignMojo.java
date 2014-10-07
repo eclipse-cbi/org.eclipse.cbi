@@ -529,6 +529,7 @@ public class SignMojo
     {
         int retry = 0;
 
+        NoHttpResponseException serverException = null;
         while ( retry++ <= retryLimit )
         {
             try
@@ -538,8 +539,14 @@ public class SignMojo
             }
             catch ( NoHttpResponseException e )
             {
+            	getLog().debug("Server error while signing: " + e.getMessage(), e);
+            	if(serverException == null)
+            		serverException = e;
+            	else
+            		serverException.addSuppressed(e);
+
                 if ( retry <= retryLimit ) {
-                    getLog().info("Failed to sign with server. Retrying...");
+                    getLog().warn("Failed to sign with server. Retrying...");
                     try
                     {
                         TimeUnit.SECONDS.sleep(retryTimer);
@@ -552,6 +559,6 @@ public class SignMojo
         }
 
         // If we make it here then signing has failed.
-        throw new MojoExecutionException( "Failed to sign file." );
+       	throw new MojoExecutionException( "Failed to sign file.", serverException);
     }
 }

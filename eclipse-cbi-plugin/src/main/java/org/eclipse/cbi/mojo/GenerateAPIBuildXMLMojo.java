@@ -24,6 +24,10 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.tycho.ArtifactKey;
@@ -37,31 +41,16 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-/**
- * @goal generate-api-build-xml
- * @phase generate-sources
- */
+@Mojo( name = "generate-api-build-xml", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 public class GenerateAPIBuildXMLMojo extends AbstractMojo {
 	
 	private static final String API_BUILD_XML_FILE = ".apibuild.xml";
 	private static final String API_NATURE = "org.eclipse.pde.api.tools.apiAnalysisNature";
 	
-    /**
-     * @parameter default-value="${project}"
-     * @required
-     * @readonly
-     */
+	@Parameter(defaultValue="${project}", required=true, readonly=true)
     protected MavenProject project;
 
-    /**
-     * @parameter property="buildQualifier"
-     * @readonly
-     */
-    private String qualifier;
-
-    /**
-     * @component role="org.eclipse.tycho.core.TychoProject"
-     */
+	@Component(role=TychoProject.class)
     private Map<String, TychoProject> projectTypes;
     
 	@Override

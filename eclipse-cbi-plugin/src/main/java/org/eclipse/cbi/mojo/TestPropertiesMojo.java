@@ -24,6 +24,8 @@ import java.util.Set;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.osgi.util.ManifestElement;
 import org.eclipse.tycho.ArtifactKey;
@@ -37,9 +39,7 @@ import de.pdark.decentxml.Element;
 import de.pdark.decentxml.XMLIOSource;
 import de.pdark.decentxml.XMLParser;
 
-/**
- * @goal test-properties
- */
+@Mojo(name="test-properties")
 public class TestPropertiesMojo
     extends AbstractPluginScannerMojo
 {
@@ -73,7 +73,7 @@ public class TestPropertiesMojo
 
     private static XMLParser parser = new XMLParser();
 
-    /** @parameter default-value="${project.build.directory}/test.properties" */
+    @Parameter(defaultValue="${project.build.directory}/test.properties")
     protected File destination;
 
     @Override

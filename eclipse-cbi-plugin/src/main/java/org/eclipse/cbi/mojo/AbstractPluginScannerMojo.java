@@ -21,6 +21,8 @@ import java.util.Properties;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.tycho.core.osgitools.BundleReader;
 import org.eclipse.tycho.core.osgitools.OsgiManifest;
@@ -31,12 +33,11 @@ abstract class AbstractPluginScannerMojo
 {
     /**
      * igorf: as of 2012-01-05, generated repository location is hardcoded to target/repository in tycho
-     * 
-     * @parameter default-value="${project.build.directory}/repository"
      **/
+	@Parameter(defaultValue="${project.build.directory}/repository")
     protected File repository;
 
-    /** @component */
+	@Component
     protected BundleReader bundleReader;
 
     @Override

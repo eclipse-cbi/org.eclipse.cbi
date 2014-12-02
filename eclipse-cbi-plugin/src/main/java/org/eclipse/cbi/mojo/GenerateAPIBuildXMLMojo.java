@@ -159,12 +159,7 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
 		String symbolicName = artifactKey.getId();
         // see org.eclipse.tycho.buildversion.BuildQualifierMojo
 		String version = project.getProperties().getProperty(
-				"unqualifiedVersion");
-		String qualifier = project.getProperties()
-				.getProperty("buildQualifier");
-		if (qualifier != null && qualifier.length() > 0) {
-			version = version + "." + qualifier;
-		}
+				"qualifiedVersion");
 		return symbolicName + "_" + version;
 	}
 }

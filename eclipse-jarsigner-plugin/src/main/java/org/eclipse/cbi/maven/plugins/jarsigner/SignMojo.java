@@ -213,7 +213,7 @@ public class SignMojo
 
             if ( !"jar".equals( artifact.getArtifactHandler().getExtension() ) )
             {
-                getLog().debug( "Artifact extention is not ``jar'', the artifact is not signed " + artifact );
+                getLog().debug( "Artifact extension is not ``jar'', the artifact is not signed " + artifact );
                 return;
             }
 

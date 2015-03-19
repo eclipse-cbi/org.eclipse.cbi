@@ -92,6 +92,14 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
+  <!--
+     See maven-enforcer-plugin configuration to actually break the build if
+     run with older maven.
+     prerequisites section is kept for now as even if it doesn't break the build, it
+     is used by other plugins like versions-maven-plugin which check and warn
+     for using plugins with older than they require Maven version.
+     If version number changed in one place, be sure to change in the other.
+  -->
   <prerequisites>
     <maven>3.1.1</maven>
   </prerequisites>
@@ -174,6 +182,34 @@
             <target>1.7</target>
           </configuration>
         </plugin>
+        <plugin>
+        <!--
+           This maven-enforcer-plugin configuration to actually break the build if
+           run with older maven.
+           prerequisites section is kept for now as even if it doesn't break the build, it
+           is used by other plugins like versions-maven-plugin which check and warn
+           for using plugins with older than they require Maven version.
+           If version number changed in one place, be sure to change in the other.
+        -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>1.4</version>
+        <executions>
+          <execution>
+            <id>enforce-maven</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion>
+                  <version>3.1.1</version>
+                </requireMavenVersion>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       </plugins>
     </pluginManagement>
   </build>

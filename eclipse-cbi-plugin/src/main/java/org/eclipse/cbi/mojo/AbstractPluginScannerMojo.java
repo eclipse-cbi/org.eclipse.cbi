@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  * 
  * Contributors:
- * Eclipse Foundation - initial API and implementation
+ *   Eclipse Foundation - initial API and implementation
  *******************************************************************************/
 
 package org.eclipse.cbi.mojo;

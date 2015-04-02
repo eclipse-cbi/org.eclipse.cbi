@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013-2015 Eclipse Foundation and others.
+ * Copyright (c) 2013, 2015 Eclipse Foundation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *   Caroline McQuatt, Mike Lim - initial implementation
- *   Mikael Barbero
+ *   Mikael Barbero - refactoring with OSXAppSigner
  *******************************************************************************/
 package org.eclipse.cbi.maven.plugins.macsigner;
 

@@ -1,13 +1,14 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2015 Eclipse Foundation and others. All rights reserved.
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License v1.0 which accompanies this distribution,
- * and is available at http://www.eclipse.org/legal/epl-v10.html
+ * Copyright (c) 2012, 2015 Eclipse Foundation and others. 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors: 
- * 		Eclipse Foundation - initial API and implementation 
- * 		Thanh Ha (Eclipse Foundation) - Add support for signing inner jars
- * 		Mikael Barbero - Use of "try with resource"
+ *   Eclipse Foundation - initial API and implementation 
+ *   Thanh Ha (Eclipse Foundation) - Add support for signing inner jars
+ *   Mikael Barbero - Use of "try with resource"
  *******************************************************************************/
 package org.eclipse.cbi.maven.plugins.jarsigner;
 

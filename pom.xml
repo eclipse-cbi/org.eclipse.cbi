@@ -129,6 +129,7 @@
   </pluginRepositories>
 
   <modules>
+    <module>checkstyle</module>
     <module>common</module>
     <module>eclipse-cbi-plugin</module>
     <module>eclipse-jarsigner-plugin</module>
@@ -157,6 +158,37 @@
 
   <build>
     <plugins>
+      <plugin>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>2.15</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.eclipse.cbi</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+          </dependency>
+          <dependency> <!-- this one is necessary to run checkstyle:2.15 on maven 3.3.x, remove when upgrade to 2.16 (not released as of today) -->
+              <groupId>org.slf4j</groupId>
+              <artifactId>jcl-over-slf4j</artifactId>
+              <version>1.7.5</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <configLocation>eclipse_checkstyle.xml</configLocation>
+          <failOnViolation>false</failOnViolation>
+          <failsOnError>true</failsOnError>
+          <consoleOutput>true</consoleOutput>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>process-sources</phase>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-site-plugin</artifactId>

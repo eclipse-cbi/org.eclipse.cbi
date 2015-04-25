@@ -233,17 +233,17 @@ public class SignMojo
                 getLog().info( "Searching " + file.getName() + " for inner jars..." );
 				JarFile jar = null;
 				try {
-				jar = new JarFile(file);
-                Enumeration<JarEntry> jarEntries = jar.entries();
-                while (jarEntries.hasMoreElements())
-                {
-                    JarEntry entry = jarEntries.nextElement();
-                    if ( "jar".equals(FileUtils.getExtension(entry.getName() ) ) )
-                    {
-                        getLog().debug( "Inner jar found: " + entry.getName() );
-                        innerJars.add(entry.getName());
-                    }
-                }
+					jar = new JarFile(file);
+	                Enumeration<JarEntry> jarEntries = jar.entries();
+	                while (jarEntries.hasMoreElements())
+	                {
+	                    JarEntry entry = jarEntries.nextElement();
+	                    if ( "jar".equals(FileUtils.getExtension(entry.getName() ) ) )
+	                    {
+	                        getLog().debug( "Inner jar found: " + entry.getName() );
+	                        innerJars.add(entry.getName());
+	                    }
+	                }
 				} finally {
 					if (jar != null) jar.close();
 				}
@@ -302,7 +302,8 @@ public class SignMojo
         }
     }
 
-    private static boolean shouldSign( File file )
+    @SuppressWarnings("static-method")
+	private boolean shouldSign( final File file )
         throws IOException
     {
         boolean sign = true;
@@ -359,7 +360,7 @@ public class SignMojo
                         TimeUnit.SECONDS.sleep(retryTimer);
                     }
                     catch ( InterruptedException ie ) {
-                        // Do nothing
+                    	getLog().debug("");
                     }
                 }
             }
@@ -403,16 +404,16 @@ public class SignMojo
 				try {
 					is = jar.getInputStream(entry);
 					fos = new FileOutputStream(f);
-            while (is.available() > 0) {
-                fos.write(is.read());
-            }
-			} finally {
-				// cleanup
-				if (fos != null)
-					fos.close();
-				if (is != null)
-					is.close();
-            }
+					while (is.available() > 0) {
+						fos.write(is.read());
+					}
+				} finally {
+					// cleanup
+					if (fos != null)
+						fos.close();
+					if (is != null)
+						is.close();
+				}
 		}
 
         // Sign inner jars

@@ -86,7 +86,7 @@
   <properties>
     <maven.version>3.1.1</maven.version>
     <tycho.version>0.23.0-SNAPSHOT</tycho.version>
-    <cbi-plugins.version>1.1.1</cbi-plugins.version>
+    <cbi-plugins.version>1.1.2-SNAPSHOT</cbi-plugins.version>
     <tycho-snapshot-repo.url>https://repo.eclipse.org/content/repositories/tycho-snapshots/</tycho-snapshot-repo.url>
     <eclipse-maven-repo.url>https://repo.eclipse.org/content/repositories/releases/</eclipse-maven-repo.url>
 

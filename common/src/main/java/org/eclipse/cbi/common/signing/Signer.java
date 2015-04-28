@@ -61,21 +61,18 @@ public class Signer
 
         if ( statusCode >= 200 && statusCode <= 299 && resEntity != null )
         {
-            InputStream is = resEntity.getContent();
-            try
+            try (InputStream is = resEntity.getContent())
             {
                 FileUtils.copyStreamToFile( new RawInputStreamFacade( is ), target );
-            }
-            finally
-            {
-                IOUtil.close( is );
             }
         }
         else if ( statusCode >= 500 && statusCode <= 599)
         {
-            InputStream is = resEntity.getContent();
-            String message = IOUtil.toString(is, "UTF-8");
-            throw new NoHttpResponseException( "Server failed with " + message );
+            try (InputStream is = resEntity.getContent())
+            {
+	            String message = IOUtil.toString(is, "UTF-8");
+	            throw new NoHttpResponseException( "Server failed with " + message );
+            }
         }
         else
         {

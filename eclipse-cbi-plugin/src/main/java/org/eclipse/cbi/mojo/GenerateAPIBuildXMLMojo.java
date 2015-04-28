@@ -29,7 +29,6 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.tycho.ArtifactKey;
 import org.eclipse.tycho.core.BundleProject;
 import org.eclipse.tycho.core.TychoProject;
@@ -102,10 +101,8 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
 		if (!targetDir.isDirectory()) {
 			targetDir.mkdirs();
 		}
-		BufferedWriter bw = null;
-		try {
-			File dotApiBuildXML = new File(targetDir, API_BUILD_XML_FILE);
-			bw = new BufferedWriter(new FileWriter(dotApiBuildXML));
+		File dotApiBuildXML = new File(targetDir, API_BUILD_XML_FILE);
+		try (BufferedWriter bw = new BufferedWriter(new FileWriter(dotApiBuildXML))) {
 			bw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 			bw.write("<project name=\"apigen\" default=\"apigen\">\n");
 			bw.write("  <target name=\"apigen\">\n");
@@ -122,8 +119,6 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
 			bw.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} finally {
-			IOUtil.close(bw);
 		}
 	}
 	

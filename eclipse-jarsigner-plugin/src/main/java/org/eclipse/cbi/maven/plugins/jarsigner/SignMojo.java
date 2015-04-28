@@ -1,11 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 Eclipse Foundation and others. All rights reserved.
+ * Copyright (c) 2012, 2015 Eclipse Foundation and others. All rights reserved.
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  *
- * Contributors: Eclipse Foundation - initial API and implementation Thanh Ha
- * (Eclipse Foundation) - Add support for signing inner jars
+ * Contributors: 
+ * 		Eclipse Foundation - initial API and implementation 
+ * 		Thanh Ha (Eclipse Foundation) - Add support for signing inner jars
+ * 		Mikael Barbero (Eclipse Foundation) - Use of "try with resource"
  *******************************************************************************/
 
 package org.eclipse.cbi.maven.plugins.jarsigner;
@@ -35,6 +37,7 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
+import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.cbi.common.signing.Signer;
 
 /**
@@ -247,9 +250,7 @@ public class SignMojo extends AbstractMojo {
             } else {
                 // Check if there are inner jars to sign
                 getLog().info("Searching " + file.getName() + " for inner jars...");
-                JarFile jar = null;
-                try {
-                    jar = new JarFile(file);
+                try (JarFile jar = new JarFile(file)) {
                     Enumeration<JarEntry> jarEntries = jar.entries();
                     while (jarEntries.hasMoreElements()) {
                         JarEntry entry = jarEntries.nextElement();
@@ -258,10 +259,6 @@ public class SignMojo extends AbstractMojo {
                             innerJars.add(entry.getName());
                         }
                     }
-                }
-                finally {
-                    if (jar != null)
-                        jar.close();
                 }
             }
 
@@ -301,6 +298,7 @@ public class SignMojo extends AbstractMojo {
 
             if (continueOnFail) {
                 getLog().warn(msg);
+                getLog().warn(e.getMessage());
             } else {
                 throw new MojoExecutionException(msg, e);
             }
@@ -311,26 +309,17 @@ public class SignMojo extends AbstractMojo {
     private boolean shouldSign(final File file) throws IOException {
         boolean sign = true;
 
-        JarFile jar = new JarFile(file);
-        try {
+        try (JarFile jar = new JarFile(file)) {
             ZipEntry entry = jar.getEntry("META-INF/eclipse.inf");
             if (entry != null) {
-                InputStream is = null;
-                try {
-                    is = jar.getInputStream(entry);
+                try (InputStream is = jar.getInputStream(entry)) {
                     Properties eclipseInf = new Properties();
                     eclipseInf.load(is);
 
                     sign = !Boolean.parseBoolean(eclipseInf.getProperty("jarprocessor.exclude"))
                             && !Boolean.parseBoolean(eclipseInf.getProperty("jarprocessor.exclude.sign"));
                 }
-                finally {
-                    is.close();
-                }
             }
-        }
-        finally {
-            jar.close();
         }
 
         return sign;
@@ -352,7 +341,9 @@ public class SignMojo extends AbstractMojo {
                         TimeUnit.SECONDS.sleep(retryTimer);
                     }
                     catch (InterruptedException ie) {
-                        getLog().debug("InterruptedException: " + ie.getMessage());
+                    	getLog().debug("InterruptedException: " + ie.getMessage());
+                    	// Restore the interrupted status
+                        Thread.currentThread().interrupt();
                     }
                 }
             }
@@ -372,9 +363,7 @@ public class SignMojo extends AbstractMojo {
      */
     private void signInnerJars(File file, List<String> innerJars)
             throws IOException, FileNotFoundException, MojoExecutionException {
-        JarFile jar = null;
-        try {
-            jar = new JarFile(file);
+        try(JarFile jar = new JarFile(file)) {
             File nestedWorkdir = new File(workdir + File.separator + "sign-innner-jars");
             nestedWorkdir.mkdirs();
 
@@ -447,10 +436,6 @@ public class SignMojo extends AbstractMojo {
             // cleanup
             FileUtils.deleteDirectory(nestedWorkdir);
         }
-        finally {
-            if (jar != null)
-                jar.close();
-        }
     }
 
     /**
@@ -462,48 +447,25 @@ public class SignMojo extends AbstractMojo {
      *            directory to jar
      */
     private void createJar(File jarFile, File jarDir) throws IOException, FileNotFoundException {
-        JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile));
-        try {
+        try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile))) {
             for (File f : FileUtils.getFiles(jarDir, "**/*", "", false)) {
                 getLog().debug("   " + f.getPath());
-                try {
-                    if (f.isDirectory()) {
-                        // Directories need to end with a forward slash
-                        JarEntry entry = new JarEntry(f.getPath().replace("\\", "/") + "/");
-                        entry.setTime(f.lastModified());
-                        jos.putNextEntry(entry);
-                        getLog().info("Directory: " + entry.getName());
-                    } else {
-                        JarEntry entry = new JarEntry(f.getPath().replace("\\", "/"));
-                        entry.setTime(f.lastModified());
-                        jos.putNextEntry(entry);
-
-                        // Write to file
-                        File writeFile = new File(jarDir, f.getPath());
-                        BufferedInputStream in = null;
-                        try {
-                            in = new BufferedInputStream(new FileInputStream(writeFile));
-                            byte[] buffer = new byte[1024];
-                            while (true) {
-                                int count = in.read(buffer);
-                                if (count == -1)
-                                    break;
-                                jos.write(buffer, 0, count);
-                            }
-                        }
-                        finally {
-                            if (in != null)
-                                in.close();
-                        }
+                if (f.isDirectory()) {
+                    // Directories need to end with a forward slash
+                    JarEntry entry = new JarEntry(f.getPath().replace("\\", "/") + "/");
+                    entry.setTime(f.lastModified());
+                    jos.putNextEntry(entry);
+                    getLog().debug("Directory: " + entry.getName());
+                } else {
+                    JarEntry entry = new JarEntry(f.getPath().replace("\\", "/"));
+                    entry.setTime(f.lastModified());
+                    jos.putNextEntry(entry);
+                    File source = new File(jarDir, f.getPath());
+                    try(InputStream is = new BufferedInputStream(new FileInputStream(source))) {
+                    	IOUtil.copy(is, jos);
                     }
                 }
-                finally {
-                    jos.closeEntry(); // Don't forget to close the file entry
-                }
             }
-        }
-        finally {
-            jos.close(); // Close the jar
         }
     }
 }

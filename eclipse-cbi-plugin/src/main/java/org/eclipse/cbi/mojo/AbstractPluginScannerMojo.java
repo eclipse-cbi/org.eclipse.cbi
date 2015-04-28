@@ -23,7 +23,6 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.tycho.core.osgitools.BundleReader;
 import org.eclipse.tycho.core.osgitools.OsgiManifest;
 import org.eclipse.tycho.core.osgitools.OsgiManifestParserException;
@@ -73,15 +72,9 @@ abstract class AbstractPluginScannerMojo
                 processPlugins( properties, manifests );
             }
 
-            OutputStream os = new BufferedOutputStream( new FileOutputStream( getDestination() ) );
-
-            try
+            try (OutputStream os = new BufferedOutputStream( new FileOutputStream( getDestination() ) ))
             {
                 properties.store( os, null );
-            }
-            finally
-            {
-                IOUtil.close( os );
             }
         }
         catch ( Exception e )

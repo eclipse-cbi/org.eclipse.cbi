@@ -26,7 +26,6 @@ import java.util.zip.ZipEntry;
 
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.osgi.util.ManifestElement;
 import org.eclipse.tycho.ArtifactKey;
 import org.eclipse.tycho.DefaultArtifactKey;
@@ -180,8 +179,7 @@ public class TestPropertiesMojo
     private static TestType getTestType( File plugin )
         throws IOException
     {
-        JarFile jar = new JarFile( plugin );
-        try
+        try (JarFile jar = new JarFile( plugin ))
         {
             ZipEntry entry = jar.getEntry( "test.xml" );
             if ( entry == null )
@@ -189,14 +187,9 @@ public class TestPropertiesMojo
                 return TestType.NONE;
             }
             Document document;
-            InputStream is = jar.getInputStream( entry );
-            try
+            try (InputStream is = jar.getInputStream( entry ))
             {
                 document = parser.parse( new XMLIOSource( is ) );
-            }
-            finally
-            {
-                IOUtil.close( is );
             }
 
             for ( Element element : document.getRootElement().getChildren( "target" ) )
@@ -208,10 +201,6 @@ public class TestPropertiesMojo
             }
 
             return TestType.TEST;
-        }
-        finally
-        {
-            jar.close();
         }
     }
 }

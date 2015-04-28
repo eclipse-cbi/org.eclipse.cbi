@@ -11,6 +11,8 @@
 
 package org.eclipse.cbi.maven.plugins.macsigner;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -31,6 +33,7 @@ import org.apache.http.NoHttpResponseException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.codehaus.plexus.util.FileUtils;
+import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.cbi.common.signing.Signer;
 
 /**
@@ -178,11 +181,6 @@ public class SignMojo
      */
     private static final String ZIP_EXT = ".zip";
 
-    /**
-     * The number of byte written to the output stream during zip and unzip.
-     */
-    private static final int BUFFER_SIZE = 1024;
-
     @Override
     public void execute()
         throws MojoExecutionException
@@ -247,10 +245,9 @@ public class SignMojo
     private static void unZip(File zipFile, File output_dir) throws IOException, MojoExecutionException
     {
 
-        ZipArchiveInputStream zis = new ZipArchiveInputStream(new FileInputStream(zipFile));
-        ZipArchiveEntry ze;
-        String name, parent;
-        try {
+        try (ZipArchiveInputStream zis = new ZipArchiveInputStream(new FileInputStream(zipFile))) {
+	        ZipArchiveEntry ze;
+	        String name, parent;
             ze = zis.getNextZipEntry();
             // check for at least one zip entry
             if (ze == null)
@@ -280,15 +277,12 @@ public class SignMojo
                         Files.setPosixFilePermissions(outFile.toPath(), PosixFilePermissions.fromString("rwxr-x---"));
                     }
 
-                    FileOutputStream fos = new FileOutputStream(outFile);
-
-                    copyInputStreamToOutputStream(zis, fos);
-                    fos.close();
+                    try (OutputStream fos = new BufferedOutputStream(new FileOutputStream(outFile))) {
+                    	IOUtil.copy(zis,  fos);
+                    }
                 }
                 ze = zis.getNextZipEntry();
             }
-        } finally {
-            zis.close();
         }
     }
 
@@ -344,10 +338,9 @@ public class SignMojo
                         // of those that need to be set as executable on unZip
                         executableFiles.add(name);
                     }
-                    InputStream is = new FileInputStream(f);
-                    copyInputStreamToOutputStream(is, zip);
-
-                    is.close();
+                    try (InputStream is = new BufferedInputStream(new FileInputStream(f))) {
+                    	IOUtil.copy(is, zip);
+                    }
                     zip.closeArchiveEntry();
                 }
                 else if (f.isDirectory() && isInContentsFolder(name))
@@ -391,24 +384,6 @@ public class SignMojo
     }
 
     /**
-     * Helper method. Writes bytes from an InputStream to an OutputStream.
-     * @param fis                   The InputStream.
-     * @param zip                   The OutputStream.
-     * @throws IOException
-     */
-    private static void copyInputStreamToOutputStream(InputStream fis, OutputStream zip) throws IOException {
-        byte[] buff = new byte[BUFFER_SIZE];
-
-        while(true) {
-            int r_count = fis.read(buff);
-            if (r_count < 0) {
-                break;
-            }
-            zip.write(buff, 0, r_count);
-        }
-    }
-
-    /**
      * Signs the file.
      * @param file
      * @throws MojoExecutionException
@@ -429,11 +404,9 @@ public class SignMojo
             //zipping the directory
             getLog().debug("Building zip: " + file);
             File zipFile = File.createTempFile(UNSIGNED_ZIP_FILE_NAME, ZIP_EXT, workdir);
-            ZipArchiveOutputStream zos = new ZipArchiveOutputStream(new FileOutputStream(zipFile));
-
-            createZip(file, zos);
-            zos.finish();
-            zos.close();
+            try (ZipArchiveOutputStream zos = new ZipArchiveOutputStream(new FileOutputStream(zipFile))) {
+            	createZip(file, zos);
+            }
 
             final long start = System.currentTimeMillis();
 

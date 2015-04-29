@@ -86,7 +86,6 @@
   <properties>
     <maven.version>3.1.1</maven.version>
     <tycho.version>0.22.0</tycho.version>
-    <cbi-plugins.version>1.1.1</cbi-plugins.version>
     <tycho-snapshot-repo.url>https://repo.eclipse.org/content/repositories/tycho-snapshots/</tycho-snapshot-repo.url>
     <eclipse-maven-repo.url>https://repo.eclipse.org/content/repositories/releases/</eclipse-maven-repo.url>
 
@@ -225,29 +224,6 @@
     </pluginManagement>
   </build>
 
-  <profiles>
-    <profile>
-      <id>release</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.eclipse.cbi.maven.plugins</groupId>
-            <artifactId>eclipse-jarsigner-plugin</artifactId>
-            <version>${cbi-plugins.version}</version>
-            <executions>
-              <execution>
-                <id>sign</id>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
-                <phase>verify</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
   <dependencyManagement>
     <dependencies>
       <dependency>

@@ -13,12 +13,14 @@
 package org.eclipse.cbi.maven.plugins.jarsigner;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -384,22 +386,9 @@ public class SignMojo extends AbstractMojo {
                                                   // exists
                     getLog().debug("Created missing directory " + f.getParent());
                 }
-                InputStream is = null;
-                FileOutputStream fos = null;
-                try {
-                    is = jar.getInputStream(entry);
-                    fos = new FileOutputStream(f);
-                    while (is.available() > 0) {
-                        fos.write(is.read());
-                    }
-                }
-                finally {
-                    // cleanup
-                    if (fos != null)
-                        fos.close();
-                    if (is != null)
-                        is.close();
-                }
+                try (InputStream is = new BufferedInputStream(jar.getInputStream(entry)); OutputStream fos = new BufferedOutputStream(new FileOutputStream(f))) {
+			        IOUtil.copy(is, fos);
+			    }
             }
 
             // Sign inner jars

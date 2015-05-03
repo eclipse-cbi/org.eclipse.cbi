@@ -11,34 +11,16 @@
  *******************************************************************************/
 package org.eclipse.cbi.maven.plugins.jarsigner;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.jar.JarOutputStream;
-import java.util.zip.ZipEntry;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.FileUtils;
-import org.codehaus.plexus.util.IOUtil;
 import org.eclipse.cbi.common.signing.ApacheHttpClientSigner;
 import org.eclipse.cbi.common.signing.Signer;
 
@@ -55,7 +37,7 @@ import org.eclipse.cbi.common.signing.Signer;
  */
 public class SignMojo extends AbstractMojo {
 
-    /**
+	/**
      * Maven Project
      *
      * @parameter property="project"
@@ -212,6 +194,9 @@ public class SignMojo extends AbstractMojo {
             // tycho
             "eclipse-plugin", "eclipse-test-plugin", "eclipse-feature");
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void execute() throws MojoExecutionException {
         if (skip) {
@@ -219,204 +204,51 @@ public class SignMojo extends AbstractMojo {
             return;
         }
 
-        if (!supportedProjectTypes.contains(project.getPackaging())) {
-            getLog().debug("Ignore unsupported project " + project);
+        final String packaging = project.getPackaging();
+		if (!supportedProjectTypes.contains(packaging)) {
+            getLog().debug("Packaging type '" + packaging + "' of project '" + project + "' is not supported");
             return;
         }
 
-        final Signer signer = new ApacheHttpClientSigner(URI.create(signerUrl), getLog());
-        signArtifact(project.getArtifact(), signer);
+        final JarSigner jarSigner = createJarSigner();
+
+        final Artifact mainArtifact = project.getArtifact();
+        if (mainArtifact != null) {
+        	signArtifact(jarSigner, mainArtifact);
+        }
 
         for (Artifact artifact : project.getAttachedArtifacts()) {
-            signArtifact(artifact, signer);
+        	signArtifact(jarSigner, artifact);
         }
     }
 
-    protected void signArtifact(Artifact artifact, Signer signer) throws MojoExecutionException {
-        try {
-            File file = artifact.getFile();
-            if (file == null || !file.isFile() || !file.canRead()) {
-                getLog().warn("Could not read artifact file, the artifact is not signed " + artifact);
-                return;
-            }
-
-            if (!"jar".equals(artifact.getArtifactHandler().getExtension())) {
-                getLog().debug("Artifact extension is not ``jar'', the artifact is not signed " + artifact);
-                return;
-            }
-
-            if (!shouldSign(file)) {
-                getLog().info("Signing of " + artifact + " is disabled in META-INF/eclipse.inf, the artifact is not signed.");
-                return;
-            }
-
-            List<String> innerJars = new ArrayList<String>();
-            if (excludeInnerJars) {
-                getLog().info("Signing of inner jars for " + artifact + " is disabled, inner jars will not be signed.");
-            } else {
-                // Check if there are inner jars to sign
-                getLog().info("Searching " + file.getName() + " for inner jars...");
-                try (JarFile jar = new JarFile(file)) {
-                    Enumeration<JarEntry> jarEntries = jar.entries();
-                    while (jarEntries.hasMoreElements()) {
-                        JarEntry entry = jarEntries.nextElement();
-                        if ("jar".equals(FileUtils.getExtension(entry.getName()))) {
-                            getLog().debug("Inner jar found: " + entry.getName());
-                            innerJars.add(entry.getName());
-                        }
-                    }
-                }
-            }
-
-            final long start = System.currentTimeMillis();
-
-            workdir.mkdirs();
-
-            // Sign inner jars if there are any
-            if (!excludeInnerJars && innerJars.size() > 0) {
-                signInnerJars(file, innerJars, signer);
-            }
-
-            // Sign Artifact
-            if (!signer.sign(file.toPath(), retryLimit, retryTimer, TimeUnit.SECONDS)) {
-                String msg = "Could not sign artifact " + artifact;
-
-                if (continueOnFail) {
-                    getLog().warn(msg);
-                } else {
-                    throw new MojoExecutionException(msg);
-                }
-            }
-
-            getLog().debug("Signed " + artifact + " in " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
-        }
-        catch (IOException e) {
-            String msg = "Could not sign artifact " + artifact;
-
-            if (continueOnFail) {
-                getLog().warn(msg);
-                getLog().warn(e.getMessage());
-            } else {
-                throw new MojoExecutionException(msg, e);
-            }
-        }
-    }
-
-    @SuppressWarnings("static-method")
-    private boolean shouldSign(final File file) throws IOException {
-        boolean sign = true;
-
-        try (JarFile jar = new JarFile(file)) {
-            ZipEntry entry = jar.getEntry("META-INF/eclipse.inf");
-            if (entry != null) {
-                try (InputStream is = jar.getInputStream(entry)) {
-                    Properties eclipseInf = new Properties();
-                    eclipseInf.load(is);
-
-                    sign = !Boolean.parseBoolean(eclipseInf.getProperty("jarprocessor.exclude"))
-                            && !Boolean.parseBoolean(eclipseInf.getProperty("jarprocessor.exclude.sign"));
-                }
-            }
-        }
-
-        return sign;
-    }
+	private static void signArtifact(final JarSigner jarSigner, final Artifact artifact) throws MojoExecutionException {
+		File artifactFile = artifact.getFile();
+		if (artifactFile != null) {
+			jarSigner.signJar(artifactFile.toPath());
+		}
+	}
 
     /**
-     * Signs the inner jars in a jar file
-     *
-     * @param file
-     *            jar file containing inner jars to be signed
-     * @param innerJars
-     *            A list of inner jars that needs to be signed
+     * Creates and returns the {@link JarSigner} according to the injected Mojo parameter.
+     * @return the {@link JarSigner} according to the injected Mojo parameter.
      */
-    private void signInnerJars(File file, List<String> innerJars, Signer signer)
-            throws IOException, FileNotFoundException, MojoExecutionException {
-        try(JarFile jar = new JarFile(file)) {
-            File nestedWorkdir = new File(workdir + File.separator + "sign-innner-jars");
-            nestedWorkdir.mkdirs();
-
-            Enumeration<JarEntry> extractFiles = jar.entries();
-            while (extractFiles.hasMoreElements()) {
-
-                JarEntry entry = extractFiles.nextElement();
-                File f = new File(nestedWorkdir + File.separator + entry.getName());
-
-                // Create directory if entry is a directory
-                if (entry.isDirectory()) {
-                    f.mkdir();
-                    continue;
-                }
-
-                // Extract files from jar
-                if (f.getParentFile().mkdirs()) { // Ensure the parent directory
-                                                  // exists
-                    getLog().debug("Created missing directory " + f.getParent());
-                }
-                try (InputStream is = new BufferedInputStream(jar.getInputStream(entry)); OutputStream fos = new BufferedOutputStream(new FileOutputStream(f))) {
-			        IOUtil.copy(is, fos);
-			    }
-            }
-
-            // Sign inner jars
-            for (Iterator<String> it = innerJars.iterator(); it.hasNext();) {
-                final long start = System.currentTimeMillis();
-
-                String jarToSign = it.next();
-                File unsignedJar = new File(nestedWorkdir, jarToSign);
-
-                signer.sign(unsignedJar.toPath(), retryLimit, retryTimer, TimeUnit.SECONDS);
-
-                getLog().info("Signed " + jarToSign + " in " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
-            }
-
-            // create new jar containing the signed inner jars
-            File tempJar = File.createTempFile(file.getName(), ".create-jar", workdir);
-            try {
-                getLog().debug("Creating jar " + file.getName());
-                createJar(tempJar, nestedWorkdir);
-                if (!tempJar.canRead() || tempJar.length() <= 0) {
-                    throw new MojoExecutionException("Could not create jar " + file.getName());
-                }
-                FileUtils.copyFile(tempJar, file);
-            }
-            finally {
-                tempJar.delete();
-            }
-
-            // cleanup
-            FileUtils.deleteDirectory(nestedWorkdir);
+	private JarSigner createJarSigner() {
+		URI signerURI = URI.create(signerUrl);
+		final Signer signer = new ApacheHttpClientSigner(signerURI, getLog());
+        JarSigner.Builder jarSignerBuilder = JarSigner.builder(signer);
+        jarSignerBuilder.logOn(getLog()).maxRetry(retryLimit).waitBeforeRetry(retryTimer, TimeUnit.SECONDS);
+        
+        if (continueOnFail) {
+        	jarSignerBuilder.continueOnFail();
         }
-    }
-
-    /**
-     * Creates a jar file from a directory
-     *
-     * @param jarFile
-     *            filename of jar being created
-     * @param jarDir
-     *            directory to jar
-     */
-    private void createJar(File jarFile, File jarDir) throws IOException, FileNotFoundException {
-        try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile))) {
-            for (File f : FileUtils.getFiles(jarDir, "**/*", "", false)) {
-                getLog().debug("   " + f.getPath());
-                if (f.isDirectory()) {
-                    // Directories need to end with a forward slash
-                    JarEntry entry = new JarEntry(f.getPath().replace("\\", "/") + "/");
-                    entry.setTime(f.lastModified());
-                    jos.putNextEntry(entry);
-                    getLog().debug("Directory: " + entry.getName());
-                } else {
-                    JarEntry entry = new JarEntry(f.getPath().replace("\\", "/"));
-                    entry.setTime(f.lastModified());
-                    jos.putNextEntry(entry);
-                    File source = new File(jarDir, f.getPath());
-                    try(InputStream is = new BufferedInputStream(new FileInputStream(source))) {
-                    	IOUtil.copy(is, jos);
-                    }
-                }
-            }
+        
+        if (excludeInnerJars) {
+        	jarSignerBuilder.maxDepth(0);
+        } else {
+        	jarSignerBuilder.maxDepth(1);
         }
-    }
+        
+        return jarSignerBuilder.build();
+	}
 }

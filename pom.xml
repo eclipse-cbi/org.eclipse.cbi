@@ -134,6 +134,7 @@
     <module>eclipse-jarsigner-plugin</module>
     <module>eclipse-macsigner-plugin</module>
     <module>eclipse-winsigner-plugin</module>
+    <module>eclipse-dmg-packager</module>
   </modules>
 
   <distributionManagement>

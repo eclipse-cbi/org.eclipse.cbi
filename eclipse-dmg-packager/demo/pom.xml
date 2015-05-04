@@ -1,0 +1,43 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>pascal</groupId>
+	<artifactId>dmgdemo</artifactId>
+	<version>1.0-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>foo</name>
+	<url>http://maven.apache.org</url>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.eclipse.cbi.maven.plugins</groupId>
+				<artifactId>eclipse-dmg-packager</artifactId>
+				<version>1.2.0-SNAPSHOT</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<id>something</id>
+						<goals>
+							<goal>createDMG</goal>
+						</goals>
+						<configuration>
+							<volumeName>Another IDE</volumeName>
+							<volumeIcon>../../Eclipse.app/Contents/Resources/Eclipse.icns</volumeIcon>
+							<icon>Eclipse 100 125</icon>
+							<source>../../org.eclipse.sdk.ide-macosx.cocoa.x86_64.tar.gz</source>
+							<dmgCreatorServiceURL>http://mac-tests2:8787/dmg-packaging-service/1.0.0-SNAPSHOT</dmgCreatorServiceURL>
+							<dmgFilename>eclipseide.dmg</dmgFilename>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

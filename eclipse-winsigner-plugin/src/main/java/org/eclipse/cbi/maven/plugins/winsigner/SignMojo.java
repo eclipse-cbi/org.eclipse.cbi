@@ -12,12 +12,18 @@
 package org.eclipse.cbi.maven.plugins.winsigner;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.eclipse.cbi.common.signing.ApacheHttpClientSigner;
 import org.eclipse.cbi.common.signing.Signer;
 
@@ -30,9 +36,12 @@ import org.eclipse.cbi.common.signing.Signer;
  * @requiresProject
  * @description runs the eclipse signing process
  */
-public class SignMojo
-    extends AbstractMojo
-{
+public class SignMojo extends AbstractMojo {
+	
+	private static final String ECLIPSEC_EXE = "eclipsec.exe";
+
+	private static final String ECLIPSE_EXE = "eclipse.exe";
+
 	/**
      * The signing service URL for signing Windows binaries
      *
@@ -114,7 +123,7 @@ public class SignMojo
      * @parameter property="fileNames"
      * @since 1.0.4
      */
-    private String[] fileNames;
+    private Set<String> fileNames;
 
     /**
      * Continue the build even if signing fails
@@ -150,105 +159,42 @@ public class SignMojo
      */
     private int retryTimer;
 
+
     @Override
-    public void execute()
-        throws MojoExecutionException
-    {
-    	final Signer signer = new ApacheHttpClientSigner(URI.create(signerUrl), getLog());
-    	File searchDir = new File(baseSearchDir);
+    public void execute() throws MojoExecutionException {
     	
-    	//exe paths are configured
-    	if (signFiles != null && !(signFiles.length == 0)) {
+    	final Signer signer = new ApacheHttpClientSigner(URI.create(signerUrl), getLog());
+    	WindowsExeSigner.Builder winExeSignerBuilder = WindowsExeSigner.builder(signer).logOn(getLog()).maxRetry(retryLimit).waitBeforeRetry(retryTimer, TimeUnit.SECONDS);
+    	if (continueOnFail) {
+    		winExeSignerBuilder.continueOnFail();
+    	}
+    	WindowsExeSigner exeSigner = winExeSignerBuilder.build();
+    	
+    	if (signFiles != null && signFiles.length != 0) {
+    		//exe paths are configured
+    		Set<Path> exePaths = new LinkedHashSet<>();
         	for (String path : signFiles) {
-        		signArtifact(signer, new File(path));
+        		exePaths.add(FileSystems.getDefault().getPath(path));
         	}
-    	}
-    	else { //perform search
-        	if (fileNames == null || fileNames.length == 0) {
-        		fileNames = new String[2];
-        		fileNames[0] = "eclipse.exe";
-        		fileNames[1] = "eclipsec.exe";
-        	}
-
-            getLog().debug("Searching: " + searchDir);
-            traverseDirectory(searchDir, signer);
+        	exeSigner.signExecutables(exePaths);
+    	} else { 
+    		//perform search
+    		Set<PathMatcher> pathMatchers = getPathMatchers(FileSystems.getDefault(), fileNames, getLog());
+    		exeSigner.signExecutables(FileSystems.getDefault().getPath(baseSearchDir), pathMatchers);
     	}
     }
 
-    /**
-     * Recursive method. Searches the base directory for files to sign.
-     * @param signer 
-     * @param files
-     * @throws MojoExecutionException
-     */
-    private void traverseDirectory(File dir, Signer signer) throws MojoExecutionException {
-    	if (dir.isDirectory()) {
-    		getLog().debug("searching " + dir.getAbsolutePath());
-    		for(File file : dir.listFiles()){
-    			if (file.isFile()){
-    				String fileName = file.getName();
-    				for(String allowedName : fileNames) {
-    					if (fileName.equals(allowedName)) {
-    						signArtifact(signer, file); // signs the file
-    					}
-    				}
-    			} else if (file.isDirectory()) {
-    				traverseDirectory(file, signer);
-    			}
-    		}
-    	}
-    	else {
-    		getLog().error("Internal error. " + dir + " is not a directory.");
-    	}
-    }
-
-    /**
-     * signs the file
-     * @param signer 
-     * @param file
-     * @throws MojoExecutionException
-     */
-    protected void signArtifact( Signer signer, File file )
-        throws MojoExecutionException
-    {
-        try
-        {
-            if ( !file.isFile() || !file.canRead())
-            {
-            	getLog().warn(file + " is either not a file or cannot be read, the artifact is not signed.");
-                return; // Can't read this. Likely a directory.
-            }
-
-            final long start = System.currentTimeMillis();
-
-            if (!signer.sign(file.toPath(), retryLimit, retryTimer, TimeUnit.SECONDS))
-            {
-                String msg = "Could not sign artifact " + file;
-
-                if (continueOnFail)
-                {
-                    getLog().warn(msg);
-                }
-                else
-                {
-                    throw new MojoExecutionException(msg);
-                }
-            }
-            getLog().info( "Signed " + file + " in " + ( ( System.currentTimeMillis() - start ) / 1000 )
-                               + " seconds." );
-        }
-        catch ( IOException e )
-        {
-            String msg = "Could not sign file " + file;
-
-            if (continueOnFail)
-            {
-                getLog().warn(msg);
-            }
-            else
-            {
-                throw new MojoExecutionException(msg, e);
-            }
-        }
-    }
+    static Set<PathMatcher> getPathMatchers(FileSystem fs, Set<String> fileNames, Log log) {
+		final Set<PathMatcher> pathMatchers = new LinkedHashSet<>();
+		
+		if (fileNames == null || fileNames.isEmpty()) {
+			pathMatchers.add(fs.getPathMatcher("glob:**" + fs.getSeparator() + ECLIPSE_EXE));
+			pathMatchers.add(fs.getPathMatcher("glob:**" + fs.getSeparator() + ECLIPSEC_EXE));
+		} else {
+			for (String filename : fileNames) {
+				pathMatchers.add(fs.getPathMatcher("glob:**" + filename));
+			}
+		}
+		return pathMatchers;
+	}
 }

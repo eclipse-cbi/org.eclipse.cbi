@@ -11,28 +11,19 @@
  *******************************************************************************/
 package org.eclipse.cbi.maven.plugins.macsigner;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.LinkedList;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.codehaus.plexus.util.IOUtil;
+import org.apache.maven.plugin.logging.Log;
 import org.eclipse.cbi.common.signing.ApacheHttpClientSigner;
 import org.eclipse.cbi.common.signing.Signer;
 
@@ -45,10 +36,11 @@ import org.eclipse.cbi.common.signing.Signer;
  * @requiresProject
  * @description runs the eclipse signing process
  */
-public class SignMojo
-    extends AbstractMojo
-{
-    /**
+public class SignMojo extends AbstractMojo {
+
+	private static final String DOT_APP = ".app";
+	
+	/**
      * The signing service URL for signing Mac binaries
      *
      * <p>The signing service should return a signed zip file. Containing
@@ -108,7 +100,7 @@ public class SignMojo
      * @parameter property="signFiles"
      * @since 1.0.4
      */
-    private String[] signFiles;
+    private Set<String> signFiles;
 
     /**
      * The base directory to search for executables to sign
@@ -123,12 +115,12 @@ public class SignMojo
     /**
      * A list of *.app filenames to sign
      *
-     * <p>If NOT configured 'Eclipse.app' is signed.</p>
+     * <p>If NOT configured {@value #ECLIPSE_APP} is signed.</p>
      *
      * @parameter property="fileNames"
      * @since 1.0.4
      */
-    private String[] fileNames;
+    private Set<String> fileNames;
 
     /**
      * Continue the build even if signing fails
@@ -164,302 +156,42 @@ public class SignMojo
      */
     private int retryTimer;
 
-    /**
-     * List of executable files on the .app file to be signed.
-     */
-    private static ArrayList<String> executableFiles = new ArrayList<String>();
-
-    /**
-     * Part of the unsigned zip file name.
-     */
-    private static final String UNSIGNED_ZIP_FILE_NAME = "app_unsigned";
-
-    /**
-     * The zip file extension.
-     */
-    private static final String ZIP_EXT = ".zip";
-
     @Override
-    public void execute()
-        throws MojoExecutionException
-    {
+    public void execute() throws MojoExecutionException {
     	final Signer signer = new ApacheHttpClientSigner(URI.create(signerUrl), getLog());
+    	OSXAppSigner.Builder appSignerBuilder = OSXAppSigner.builder(signer).logOn(getLog()).maxRetry(retryLimit).waitBeforeRetry(retryTimer, TimeUnit.SECONDS);
+    	if (continueOnFail) {
+    		appSignerBuilder.continueOnFail();
+    	}
+    	OSXAppSigner osxAppSigner = appSignerBuilder.build();
     	
-        //app paths are configured
-        if (signFiles != null && !(signFiles.length == 0)) {
-            for (String path : signFiles) {
-                signArtifact(signer, new File(path));
-            }
-        }
-        else { //perform search
-            if (fileNames == null || fileNames.length == 0) {
-                fileNames = new String[1];
-                fileNames[0] = "Eclipse.app";
-            }
-
-            File searchDir = new File(baseSearchDir);
-            getLog().debug("Searching: " + searchDir);
-            traverseDirectory(searchDir, signer);
+        if (signFiles != null && !signFiles.isEmpty()) {
+        	//app paths are configured
+        	Set<Path> filesToSign = new LinkedHashSet<>();
+        	for (String pathString : signFiles) {
+				filesToSign.add(FileSystems.getDefault().getPath(pathString));
+			}
+            osxAppSigner.signApplications(filesToSign);
+        } else { 
+        	//perform search
+        	osxAppSigner.signApplications(FileSystems.getDefault().getPath(baseSearchDir), getPathMatchers(FileSystems.getDefault(), fileNames, getLog()));
         }
     }
 
-    /**
-     * Recursive method. Searches the base directory for files to sign.
-     * @param dir
-     * @throws MojoExecutionException
-     */
-    private void traverseDirectory(File dir, Signer signer) throws MojoExecutionException {
-        if (dir.isDirectory()) {
-            getLog().debug("searching " + dir.getAbsolutePath());
-            for(File file : dir.listFiles()){
-                if (file.isFile()){
-                    continue;
-                } else if (file.isDirectory()) {
-                    boolean isSigned = false;
-                    String fileName = file.getName();
-                    for(String allowedName : fileNames) {
-                        if (fileName.equals(allowedName)) {
-                            signArtifact(signer, file); // signs the file
-                            isSigned = true;
-                            break;
-                        }
-                    }
-                    if (!isSigned) // do not search directories that are already signed
-                    {
-                        traverseDirectory(file, signer);
-                    }
-                }
-            }
-        }
-        else {
-            getLog().error("Internal error. " + dir + " is not a directory.");
-        }
-    }
-
-    /**
-     * Decompresses zip files.
-     * @param zipFile           The zip file to decompress.
-     * @throws IOException
-     * @throws MojoExecutionException
-     */
-    private static void unZip(File zipFile, File output_dir) throws IOException, MojoExecutionException
-    {
-
-        try (ZipArchiveInputStream zis = new ZipArchiveInputStream(new FileInputStream(zipFile))) {
-	        ZipArchiveEntry ze;
-	        String name, parent;
-            ze = zis.getNextZipEntry();
-            // check for at least one zip entry
-            if (ze == null)
-            {
-                throw new MojoExecutionException( "Could not decompress " + zipFile);
-            }
-
-            while(ze != null) {
-                name = ze.getName();
-
-                //make directories
-                if( ze.isDirectory())
-                {
-                    mkdirs(output_dir, name);
-                }
-                else
-                {
-                    parent = getParentDirAbsolutePath(name);
-                    mkdirs(output_dir, parent);
-
-                    File outFile = new File(output_dir, name);
-                    outFile.createNewFile();
-
-                    // check for match in executable list
-                    if(executableFiles.contains(name))
-                    {
-                        Files.setPosixFilePermissions(outFile.toPath(), PosixFilePermissions.fromString("rwxr-x---"));
-                    }
-
-                    try (OutputStream fos = new BufferedOutputStream(new FileOutputStream(outFile))) {
-                    	IOUtil.copy(zis,  fos);
-                    }
-                }
-                ze = zis.getNextZipEntry();
-            }
-        }
-    }
-
-    /**
-     * Helper method to create a new file and make all of the necessary directories.
-     * @param outdir            The parent of the new file.
-     * @param path              The child path of the new file relative to the parent.
-     */
-    private static void mkdirs(File outdir, String path)
-    {
-        File d = new File(outdir, path);
-        if( !d.exists() )
-            d.mkdirs();
-    }
-
-    /**
-     * Creates a zip file.
-     * @param dir                   The Directory of the files to be zipped.
-     * @param zip                   An output stream to write the file
-     * @throws IOException
-     */
-    private void createZip(File dir, ZipArchiveOutputStream zip) throws IOException {
-        Deque<File> dir_stack = new LinkedList<File>();
-        dir_stack.push(dir);
-
-        // base path is the parent of the "Application.app" folder
-        // it will be used to make "Application.app" the top-level folder in the zip
-        String base_path = getParentDirAbsolutePath(dir);
-
-        // verify that "dir" actually id the ".app" folder
-        if(!dir.getName().endsWith(".app"))
-        	throw new IOException("Please verify the configuration. Directory does not end with '.app': " + dir);
-
-        while (!dir_stack.isEmpty()) {
-
-            File file = dir_stack.pop();
-            File[] files = file.listFiles();
-
-            for (File f : files) {
-            	String name = f.getAbsolutePath().substring(base_path.length());
-            	getLog().debug("Found: " + name);
-
-                if (f.isFile() && isInContentsFolder(name))
-                {
-                	getLog().debug("Adding to zip file for signing: " + f);
-
-                    ZipArchiveEntry entry = new ZipArchiveEntry(name);
-                    zip.putArchiveEntry(entry);
-
-                    if (f.canExecute())
-                    {
-                        //work around to track the relative file names
-                        // of those that need to be set as executable on unZip
-                        executableFiles.add(name);
-                    }
-                    try (InputStream is = new BufferedInputStream(new FileInputStream(f))) {
-                    	IOUtil.copy(is, zip);
-                    }
-                    zip.closeArchiveEntry();
-                }
-                else if (f.isDirectory() && isInContentsFolder(name))
-                { //add directory entry
-                    dir_stack.push(f);
-                }
-                else
-                {
-                    getLog().debug(f + " was not included in the zip file to be signed.");
-                }
-            }
-        }
-    }
-
-	private static boolean isInContentsFolder(String name) {
-		String[] segments = name.split("/");
-		return segments.length > 1 && segments[0].endsWith(".app") && segments[1].equals("Contents");
+	static Set<PathMatcher> getPathMatchers(FileSystem fs, Set<String> fileNames, Log log) {
+		final Set<PathMatcher> pathMatchers = new LinkedHashSet<>();
+		
+		if (fileNames == null || fileNames.isEmpty()) {
+			pathMatchers.add(fs.getPathMatcher("glob:**" + fs.getSeparator() + "Eclipse.app"));
+		} else {
+			for (String filename : fileNames) {
+				if (!filename.endsWith(DOT_APP)) {
+					log.warn("The given file name '" + filename + "' does not end with '.app' extension. No corresponding application will be signed.");
+				} else {
+					pathMatchers.add(fs.getPathMatcher("glob:**" + filename));
+				}
+			}
+		}
+		return pathMatchers;
 	}
-
-    /**
-     * Helper method. Returns the absolute path of a file's parent.
-     * @param dir
-     * @return          The absolute path of a file's parent.
-     *                  Returns the empty string if there is no parent directory.
-     */
-    private static String getParentDirAbsolutePath(File file)
-    {
-        return getParentDirAbsolutePath(file.getAbsolutePath());
-    }
-
-    /**
-     * Helper method. Returns the absolute path of a file's parent.
-     * @param name
-     * @return          The absolute path of a file's parent.
-     *                  Returns the empty string if there is no parent directory.
-     */
-    private static String getParentDirAbsolutePath(String name)
-    {
-        int index = name.lastIndexOf(File.separator);
-        return name.substring(0, index + 1);
-    }
-
-    /**
-     * Signs the file.
-     * @param signer 
-     * @param file
-     * @throws MojoExecutionException
-     */
-    protected void signArtifact( Signer signer, File file )
-        throws MojoExecutionException
-    {
-        try
-        {
-            if (!file.isDirectory())
-            {
-                getLog().warn(file + " is a not a directory, the artifact is not signed.");
-                return; // Expecting the .app directory
-            }
-
-            workdir.mkdirs();
-
-            //zipping the directory
-            getLog().debug("Building zip: " + file);
-            File zipFile = File.createTempFile(UNSIGNED_ZIP_FILE_NAME, ZIP_EXT, workdir);
-            try (ZipArchiveOutputStream zos = new ZipArchiveOutputStream(new FileOutputStream(zipFile))) {
-            	createZip(file, zos);
-            }
-
-            final long start = System.currentTimeMillis();
-
-            String base_path = getParentDirAbsolutePath(file);
-            File zipDir = new File(base_path);
-            try
-            {
-                if (!signer.sign( zipFile.toPath(), retryLimit, retryTimer, TimeUnit.SECONDS ))
-                {
-                    String msg = "Could not sign artifact " + file;
-
-                    if (continueOnFail)
-                    {
-                        getLog().warn(msg);
-                    }
-                    else
-                    {
-                        throw new MojoExecutionException(msg);
-                    }
-                }
-
-                // unzipping response
-                getLog().debug("Decompressing zip: " + file);
-                unZip(zipFile, zipDir);
-            }
-            finally
-            {
-                if (!zipFile.delete())
-                {
-                    getLog().warn("Temporary file failed to delete: " + zipFile);
-                }
-            }
-
-            getLog().info( "Signed " + file + " in " + ( ( System.currentTimeMillis() - start ) / 1000 )
-                               + " seconds." );
-        }
-        catch ( IOException e )
-        {
-            String msg = "Could not sign file " + file + ": " + e.getMessage();
-
-            if (continueOnFail)
-            {
-                getLog().warn(msg);
-            }
-            else
-            {
-                throw new MojoExecutionException(msg, e);
-            }
-        }
-        finally
-        {
-            executableFiles.clear();
-        }
-    }
 }

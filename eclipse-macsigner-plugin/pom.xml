@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright (c) 2013, 2014 Eclipse Foundation and others.
+  Copyright (c) 2013, 2014, 2015 Eclipse Foundation and others.
   All rights reserved. This program and the accompanying materials
   are made available under the terms of the Eclipse Distribution License v1.0
   which accompanies this distribution, and is available at
@@ -8,6 +8,7 @@
  
   Contributors:
     Caroline McQuatt - initial implementation
+    Mikael Barbero
 -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -33,22 +34,26 @@
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-plugin-api</artifactId>
     </dependency>
-
-    <dependency>
-      <groupId>org.codehaus.plexus</groupId>
-      <artifactId>plexus-utils</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-compress</artifactId>
-      <version>1.8.1</version>
-    </dependency>
-
     <dependency>
       <groupId>org.eclipse.cbi.maven.plugins</groupId>
       <artifactId>org.eclipse.cbi.common</artifactId>
       <version>${project.parent.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.eclipse.cbi.maven.plugins</groupId>
+      <artifactId>org.eclipse.cbi.common</artifactId>
+      <version>${project.parent.version}</version>
+      <scope>test</scope>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.jimfs</groupId>
+      <artifactId>jimfs</artifactId>
     </dependency>
   </dependencies>
 </project>

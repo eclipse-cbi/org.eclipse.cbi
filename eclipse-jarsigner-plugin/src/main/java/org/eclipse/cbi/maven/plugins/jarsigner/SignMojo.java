@@ -7,9 +7,8 @@
  * Contributors: 
  * 		Eclipse Foundation - initial API and implementation 
  * 		Thanh Ha (Eclipse Foundation) - Add support for signing inner jars
- * 		Mikael Barbero (Eclipse Foundation) - Use of "try with resource"
+ * 		Mikael Barbero - Use of "try with resource"
  *******************************************************************************/
-
 package org.eclipse.cbi.maven.plugins.jarsigner;
 
 import java.io.BufferedInputStream;
@@ -21,6 +20,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -33,13 +33,13 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
-import org.apache.http.NoHttpResponseException;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
+import org.eclipse.cbi.common.signing.ApacheHttpClientSigner;
 import org.eclipse.cbi.common.signing.Signer;
 
 /**
@@ -108,7 +108,10 @@ public class SignMojo extends AbstractMojo {
      *
      * @parameter property="project.build.directory"
      * @readonly
+     * @deprecated not used anymore. Use {@code java.io.tmpdir} property instead. 
      */
+    @SuppressWarnings("unused")
+	@Deprecated
     private File workdir;
 
     /**
@@ -221,14 +224,15 @@ public class SignMojo extends AbstractMojo {
             return;
         }
 
-        signArtifact(project.getArtifact());
+        final Signer signer = new ApacheHttpClientSigner(URI.create(signerUrl), getLog());
+        signArtifact(project.getArtifact(), signer);
 
         for (Artifact artifact : project.getAttachedArtifacts()) {
-            signArtifact(artifact);
+            signArtifact(artifact, signer);
         }
     }
 
-    protected void signArtifact(Artifact artifact) throws MojoExecutionException {
+    protected void signArtifact(Artifact artifact, Signer signer) throws MojoExecutionException {
         try {
             File file = artifact.getFile();
             if (file == null || !file.isFile() || !file.canRead()) {
@@ -270,30 +274,21 @@ public class SignMojo extends AbstractMojo {
 
             // Sign inner jars if there are any
             if (!excludeInnerJars && innerJars.size() > 0) {
-                signInnerJars(file, innerJars);
+                signInnerJars(file, innerJars, signer);
             }
 
             // Sign Artifact
+            if (!signer.sign(file.toPath(), retryLimit, retryTimer, TimeUnit.SECONDS)) {
+                String msg = "Could not sign artifact " + artifact;
 
-            File tempSigned = File.createTempFile(file.getName(), ".signed-jar", workdir);
-            try {
-                signFile(file, tempSigned);
-                if (!tempSigned.canRead() || tempSigned.length() <= 0) {
-                    String msg = "Could not sign artifact " + artifact;
-
-                    if (continueOnFail) {
-                        getLog().warn(msg);
-                    } else {
-                        throw new MojoExecutionException(msg);
-                    }
+                if (continueOnFail) {
+                    getLog().warn(msg);
+                } else {
+                    throw new MojoExecutionException(msg);
                 }
-                FileUtils.copyFile(tempSigned, file);
-            }
-            finally {
-                tempSigned.delete();
             }
 
-            getLog().info("Signed " + artifact + " in " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
+            getLog().debug("Signed " + artifact + " in " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
         }
         catch (IOException e) {
             String msg = "Could not sign artifact " + artifact;
@@ -327,34 +322,6 @@ public class SignMojo extends AbstractMojo {
         return sign;
     }
 
-    private void signFile(File source, File target) throws IOException, MojoExecutionException {
-        int retry = 0;
-
-        while (retry++ <= retryLimit) {
-            try {
-                Signer.signFile(source, target, signerUrl);
-                return;
-            }
-            catch (NoHttpResponseException e) {
-                if (retry <= retryLimit) {
-                    getLog().debug(e.toString());
-                    getLog().info("Failed to sign " + source.getName() + " with server. Retrying...");
-                    try {
-                        TimeUnit.SECONDS.sleep(retryTimer);
-                    }
-                    catch (InterruptedException ie) {
-                    	getLog().debug("InterruptedException: " + ie.getMessage());
-                    	// Restore the interrupted status
-                        Thread.currentThread().interrupt();
-                    }
-                }
-            }
-        }
-
-        // If we make it here then signing has failed.
-        throw new MojoExecutionException("Failed to sign file.");
-    }
-
     /**
      * Signs the inner jars in a jar file
      *
@@ -363,7 +330,7 @@ public class SignMojo extends AbstractMojo {
      * @param innerJars
      *            A list of inner jars that needs to be signed
      */
-    private void signInnerJars(File file, List<String> innerJars)
+    private void signInnerJars(File file, List<String> innerJars, Signer signer)
             throws IOException, FileNotFoundException, MojoExecutionException {
         try(JarFile jar = new JarFile(file)) {
             File nestedWorkdir = new File(workdir + File.separator + "sign-innner-jars");
@@ -397,13 +364,8 @@ public class SignMojo extends AbstractMojo {
 
                 String jarToSign = it.next();
                 File unsignedJar = new File(nestedWorkdir, jarToSign);
-                File tempSignedJar = new File(nestedWorkdir, jarToSign + ".signed-jar");
 
-                signFile(unsignedJar, tempSignedJar);
-                FileUtils.copyFile(tempSignedJar, unsignedJar);
-
-                // cleanup
-                tempSignedJar.delete();
+                signer.sign(unsignedJar.toPath(), retryLimit, retryTimer, TimeUnit.SECONDS);
 
                 getLog().info("Signed " + jarToSign + " in " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
             }

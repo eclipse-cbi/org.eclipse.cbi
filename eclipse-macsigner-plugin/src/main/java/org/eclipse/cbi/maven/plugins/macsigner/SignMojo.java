@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Eclipse Foundation and others.
+ * Copyright (c) 2013-2015 Eclipse Foundation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,8 +7,8 @@
  *
  * Contributors:
  *   Caroline McQuatt, Mike Lim - initial implementation
+ *   Mikael Barbero
  *******************************************************************************/
-
 package org.eclipse.cbi.maven.plugins.macsigner;
 
 import java.io.BufferedInputStream;
@@ -19,6 +19,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
@@ -29,11 +30,10 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.http.NoHttpResponseException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
+import org.eclipse.cbi.common.signing.ApacheHttpClientSigner;
 import org.eclipse.cbi.common.signing.Signer;
 
 /**
@@ -80,7 +80,10 @@ public class SignMojo
      * @parameter property="project.build.directory"
      * @readonly
      * @since 1.0.4
+     * @deprecated not used anymore. Use {@code java.io.tmpdir} property instead. 
      */
+    @SuppressWarnings("unused")
+	@Deprecated
     private File workdir;
 
     /**
@@ -172,11 +175,6 @@ public class SignMojo
     private static final String UNSIGNED_ZIP_FILE_NAME = "app_unsigned";
 
     /**
-     * Part of the signed zip file name.
-     */
-    private static final String SIGNED_ZIP_FILE_NAME = "app_signed";
-
-    /**
      * The zip file extension.
      */
     private static final String ZIP_EXT = ".zip";
@@ -185,10 +183,12 @@ public class SignMojo
     public void execute()
         throws MojoExecutionException
     {
+    	final Signer signer = new ApacheHttpClientSigner(URI.create(signerUrl), getLog());
+    	
         //app paths are configured
         if (signFiles != null && !(signFiles.length == 0)) {
             for (String path : signFiles) {
-                signArtifact(new File(path));
+                signArtifact(signer, new File(path));
             }
         }
         else { //perform search
@@ -199,7 +199,7 @@ public class SignMojo
 
             File searchDir = new File(baseSearchDir);
             getLog().debug("Searching: " + searchDir);
-            traverseDirectory(searchDir);
+            traverseDirectory(searchDir, signer);
         }
     }
 
@@ -208,7 +208,7 @@ public class SignMojo
      * @param dir
      * @throws MojoExecutionException
      */
-    private void traverseDirectory(File dir) throws MojoExecutionException {
+    private void traverseDirectory(File dir, Signer signer) throws MojoExecutionException {
         if (dir.isDirectory()) {
             getLog().debug("searching " + dir.getAbsolutePath());
             for(File file : dir.listFiles()){
@@ -219,14 +219,14 @@ public class SignMojo
                     String fileName = file.getName();
                     for(String allowedName : fileNames) {
                         if (fileName.equals(allowedName)) {
-                            signArtifact(file); // signs the file
+                            signArtifact(signer, file); // signs the file
                             isSigned = true;
                             break;
                         }
                     }
                     if (!isSigned) // do not search directories that are already signed
                     {
-                        traverseDirectory(file);
+                        traverseDirectory(file, signer);
                     }
                 }
             }
@@ -385,10 +385,11 @@ public class SignMojo
 
     /**
      * Signs the file.
+     * @param signer 
      * @param file
      * @throws MojoExecutionException
      */
-    protected void signArtifact( File file )
+    protected void signArtifact( Signer signer, File file )
         throws MojoExecutionException
     {
         try
@@ -412,29 +413,9 @@ public class SignMojo
 
             String base_path = getParentDirAbsolutePath(file);
             File zipDir = new File(base_path);
-            File tempSigned = File.createTempFile(SIGNED_ZIP_FILE_NAME, ZIP_EXT, workdir );
-            File tempSignedCopy = new File(base_path + File.separator + tempSigned.getName());
-
-            if (tempSignedCopy.exists()) {
-                String msg = "Could not copy signed file because a file with the same name already exists: " + tempSignedCopy;
-
-                if (continueOnFail)
-                {
-                    getLog().warn(msg);
-                }
-                else
-                {
-                    throw new MojoExecutionException(msg);
-                }
-            }
-            tempSignedCopy.createNewFile();
-
-            FileUtils.copyFile(tempSigned, tempSignedCopy);
-
             try
             {
-                signFile( zipFile, tempSigned );
-                if ( !tempSigned.canRead() || tempSigned.length() <= 0 )
+                if (!signer.sign( zipFile.toPath(), retryLimit, retryTimer, TimeUnit.SECONDS ))
                 {
                     String msg = "Could not sign artifact " + file;
 
@@ -450,21 +431,13 @@ public class SignMojo
 
                 // unzipping response
                 getLog().debug("Decompressing zip: " + file);
-                unZip(tempSigned, zipDir);
+                unZip(zipFile, zipDir);
             }
             finally
             {
                 if (!zipFile.delete())
                 {
                     getLog().warn("Temporary file failed to delete: " + zipFile);
-                }
-                if (!tempSigned.delete())
-                {
-                    getLog().warn("Temporary file failed to delete: " + tempSigned);
-                }
-                if (!tempSignedCopy.delete())
-                {
-                    getLog().warn("Temporary file failed to delete: " + tempSignedCopy);
                 }
             }
 
@@ -488,50 +461,5 @@ public class SignMojo
         {
             executableFiles.clear();
         }
-    }
-
-    /**
-     * helper to send the file to the signing service
-     * @param source file to send
-     * @param target file to copy response to
-     * @throws IOException
-     * @throws MojoExecutionException
-     */
-    private void signFile( File source, File target )
-            throws IOException, MojoExecutionException
-    {
-        int retry = 0;
-
-        NoHttpResponseException serverException = null;
-        while ( retry++ <= retryLimit )
-        {
-            try
-            {
-                Signer.signFile( source, target, signerUrl );
-                return;
-            }
-            catch ( NoHttpResponseException e )
-            {
-            	getLog().debug("Server error while signing: " + e.getMessage(), e);
-            	if(serverException == null)
-            		serverException = e;
-            	else
-            		serverException.addSuppressed(e);
-
-                if ( retry <= retryLimit ) {
-                    getLog().warn("Failed to sign with server. Retrying...");
-                    try
-                    {
-                        TimeUnit.SECONDS.sleep(retryTimer);
-                    }
-                    catch ( InterruptedException ie ) {
-                        // Do nothing
-                    }
-                }
-            }
-        }
-
-        // If we make it here then signing has failed.
-       	throw new MojoExecutionException( "Failed to sign file.", serverException);
     }
 }

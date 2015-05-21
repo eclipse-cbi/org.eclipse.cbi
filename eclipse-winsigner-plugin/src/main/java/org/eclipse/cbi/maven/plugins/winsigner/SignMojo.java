@@ -1,24 +1,24 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 Eclipse Foundation and others
+ * Copyright (c) 2013-2015 Eclipse Foundation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Caroline McQuatt, Mike Lim - initial implementation
+ * 		Caroline McQuatt, Mike Lim - initial implementation
+ * 		Mikael Barbero
  *******************************************************************************/
-
 package org.eclipse.cbi.maven.plugins.winsigner;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.http.NoHttpResponseException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.codehaus.plexus.util.FileUtils;
+import org.eclipse.cbi.common.signing.ApacheHttpClientSigner;
 import org.eclipse.cbi.common.signing.Signer;
 
 /**
@@ -64,7 +64,10 @@ public class SignMojo
      * @parameter property="project.build.directory"
      * @readonly
      * @since 1.0.4
+     * @deprecated not used anymore. Use {@code java.io.tmpdir} property instead. 
      */
+    @SuppressWarnings("unused")
+	@Deprecated
     private File workdir;
 
     /**
@@ -151,10 +154,13 @@ public class SignMojo
     public void execute()
         throws MojoExecutionException
     {
+    	final Signer signer = new ApacheHttpClientSigner(URI.create(signerUrl), getLog());
+    	File searchDir = new File(baseSearchDir);
+    	
     	//exe paths are configured
     	if (signFiles != null && !(signFiles.length == 0)) {
         	for (String path : signFiles) {
-        		signArtifact(new File(path));
+        		signArtifact(signer, new File(path));
         	}
     	}
     	else { //perform search
@@ -164,18 +170,18 @@ public class SignMojo
         		fileNames[1] = "eclipsec.exe";
         	}
 
-            File searchDir = new File(baseSearchDir);
             getLog().debug("Searching: " + searchDir);
-            traverseDirectory(searchDir);
+            traverseDirectory(searchDir, signer);
     	}
     }
 
     /**
      * Recursive method. Searches the base directory for files to sign.
+     * @param signer 
      * @param files
      * @throws MojoExecutionException
      */
-    private void traverseDirectory(File dir) throws MojoExecutionException {
+    private void traverseDirectory(File dir, Signer signer) throws MojoExecutionException {
     	if (dir.isDirectory()) {
     		getLog().debug("searching " + dir.getAbsolutePath());
     		for(File file : dir.listFiles()){
@@ -183,11 +189,11 @@ public class SignMojo
     				String fileName = file.getName();
     				for(String allowedName : fileNames) {
     					if (fileName.equals(allowedName)) {
-    						signArtifact(file); // signs the file
+    						signArtifact(signer, file); // signs the file
     					}
     				}
     			} else if (file.isDirectory()) {
-    				traverseDirectory(file);
+    				traverseDirectory(file, signer);
     			}
     		}
     	}
@@ -198,10 +204,11 @@ public class SignMojo
 
     /**
      * signs the file
+     * @param signer 
      * @param file
      * @throws MojoExecutionException
      */
-    protected void signArtifact( File file )
+    protected void signArtifact( Signer signer, File file )
         throws MojoExecutionException
     {
         try
@@ -214,29 +221,18 @@ public class SignMojo
 
             final long start = System.currentTimeMillis();
 
-            workdir.mkdirs();
-            File tempSigned = File.createTempFile( file.getName(), ".signed-exe", workdir );
-            try
+            if (!signer.sign(file.toPath(), retryLimit, retryTimer, TimeUnit.SECONDS))
             {
-                signFile( file, tempSigned );
-                if ( !tempSigned.canRead() || tempSigned.length() <= 0 )
-                {
-                    String msg = "Could not sign artifact " + file;
+                String msg = "Could not sign artifact " + file;
 
-                    if (continueOnFail)
-                    {
-                        getLog().warn(msg);
-                    }
-                    else
-                    {
-                        throw new MojoExecutionException(msg);
-                    }
+                if (continueOnFail)
+                {
+                    getLog().warn(msg);
                 }
-                FileUtils.copyFile( tempSigned, file );
-            }
-            finally
-            {
-                tempSigned.delete();
+                else
+                {
+                    throw new MojoExecutionException(msg);
+                }
             }
             getLog().info( "Signed " + file + " in " + ( ( System.currentTimeMillis() - start ) / 1000 )
                                + " seconds." );
@@ -254,43 +250,5 @@ public class SignMojo
                 throw new MojoExecutionException(msg, e);
             }
         }
-    }
-
-    /**
-     * helper to send the file to the signing service
-     * @param source file to send
-     * @param target file to copy response to
-     * @throws IOException
-     * @throws MojoExecutionException
-     */
-    private void signFile( File source, File target )
-            throws IOException, MojoExecutionException
-    {
-        int retry = 0;
-
-        while ( retry++ <= retryLimit )
-        {
-            try
-            {
-                Signer.signFile( source, target, signerUrl );
-                return;
-            }
-            catch ( NoHttpResponseException e )
-            {
-                if ( retry <= retryLimit ) {
-                    getLog().info("Failed to sign with server. Retrying...");
-                    try
-                    {
-                        TimeUnit.SECONDS.sleep(retryTimer);
-                    }
-                    catch ( InterruptedException ie ) {
-                        // Do nothing
-                    }
-                }
-            }
-        }
-
-        // If we make it here then signing has failed.
-        throw new MojoExecutionException( "Failed to sign file." );
     }
 }

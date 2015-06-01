@@ -46,12 +46,13 @@ public class Zips {
 	 *            the file to unzip.
 	 * @param outputDir
 	 *            the output directory where the Zip will be unpacked.
+	 * @return the number of unpacked entries
 	 * @throws IOException
 	 */
-	public static void unpackZip(Path source, Path outputDir) throws IOException {
+	public static int unpackZip(Path source, Path outputDir) throws IOException {
 		checkPathExists(source, "'source' path must exists");
 		try (ZipInputStream zis = new ZipInputStream(newBufferedInputStream(source))) {
-			unpack(zis, outputDir);
+			return unpack(zis, outputDir);
 		}
 	}
 
@@ -63,12 +64,13 @@ public class Zips {
 	 * @param outputDir
 	 *            the output directory where the Jar will be unpacked. It does
 	 *            not have to exist beforehand.
+	 * @return the number of unpacked entries
 	 * @throws IOException
 	 */
-	public static void unpackJar(Path source, Path outputDir) throws IOException {
+	public static int unpackJar(Path source, Path outputDir) throws IOException {
 		checkPathExists(source, "'source' path must exists");
 		try (JarInputStream jis = new JarInputStream(newBufferedInputStream(source))) {
-			unpack(jis, outputDir);
+			return unpack(jis, outputDir);
 		}
 	}
 
@@ -84,12 +86,13 @@ public class Zips {
 	 * @param preserveRoot
 	 *            whether the {@code source} folder should be kept in the target
 	 *            Zip.
+	 * @return the number of packed entries
 	 * @throws IOException
 	 */
-	public static void packZip(Path source, Path targetZip, boolean preserveRoot) throws IOException {
+	public static int packZip(Path source, Path targetZip, boolean preserveRoot) throws IOException {
 		checkPathExists(source, "'source' path must exists");
 		try (ZipOutputStream zos = new ZipOutputStream(newBufferedOutputStream(targetZip))) {
-			packEntries(source, zos, preserveRoot);
+			return packEntries(source, zos, preserveRoot);
 		}
 	}
 
@@ -105,12 +108,13 @@ public class Zips {
 	 * @param preserveRoot
 	 *            whether the {@code source} folder should be kept in the target
 	 *            Jar.
+	 * @return the number of packed entries
 	 * @throws IOException
 	 */
-	public static void packJar(Path source, Path targetJar, boolean preserveRoot) throws IOException {
+	public static int packJar(Path source, Path targetJar, boolean preserveRoot) throws IOException {
 		checkPathExists(source, "'source' path must exists");
 		try (JarOutputStream jos = new JarOutputStream(newBufferedOutputStream(targetJar))) {
-			packEntries(source, jos, preserveRoot);
+			return packEntries(source, jos, preserveRoot);
 		}
 	}
 
@@ -134,9 +138,11 @@ public class Zips {
 	 * @param outputDir
 	 *            the output directory where the Jar will be unpacked. It does
 	 *            not have to exist beforehand.
+	 * @return the number of unpacked entries
 	 * @throws IOException
 	 */
-	public static void unpack(ZipInputStream zis, Path outputDir) throws IOException {
+	public static int unpack(ZipInputStream zis, Path outputDir) throws IOException {
+		int unpackedEntries = 0;
 		for(ZipEntry entry = zis.getNextEntry(); entry != null; entry = zis.getNextEntry()) {
 			final Path entryPath = outputDir.resolve(entry.getName());
 			if (entry.isDirectory()) {
@@ -147,14 +153,16 @@ public class Zips {
 				Files.copy(zis, entryPath, StandardCopyOption.REPLACE_EXISTING);
 			}
 			Files.setLastModifiedTime(entryPath, FileTime.from(entry.getTime(), TimeUnit.MILLISECONDS));
+			unpackedEntries++;
 		}
+		return unpackedEntries;
 	}
 
 	private static BufferedOutputStream newBufferedOutputStream(Path path) throws IOException {
 		return new BufferedOutputStream(Files.newOutputStream(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE));
 	}
 
-	private static void packEntries(Path source, ZipOutputStream zos, boolean preserveRoot) throws IOException {
+	private static int packEntries(Path source, ZipOutputStream zos, boolean preserveRoot) throws IOException {
 		if (Files.isDirectory(source)) {
 			final PathMapper pathMapper;
 			if (preserveRoot) {
@@ -162,9 +170,12 @@ public class Zips {
 			} else {
 				pathMapper = new NoPreserveRootPathMapper(source);
 			}
-			Files.walkFileTree(source, new PackerFileVisitor(zos, pathMapper));
+			PackerFileVisitor packerFileVisitor = new PackerFileVisitor(zos, pathMapper);
+			Files.walkFileTree(source, packerFileVisitor);
+			return packerFileVisitor.packedEntries();
 		} else {
 			packFile(source, zos, source.getFileName());
+			return 1;
 		}
 	}
 
@@ -229,10 +240,15 @@ public class Zips {
 	private static final class PackerFileVisitor extends SimpleFileVisitor<Path> {
 		private final PathMapper pathMapper;
 		private final ZipOutputStream zos;
+		private int packedEntries;
 
 		private PackerFileVisitor(ZipOutputStream zos, PathMapper pathMapper) {
 			this.pathMapper = pathMapper;
 			this.zos = zos;
+		}
+
+		int packedEntries() {
+			return this.packedEntries;
 		}
 
 		@Override
@@ -245,6 +261,7 @@ public class Zips {
 				
 				zos.putNextEntry(zipEntry);
 				zos.closeEntry();
+				packedEntries++;
 			}
 			
 			return FileVisitResult.CONTINUE;
@@ -254,6 +271,7 @@ public class Zips {
 		public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 			Path entryPath = pathMapper.mapTo(file);
 			packFile(file, zos, entryPath);
+			packedEntries++;
 			return FileVisitResult.CONTINUE;
 		}
 	}

@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.cbi.common.signing;
 
+import java.util.Date;
+
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 
@@ -25,17 +27,17 @@ public class ExceptionHandler {
 	
 	public void handleError(String msg) throws MojoExecutionException {
 		if (continueOnFail) {
-			log.warn(msg);
+			log.warn(new Date() + " " + msg);
 		} else {
-			throw new MojoExecutionException(msg);
+			throw new MojoExecutionException(new Date() + " " + msg);
 		}
 	}
 	
 	public void handleError(String msg, Exception e) throws MojoExecutionException {
 		if (continueOnFail) {
-			log.warn(msg, e);
+			log.warn(new Date() + " " + msg, e);
 		} else {
-			throw new MojoExecutionException(msg, e);
+			throw new MojoExecutionException(new Date() + " " + msg, e);
 		}
 	}
 }

@@ -21,14 +21,22 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
 /**
  * Utility class to work with Zip files ({@link Path} based).
@@ -37,7 +45,14 @@ public class Zips {
 	
 	private static final String ZIP_ENTRY_NAME_SEPARATOR = "/";
 	private static final String BACKSLASH_ESCAPE_REPLACEMENT = "\\\\\\\\";
-	private static final Pattern BACKSLASH_PATTERN = Pattern.compile("\\\\");;
+	private static final Pattern BACKSLASH_PATTERN = Pattern.compile("\\\\");
+	// indexed by the standard binary representation of permission
+	// if permission is 644; in binary 110 100 100 
+	// the position of the ones give the index of the permission in the array below
+	private static final PosixFilePermission[] POSIX_PERMISSIONS  = new PosixFilePermission[] {
+		PosixFilePermission.OTHERS_EXECUTE, PosixFilePermission.OTHERS_WRITE, PosixFilePermission.OTHERS_READ,
+		PosixFilePermission.GROUP_EXECUTE, PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_READ,
+		PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_READ,};
 
 	/**
 	 * Unzip the given {@code source} Zip file in the {@code outputDir}.
@@ -72,6 +87,59 @@ public class Zips {
 		try (JarInputStream jis = new JarInputStream(newBufferedInputStream(source))) {
 			return unpack(jis, outputDir);
 		}
+	}
+	
+	public static int unpackTarGz(Path sourcePath, Path outputDir) throws IOException {
+		try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(new GZIPInputStream(Files.newInputStream(sourcePath)))) {
+			return unpack(tarArchiveInputStream, outputDir);
+		}
+	}
+	
+	public static int unpack(TarArchiveInputStream zis, Path outputDir) throws IOException {
+		int unpackedEntries = 0;
+		for(TarArchiveEntry entry = zis.getNextTarEntry(); entry != null; entry = zis.getNextTarEntry()) {
+			final Path entryPath = outputDir.resolve(entry.getName());
+			if (entry.isDirectory()) {
+				Files.createDirectories(entryPath);
+			} else if (entry.isLink()) {
+				Files.createLink(entryPath, outputDir.resolve(entry.getLinkName()));
+			} else if (entry.isSymbolicLink()) {
+				Files.createSymbolicLink(entryPath, outputDir.resolve(entry.getLinkName()));
+			} else if (entry.isFile()) {
+				Path parentPath = entryPath.normalize().getParent();
+				Files.createDirectories(parentPath);
+				Files.copy(zis, entryPath, StandardCopyOption.REPLACE_EXISTING);
+			} else {
+				throw new IOException("Type of a Tar entry is not supported");
+			}
+
+			if (!Files.isSymbolicLink(entryPath)) {
+				setPermissions(entry, entryPath);
+				Files.setLastModifiedTime(entryPath, FileTime.from(entry.getLastModifiedDate().getTime(), TimeUnit.MILLISECONDS));
+			}
+			unpackedEntries++;
+		}
+		
+		return unpackedEntries;
+	}
+
+	private static void setPermissions(TarArchiveEntry entry, final Path entryPath) throws IOException {
+		// to set permissions if we are on a posix file system.
+		PosixFileAttributeView attributes = Files.getFileAttributeView(entryPath, PosixFileAttributeView.class);
+		if (attributes != null) {
+			attributes.setPermissions(modeToPosixPermissions(entry.getMode()));
+		}
+	}
+	
+	private static Set<PosixFilePermission> modeToPosixPermissions(int mode) {
+		final Set<PosixFilePermission> ret = new LinkedHashSet<PosixFilePermission>();
+		for (int i = 8; i >= 0; i--) {
+			int perm = mode & (1 << i);
+			if (perm != 0) {
+				ret.add(POSIX_PERMISSIONS[i]);
+			}	
+		}
+		return ret;
 	}
 
 	/**

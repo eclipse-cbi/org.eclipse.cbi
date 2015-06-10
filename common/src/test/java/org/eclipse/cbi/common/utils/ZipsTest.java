@@ -19,14 +19,20 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Set;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.eclipse.cbi.common.TestUtils;
 import org.junit.Test;
 import org.junit.experimental.theories.DataPoints;
@@ -192,6 +198,29 @@ public class ZipsTest {
 		assertTrue(Files.exists(fs.getPath("unpackFolder/t2/t3/Test2.java")));
 		assertArrayEquals(Files.readAllBytes(path1), Files.readAllBytes(fs.getPath("unpackFolder/t1/Test1.java")));
 		assertArrayEquals(Files.readAllBytes(path2), Files.readAllBytes(fs.getPath("unpackFolder/t2/t3/Test2.java")));
+	}
+	
+	@Theory
+	public void testUnpackTarGz(Configuration conf) throws IOException {
+		FileSystem fs = Jimfs.newFileSystem(conf);
+		try (TarArchiveInputStream is = new TarArchiveInputStream(new GZIPInputStream(this.getClass().getResource("/test.tar.gz").openStream()))) {
+			assertEquals(8, Zips.unpack(is, fs.getPath("untarFolder")));
+			assertTrue(Files.isSymbolicLink(fs.getPath("untarFolder", "folderSymlink")));
+			assertTrue(Files.isSameFile(fs.getPath("untarFolder", "folder"), Files.readSymbolicLink(fs.getPath("untarFolder", "folderSymlink"))));
+			assertTrue(Files.isSameFile(fs.getPath("untarFolder", "folder2", "hardlinkToExe"), fs.getPath("untarFolder", "anExe")));
+			Path exe = fs.getPath("untarFolder", "anExe");
+			PosixFileAttributeView posixView = Files.getFileAttributeView(exe, PosixFileAttributeView.class);
+			if (posixView != null) {
+				Set<PosixFilePermission> permissions = posixView.readAttributes().permissions();
+				assertEquals(6, permissions.size());
+				assertTrue(permissions.contains(PosixFilePermission.OWNER_READ));
+				assertTrue(permissions.contains(PosixFilePermission.OWNER_WRITE));
+				assertTrue(permissions.contains(PosixFilePermission.OWNER_EXECUTE));
+				assertTrue(permissions.contains(PosixFilePermission.GROUP_READ));
+				assertTrue(permissions.contains(PosixFilePermission.GROUP_EXECUTE));
+				assertTrue(permissions.contains(PosixFilePermission.OTHERS_READ));
+			}
+		}
 	}
 
 	private static void checkNextEntry(ZipInputStream zis, Path originalPath, String expectedEntryName) throws IOException {

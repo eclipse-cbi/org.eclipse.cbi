@@ -42,6 +42,11 @@
       <artifactId>httpmime</artifactId>
       <version>${httpclient-version}</version>
     </dependency>
+    
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>junit</groupId>

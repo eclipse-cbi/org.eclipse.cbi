@@ -27,17 +27,17 @@ public class ExceptionHandler {
 	
 	public void handleError(String msg) throws MojoExecutionException {
 		if (continueOnFail) {
-			log.warn(new Date() + " " + msg);
+			log.warn("[" + new Date() + "] " + msg);
 		} else {
-			throw new MojoExecutionException(new Date() + " " + msg);
+			throw new MojoExecutionException("[" + new Date() + "] " + msg);
 		}
 	}
 	
 	public void handleError(String msg, Exception e) throws MojoExecutionException {
 		if (continueOnFail) {
-			log.warn(new Date() + " " + msg, e);
+			log.warn("[" + new Date() + "] " + msg, e);
 		} else {
-			throw new MojoExecutionException(new Date() + " " + msg, e);
+			throw new MojoExecutionException("[" + new Date() + "] " + msg, e);
 		}
 	}
 }

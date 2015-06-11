@@ -185,7 +185,7 @@ public class ZipsTest {
 	}
 	
 	@Theory
-	public void testPackUnpack(Configuration conf) throws IOException {
+	public void testPackUnpackZip(Configuration conf) throws IOException {
 		FileSystem fs = Jimfs.newFileSystem(conf);
 		Path path1 = createLoremIpsumFile(fs.getPath("folder", "t1", "Test1.java"), 3);
 		Path path2 = createLoremIpsumFile(fs.getPath("folder", "t2", "t3", "Test2.java"), 10);
@@ -199,6 +199,39 @@ public class ZipsTest {
 		assertArrayEquals(Files.readAllBytes(path2), Files.readAllBytes(fs.getPath("unpackFolder/t2/t3/Test2.java")));
 	}
 	
+	@Theory
+	public void testPackJar(Configuration conf) throws IOException {
+		FileSystem fs = Jimfs.newFileSystem(conf);
+		createLoremIpsumFile(fs.getPath("c", "Afolder", "t1", "Test1.java"), 3);
+		createLoremIpsumFile(fs.getPath("c", "folder", "t2", "t3", "Test2.java"), 10);
+		TestUtils.writeFile(fs.getPath("c", "META-INF", "MANIFEST.MF"), "Manifest-Version: 1.0\nCreated-By: CBI Project!");
+		Path jarWithZip = fs.getPath("testPackWithFolders.zip.jar");
+		Path jar = fs.getPath("testPackWithFolders.jar");
+
+		assertEquals(9, Zips.packZip(fs.getPath("c"), jarWithZip, false));
+		try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(jarWithZip))) {
+			// with zip, the first entry is Afolder
+			assertEquals("Afolder/", zis.getNextEntry().getName());
+		}
+		
+		assertEquals(9, Zips.packJar(fs.getPath("c"), jar, false));
+		try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(jar))) {
+			// with Jar, the first entry must be META-INF/
+			assertEquals("META-INF/", zis.getNextEntry().getName());
+			assertEquals("META-INF/MANIFEST.MF", zis.getNextEntry().getName());
+		}
+	}
+
+	@Theory
+	public void testPackUnPackJar(Configuration conf) throws IOException {
+		FileSystem fs = Jimfs.newFileSystem(conf);
+		createLoremIpsumFile(fs.getPath("c", "Afolder", "t1", "Test1.java"), 3);
+		createLoremIpsumFile(fs.getPath("c", "folder", "t2", "t3", "Test2.java"), 10);
+		TestUtils.writeFile(fs.getPath("c", "META-INF", "MANIFEST.MF"), "Manifest-Version: 1.0\nCreated-By: CBI Project!");
+		Path jar = fs.getPath("testPackWithFolders.jar");
+		assertEquals(Zips.packJar(fs.getPath("c"), jar, false), Zips.unpackJar(jar, Files.createDirectories(fs.getPath("o"))));
+	}
+
 	@Theory
 	public void testUnpackTarGz(Configuration conf) throws IOException {
 		FileSystem fs = Jimfs.newFileSystem(conf);

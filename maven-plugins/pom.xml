@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2012, 2013, 2015 Eclipse Foundation and others. All rights 
+  reserved. This program and the accompanying materials are made available 
+  under the terms of the Eclipse Distribution License v1.0 which accompanies 
+  this distribution, and is available at http://www.eclipse.org/org/documents/edl-v10.php 
+  Contributors: Igor Fedorenko - initial implementation Thanh Ha (Eclipse Foundation) 
+  - maintenance Mikael Barbero -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.eclipse.cbi</groupId>
+  <artifactId>maven-plugin-parent</artifactId>
+  <version>1.2.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <parent>
+    <groupId>org.eclipse.cbi</groupId>
+    <artifactId>cbi-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+
+  <modules>
+    <module>../common</module>
+    <module>../checkstyle</module>
+    <!-- If you add something in there, think about also add it to ../pom.xml -->
+    <module>common</module>
+    <module>eclipse-cbi-plugin</module>
+    <module>eclipse-jarsigner-plugin</module>
+    <module>eclipse-macsigner-plugin</module>
+    <module>eclipse-winsigner-plugin</module>
+    <module>eclipse-dmg-packager</module>
+  </modules>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <configuration>
+          <relativizeDecorationLinks>false</relativizeDecorationLinks>
+          <reportPlugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-plugin-plugin</artifactId>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-project-info-reports-plugin</artifactId>
+            </plugin>
+          </reportPlugins>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.eclipse.cbi</groupId>
+        <artifactId>cbi-common</artifactId>
+        <version>${cbi-common-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.cbi</groupId>
+        <artifactId>cbi-maven-plugin-common</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-core</artifactId>
+        <version>${minimum-maven-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>tycho-core</artifactId>
+        <version>0.23.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven.plugin-tools</groupId>
+        <artifactId>maven-plugin-annotations</artifactId>
+        <version>3.3</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.plexus</groupId>
+        <artifactId>plexus-utils</artifactId>
+        <version>3.0.17</version>
+      </dependency>
+
+      <!-- Dependency scope: test -->
+      <dependency>
+        <groupId>org.eclipse.cbi</groupId>
+        <artifactId>cbi-common</artifactId>
+        <version>${cbi-common-version}</version>
+        <scope>test</scope>
+        <type>test-jar</type>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.cbi</groupId>
+        <artifactId>cbi-maven-plugin-common</artifactId>
+        <version>${project.version}</version>
+        <scope>test</scope>
+        <type>test-jar</type>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+</project>

@@ -1,4 +1,11 @@
+.classpath
+.project
 .DS_Store
 target/
 bin/
-
+.apt_generated/
+.checkstyle
+org.eclipse.core.resources.prefs
+org.eclipse.jdt.core.prefs
+org.eclipse.m2e.core.prefs
+dependency-reduced-pom.xml

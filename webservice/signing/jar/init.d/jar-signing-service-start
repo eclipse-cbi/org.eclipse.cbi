@@ -1,0 +1,29 @@
+#!/bin/bash
+###############################################################################
+# Copyright (c) 2015 Eclipse Foundation and others
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+# Contributors:
+#   Mikaël Barbero - initial implementation
+###############################################################################
+
+[ -z "${SERVICE_HOME}" -a -z "${1}" ] && {
+  echo "The environment variable 'SERVICE_HOME' must be defined or you must specify an argument to this script"
+  exit 1
+}
+
+trap 'kill $(jobs -p)' EXIT
+
+SERVICE_HOME=${SERVICE_HOME:-${1}}
+
+JAVA_HOME="${JAVA_HOME:-/path/to/jdk1.8.0}"
+JAR_FILE="${JAR_FILE:-$(find "${SERVICE_HOME}" -name "jar-signing-service*.jar" | sort | tail -n 1)}"
+SERVICE_PROPERTIES="${SERVICE_PROPERTIES:-${SERVICE_HOME}/jar-signing-service.properties}"
+
+"${JAVA_HOME}/bin/java" -jar "${JAR_FILE}" -c "${SERVICE_PROPERTIES}"
+
+exit 1
+

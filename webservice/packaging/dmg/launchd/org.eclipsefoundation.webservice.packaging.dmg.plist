@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+        <dict>
+                <key>Label</key>
+                <string>org.eclipsefoundation.webservice.packaging.dmg</string>
+
+                <key>Program</key>
+                <string>/Users/genie/webservice/packaging/start.sh</string>
+
+                <key>WorkingDirectory</key>
+                <string>/Users/genie/webservice/packaging</string>
+
+
+                <key>UserName</key>
+                <string>genie</string>
+                <key>GroupName</key>
+                <string>_www</string>
+                <key>InitGroups</key>
+                <true/>
+
+
+                <key>RunAtLoad</key>
+                <true/>
+                <key>KeepAlive</key>
+                <true/>
+        </dict>
+</plist>

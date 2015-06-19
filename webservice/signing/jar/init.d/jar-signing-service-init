@@ -1,0 +1,145 @@
+#!/bin/bash
+###############################################################################
+# Copyright (c) 2015 Eclipse Foundation and others
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+# Contributors:
+#   Mikaël Barbero - initial implementation
+###############################################################################
+
+
+export START_SCRIPT="${START_SCRIPT:-/path/to/signing/jar-signing-service-start}"
+
+[ -z "${SERVICE_USERNAME}" -a -z "${SERVICE_GROUP}" ] && {
+  echo "Environment variables 'SERVICE_USERNAME' and 'SERVICE_GROUP'"
+  exit 1
+}
+
+#check that the start script exists
+[ -e "${START_SCRIPT}" ] || exit 5
+
+# Shell functions sourced from /etc/rc.status:
+#      rc_check         check and set local and overall rc status
+#      rc_status        check and set local and overall rc status
+#      rc_status -v     ditto but be verbose in local rc status
+#      rc_status -v -r  ditto and clear the local rc status
+#      rc_failed        set local and overall rc status to failed
+#      rc_failed <num>  set local and overall rc status to <num><num>
+#      rc_reset         clear local rc status (overall remains)
+#      rc_exit          exit appropriate to overall rc status
+. /etc/rc.status
+
+# First reset status of this service
+rc_reset
+
+# Return values acc. to LSB for all commands but status:
+# 0 - success
+# 1 - generic or unspecified error
+# 2 - invalid or excess argument(s)
+# 3 - unimplemented feature (e.g. "reload")
+# 4 - insufficient privilege
+# 5 - program is not installed
+# 6 - program is not configured
+# 7 - program is not running
+#
+# Note that starting an already running service, stopping
+# or restarting a not-running service as well as the restart
+# with force-reload (in case signalling is not supported) are
+# considered a success.
+
+# Get the terminal column width if there is a TERM, else assume 0
+COLS=0
+if [ "$TERM" != 'dumb' ]
+then
+    COLS=`tput cols`
+fi
+
+###
+###  Start / Stop the service
+###
+
+case "$1" in
+    start)
+      #is the process already running?
+      PS_COUNT=$(/usr/bin/pgrep -c -U "${SERVICE_USERNAME}" -f "${START_SCRIPT}")
+      if [ "${PS_COUNT}" -gt 0 ]; then
+        echo ""${SERVICE_USERNAME}" jar signing service already running, use restart"
+        exit 1
+      else
+        echo -n "Starting jar signing service"
+        if [ "$(id -u)" != "0" ]; then  # Run as regular user
+            if [ "${USER}" == "${SERVICE_USERNAME}" ]; then
+              startproc -t 1 -s "${START_SCRIPT}" 2>&1 > /dev/null
+            else
+              echo "Error: this script must only be run by '${SERVICE_USERNAME}' or 'root'"
+              exit 1
+            fi
+        else  # Run as root
+            startproc -t 1 -s -l /var/log/messages -p /var/run/jar-signing-service -u "${SERVICE_USERNAME}" -g "${SERVICE_GROUP}" "${START_SCRIPT}"
+        fi
+
+        PS_COUNT=$(/usr/bin/pgrep -c -U "${SERVICE_USERNAME}" -f "${START_SCRIPT}")
+
+        if [ "${PS_COUNT}" -gt 0 ]; then
+          printf "\n%*s%s\n" $COLS "[OK]"
+        else
+          printf "\n%*s%s\n" $COLS "[FAIL]"
+        fi
+      fi
+        ;;
+    stop)
+        echo "Stopping jar signing service"
+        ## Stop daemon with killproc(8) and if this fails
+        ## set echo the echo return value.
+
+        /usr/bin/pkill -f -u "${SERVICE_USERNAME}" "${START_SCRIPT}"
+
+        while /usr/bin/pgrep -U "${SERVICE_USERNAME}" -f "${START_SCRIPT}" > /dev/null; do
+            sleep 1
+        done
+
+        # Remember status and be verbose
+        rc_status -v
+        ;;
+    restart)
+        ## Stop the service and regardless of whether it was
+        ## running or not, start it again.
+        $0 stop
+        $0 start
+
+        # Remember status and be quiet
+        rc_status
+        ;;
+    status)
+        echo "Status of jar signing service"
+        
+	## Check status with checkproc(8), if process is running
+        ## checkproc will return with exit status 0.
+
+        # Status has a slightly different for the status command:
+        # 0 - service running
+        # 1 - service dead, but /var/run/  pid  file exists
+        # 2 - service dead, but /var/lock/ lock file exists
+        # 3 - service not running
+
+        # NOTE: checkproc returns LSB compliant status values.
+        PS_COUNT=$(/usr/bin/pgrep -c -U "${SERVICE_USERNAME}" -f "${START_SCRIPT}")
+
+        if [ "${PS_COUNT}" -gt 0 ]; then
+          rc_status -v
+        else
+          rc_status -v1
+        fi
+	
+        ;;
+    *)
+        echo "Usage: $(basename $0) {start|stop|restart|status}"
+        exit 1
+        ;;
+esac
+
+rc_exit
+

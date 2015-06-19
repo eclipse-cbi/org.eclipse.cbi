@@ -1,29 +1,16 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
-  Copyright (c) 2012, 2013, 2015 Eclipse Foundation and others.
-  All rights reserved. This program and the accompanying materials
-  are made available under the terms of the Eclipse Distribution License v1.0
-  which accompanies this distribution, and is available at
-  http://www.eclipse.org/org/documents/edl-v10.php
-
-  Contributors:
-    Igor Fedorenko - initial implementation
-    Thanh Ha (Eclipse Foundation) - maintenance
-    Mikael Barbero
--->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.eclipse.cbi.maven.plugins</groupId>
-  <artifactId>eclipse-cbi-parent</artifactId>
-  <version>1.2.0-SNAPSHOT</version>
+
+  <groupId>org.eclipse.cbi</groupId>
+  <artifactId>cbi-parent</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>The Eclipse CBI Plugins Project</name>
+
   <url>http://wiki.eclipse.org/CBI</url>
   <description>
-      CBI plugins are created to enable the Eclipse community to use
-      various services at Eclipse including the signing infrastructure.
+    The Eclipse Common Build Infrastructure (CBI) is an initiative
+    combining technologies and practices for building Eclipse Software.
   </description>
 
   <licenses>
@@ -59,24 +46,6 @@
     <url>http://eclipse.org/</url>
   </organization>
 
-  <developers>
-    <developer>
-      <id>tha</id>
-      <name>Thanh Ha</name>
-      <email>thanh.ha@eclipse.org</email>
-      <organization>Eclipse Foundation</organization>
-      <organizationUrl>http://eclipse.org/</organizationUrl>
-      <roles>
-        <role>Release Engineer</role>
-        <role>Developer</role>
-      </roles>
-      <timezone>America/Montreal</timezone>
-      <properties>
-        <picUrl>http://www.eclipse.org/org/foundation/hat%20photos/thanh.jpg</picUrl>
-      </properties>
-    </developer>
-  </developers>
-
   <scm>
     <connection>scm:git:git://git.eclipse.org/gitroot/cbi/org.eclipse.cbi.maven.plugins</connection>
     <developerConnection>scm:git:ssh://user@git.eclipse.org:29418/cbi/org.eclipse.cbi.maven.plugins</developerConnection>
@@ -85,58 +54,14 @@
   </scm>
 
   <properties>
-    <maven.version>3.1.1</maven.version>
-    <tycho.version>0.23.0</tycho.version>
-    <tycho-snapshot-repo.url>https://repo.eclipse.org/content/repositories/tycho-snapshots/</tycho-snapshot-repo.url>
-    <eclipse-maven-repo.url>https://repo.eclipse.org/content/repositories/releases/</eclipse-maven-repo.url>
-
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <minimum-maven-version>3.1.1</minimum-maven-version>
+    <apache-httpclient-version>4.3.3</apache-httpclient-version>
+    <cbi-common-version>1.2.0-SNAPSHOT</cbi-common-version>
   </properties>
 
-  <!--
-     See maven-enforcer-plugin configuration to actually break the build if
-     run with older maven.
-     prerequisites section is kept for now as even if it doesn't break the build, it
-     is used by other plugins like versions-maven-plugin which check and warn
-     for using plugins with older than they require Maven version.
-     If version number changed in one place, be sure to change in the other.
-  -->
   <prerequisites>
-    <maven>3.1.1</maven>
+    <maven>${minimum-maven-version}</maven>
   </prerequisites>
-
-  <pluginRepositories>
-    <pluginRepository>
-      <id>eclipse-maven</id>
-      <url>${eclipse-maven-repo.url}</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </pluginRepository>
-    <pluginRepository>
-      <id>tycho.snapshots</id>
-      <url>${tycho-snapshot-repo.url}</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </pluginRepository>
-  </pluginRepositories>
-
-  <modules>
-    <module>checkstyle</module>
-    <module>common</module>
-    <module>eclipse-cbi-plugin</module>
-    <module>eclipse-jarsigner-plugin</module>
-    <module>eclipse-macsigner-plugin</module>
-    <module>eclipse-winsigner-plugin</module>
-    <module>eclipse-dmg-packager</module>
-  </modules>
 
   <distributionManagement>
     <repository>
@@ -156,104 +81,42 @@
     </site>
   </distributionManagement>
 
+  <modules>
+    <module>checkstyle</module>
+    <module>common</module>
+
+    <!-- maven-plugins submodules If you add something in there, think about
+    also adding it to maven-plugins/pom.xml -->
+    <module>maven-plugins/common</module>
+    <module>maven-plugins/eclipse-cbi-plugin</module>
+    <module>maven-plugins/eclipse-jarsigner-plugin</module>
+    <module>maven-plugins/eclipse-macsigner-plugin</module>
+    <module>maven-plugins/eclipse-winsigner-plugin</module>
+    <module>maven-plugins/eclipse-dmg-packager</module>
+
+    <!-- webservices submodules. If you add something in there, think about
+    also adding it to webservice/pom.xml -->
+    <module>webservice/common</module>
+    <module>webservice/packaging/dmg</module>
+    <module>webservice/signing/jar</module>
+    <module>webservice/signing/windows</module>
+    <module>webservice/signing/macosx</module>
+  </modules>
+
   <build>
     <plugins>
       <plugin>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>2.15</version>
-        <dependencies>
-          <dependency>
-            <groupId>org.eclipse.cbi</groupId>
-            <artifactId>checkstyle</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-          </dependency>
-          <dependency> <!-- this one is necessary to run checkstyle:2.15 on maven 3.3.x, remove when upgrade to 2.16 (not released as of today) -->
-              <groupId>org.slf4j</groupId>
-              <artifactId>jcl-over-slf4j</artifactId>
-              <version>1.7.5</version>
-          </dependency>
-        </dependencies>
-        <configuration>
-          <configLocation>eclipse_checkstyle.xml</configLocation>
-          <failOnViolation>false</failOnViolation>
-          <failsOnError>true</failsOnError>
-          <consoleOutput>true</consoleOutput>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <phase>process-sources</phase>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-site-plugin</artifactId>
-        <version>3.4</version>
-        <configuration>
-          <relativizeDecorationLinks>false</relativizeDecorationLinks>
-          <reportPlugins>
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-plugin-plugin</artifactId>
-              <version>3.3</version>
-              <configuration>
-                <requirements>
-                  <maven>${maven-version}</maven>
-                </requirements>
-              </configuration>
-            </plugin>
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-project-info-reports-plugin</artifactId>
-              <version>2.7</version>
-            </plugin>
-          </reportPlugins>
-        </configuration>
-      </plugin>
-      <plugin>
-        <!--
-           This maven-enforcer-plugin configuration to actually break the build if
-           run with older maven.
-           prerequisites section is kept for now as even if it doesn't break the build, it
-           is used by other plugins like versions-maven-plugin which check and warn
-           for using plugins with older than they require Maven version.
-           If version number changed in one place, be sure to change in the other.
-        -->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>1.4</version>
-        <executions>
-          <execution>
-            <id>enforce-maven</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <requireMavenVersion>
-                  <version>3.1.1</version>
-                </requireMavenVersion>
-              </rules>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>2.6</version>
-        <executions>
-            <execution>
-                <goals>
-                    <goal>test-jar</goal>
-                </goals>
-            </execution>
-        </executions>
-    </plugin>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
+      </plugin>
     </plugins>
     <pluginManagement>
       <plugins>
@@ -264,7 +127,154 @@
           <configuration>
             <source>1.7</source>
             <target>1.7</target>
+            <encoding>UTF-8</encoding>
           </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>2.7</version>
+          <configuration>
+            <encoding>UTF_8</encoding>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>2.6</version>
+          <configuration>
+            <archive>
+              <manifest>
+                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+              </manifest>
+            </archive>
+          </configuration>
+          <executions>
+              <execution>
+                  <goals>
+                      <goal>test-jar</goal>
+                  </goals>
+              </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.18.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>2.3</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>2.6.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>2.8.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>2.5.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>3.4</version>
+        </plugin>
+        <plugin>
+          <!--
+             This maven-enforcer-plugin configuration to actually break the build if
+             run with older maven.
+             prerequisites section is kept for now as even if it doesn't break the build, it
+             is used by other plugins like versions-maven-plugin which check and warn
+             for using plugins with older than they require Maven version.
+          -->
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>1.4</version>
+          <executions>
+            <execution>
+              <id>enforce-maven</id>
+              <goals>
+                <goal>enforce</goal>
+              </goals>
+              <configuration>
+                <rules>
+                  <requireMavenVersion>
+                    <version>${minimum-maven-version}</version>
+                  </requireMavenVersion>
+                </rules>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>2.15</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.eclipse.cbi</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>1.0.0-SNAPSHOT</version>
+            </dependency>
+            <dependency> <!-- this one is necessary to run checkstyle:2.15 on maven 3.3.x, remove when upgrade to 2.16 (not released as of today) -->
+                <groupId>org.slf4j</groupId>
+                <artifactId>jcl-over-slf4j</artifactId>
+                <version>1.7.5</version>
+            </dependency>
+          </dependencies>
+          <configuration>
+            <configLocation>eclipse_checkstyle.xml</configLocation>
+            <failOnViolation>false</failOnViolation>
+            <failsOnError>true</failsOnError>
+            <consoleOutput>true</consoleOutput>
+            <encoding>UTF-8</encoding>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>check</goal>
+              </goals>
+              <phase>process-sources</phase>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>findbugs-maven-plugin</artifactId>
+          <version>3.0.1</version>
+          <configuration>
+            <threshold>High</threshold>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-plugin-plugin</artifactId>
+          <version>3.3</version>
+            <configuration>
+              <requirements>
+                <maven>${minimum-maven-version}</maven>
+              </requirements>
+            </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-project-info-reports-plugin</artifactId>
+          <version>2.7</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -273,26 +283,42 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-core</artifactId>
-        <version>${maven.version}</version>
-      </dependency>
-      <dependency>
-         <groupId>org.apache.maven</groupId>
-         <artifactId>maven-plugin-api</artifactId>
-         <version>${maven.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.codehaus.plexus</groupId>
-        <artifactId>plexus-utils</artifactId>
-        <version>3.0.17</version>
-      </dependency>
-      <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-compress</artifactId>
         <version>1.9</version>
       </dependency>
-      
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>18.0</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.auto.value</groupId>
+        <artifactId>auto-value</artifactId>
+        <version>1.1</version>
+        <scope>compile</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.maven</groupId>
+         <artifactId>maven-plugin-api</artifactId>
+         <version>${minimum-maven-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpclient</artifactId>
+        <version>${apache-httpclient-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpmime</artifactId>
+        <version>${apache-httpclient-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.cbi</groupId>
+        <artifactId>checkstyle</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+      </dependency>
+
       <!-- Dependency scope: test -->
       <dependency>
         <groupId>junit</groupId>
@@ -307,6 +333,12 @@
         <scope>test</scope>
       </dependency>
       <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>1.10.19</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-server</artifactId>
         <version>9.2.10.v20150310</version>
@@ -315,4 +347,3 @@
     </dependencies>
   </dependencyManagement>
 </project>
-

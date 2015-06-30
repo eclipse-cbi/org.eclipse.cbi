@@ -10,12 +10,12 @@
  ###############################################################################
 #!/bin/bash
 
-set -o nounset 
+set -o nounset
 set -o errexit
 set -o errtrace
 set -o functrace
 
-shopt -s nullglob 
+shopt -s nullglob
 shopt -s extglob
 shopt -s expand_aliases
 
@@ -86,7 +86,7 @@ function clean_up {
 
 trap clean_up SIGHUP SIGINT SIGTERM EXIT
 
-JAR_FILE=$(echo ${SCRIPT_PATH}/../target/jar-signing-service-*.jar)
+JAR_FILE=$(echo ${SCRIPT_PATH}/../target/jar-signing-service-*.jar | tr ' ' '\n' | grep -v tests.jar)
 # starts the server and stores its PID
 PID=$(nohup ${JAVA8_HOME}/bin/java -jar "${JAR_FILE}" -c "${SIGNING_SERVICE_PROPERTIES}" &> "${BUILD_DIR}/stdout_stderr" < /dev/null & echo $!)
 

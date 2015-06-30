@@ -23,7 +23,6 @@
 
   <modules>
     <module>../common</module>
-    <module>../checkstyle</module>
     <!-- If you add something in there, think about also add it to ../pom.xml -->
     <module>common</module>
     <module>eclipse-cbi-plugin</module>
@@ -32,6 +31,20 @@
     <module>eclipse-winsigner-plugin</module>
     <module>eclipse-dmg-packager</module>
   </modules>
+
+  <profiles>
+    <profile>
+      <id>quality</id>
+      <activation>
+        <property>
+          <name>quality</name>
+        </property>
+      </activation>
+      <modules>
+        <module>../checkstyle</module>
+      </modules>
+    </profile>
+  </profiles>
 
   <build>
     <plugins>

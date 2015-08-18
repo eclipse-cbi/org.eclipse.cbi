@@ -54,7 +54,7 @@ public abstract class SigningServlet extends HttpServlet {
 				.session(req.getSession())
 				.build();
 		
-		try(RequestFacade requestFacade = requestFacadeBuilder().request(req).build()) {
+		try(RequestFacade requestFacade = RequestFacade.builder(tempFolder()).request(req).build()) {
 			doSign(requestFacade, responseFacade);
 		} catch (Exception e) {
 			responseFacade.internalServerError(e);
@@ -87,15 +87,6 @@ public abstract class SigningServlet extends HttpServlet {
 	abstract Codesigner codesigner();
 
 	/**
-	 * Returns the builder of {@link RequestFacade} that will be get
-	 * information from the HTTP request.
-	 * 
-	 * @return the builder of {@link RequestFacade} that will be get
-	 *         information from the HTTP request.
-	 */
-	abstract RequestFacade.Builder requestFacadeBuilder();
-
-	/**
 	 * Returns the temporary folder to use during intermediate step of
 	 * application signing.
 	 * 
@@ -114,17 +105,6 @@ public abstract class SigningServlet extends HttpServlet {
 	@AutoValue.Builder
 	public static abstract class Builder {
 		Builder() {}
-		
-		/**
-		 * Sets the {@link RequestFacade} that will be use to query
-		 * the request.
-		 * 
-		 * @param builder
-		 *            the {@link RequestFacade} that will be use to
-		 *            query the request
-		 * @return this builder for daisy chaining.
-		 */
-		public abstract Builder requestFacadeBuilder(RequestFacade.Builder requestFacadeBuilder);
 		
 		public abstract Builder codesigner(Codesigner codesigner);
 		

@@ -21,7 +21,6 @@ import org.eclipse.cbi.util.ProcessExecutor;
 import org.eclipse.cbi.util.PropertiesReader;
 import org.eclipse.cbi.webservice.server.EmbeddedServer;
 import org.eclipse.cbi.webservice.server.EmbeddedServerProperties;
-import org.eclipse.cbi.webservice.servlet.RequestFacade;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -44,15 +43,14 @@ public class DMGPackagerServer {
 		if (parseCmdLineArguments(fs, args)) {
 			final Path confPath = fs.getPath(configurationFilePath);
 			final EmbeddedServerProperties serverConf = new EmbeddedServerProperties(PropertiesReader.create(confPath));
-			final DMGPackagerProperties conf = new DMGPackagerProperties(PropertiesReader.create(confPath));
 			final Path tempFolder = serverConf.getTempFolder();
-			
-			final ProcessExecutor executor = new ProcessExecutor.BasicImpl();
+
+			final DMGPackagerProperties conf = new DMGPackagerProperties(PropertiesReader.create(confPath));
+			final DMGPackager dmgPackager = DMGPackager.builder(new ProcessExecutor.BasicImpl()).timeout(conf.getTimeout()).build();
 			
 			final DMGPackagerServlet createDMGServlet = DMGPackagerServlet.builder()
-					.dmgPackagerBuilder(DMGPackager.builder(executor).timeout(conf.getTimeout()))
-					.requestFacadeBuilder(RequestFacade.builder(tempFolder))
-					.requestParserBuilder(DMGPackagerServletRequestParser.builder(executor, tempFolder))
+					.tempFolder(tempFolder)
+					.dmgPackager(dmgPackager)
 					.build();
 			
 			final EmbeddedServer server = EmbeddedServer.builder()

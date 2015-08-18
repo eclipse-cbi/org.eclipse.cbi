@@ -27,7 +27,11 @@ public abstract class DMGPackager {
 	DMGPackager() {}
 	
 	public Path packageImageFile(Path appFolder, Path targetImageFile) throws IOException {
-		ImmutableList<String> command = createCommand(appFolder, targetImageFile);
+		return packageImageFile(appFolder, targetImageFile, Options.builder().build());
+	}
+	
+	public Path packageImageFile(Path appFolder, Path targetImageFile, Options options) throws IOException {
+		ImmutableList<String> command = createCommand(appFolder, targetImageFile, options);
 	
 		final StringBuffer output = new StringBuffer();
 		int createImageFileExitValue = processExecutor().exec(command, output , timeout(), TimeUnit.SECONDS);
@@ -41,28 +45,28 @@ public abstract class DMGPackager {
 		}
 	}
 
-	private ImmutableList<String> createCommand(Path appFolder, Path targetImageFile) {
+	private ImmutableList<String> createCommand(Path appFolder, Path targetImageFile, Options options) {
 		ImmutableList.Builder<String> command = ImmutableList.builder();
 		command.add("./create-dmg/create-dmg");
 		
-		if (volumeName().isPresent())
-			command.add("--volname", volumeName().get());
-		if (windowPosition().isPresent())
-			command.add("--window-pos", windowPosition().get());
-		if (iconSize().isPresent())
-			command.add("--icon-size", iconSize().get());
-		if (icon().isPresent())
-			command.add("--icon", icon().get());
-		if (appDropLink().isPresent())
-			command.add("--app-drop-link", appDropLink().get());
-		if (windowPosition().isPresent())
-			command.add("--window-pos", windowPosition().get());
-		if (volumeIcon().isPresent())
-			command.add("--volicon", volumeIcon().get().toString());
-		if (backgroundImage().isPresent())
-			command.add("--background", backgroundImage().get().toString());
-		if (eula().isPresent())
-			command.add("--eula", eula().get().toString());
+		if (options.volumeName().isPresent())
+			command.add("--volname", options.volumeName().get());
+		if (options.windowPosition().isPresent())
+			command.add("--window-pos", options.windowPosition().get());
+		if (options.iconSize().isPresent())
+			command.add("--icon-size", options.iconSize().get());
+		if (options.icon().isPresent())
+			command.add("--icon", options.icon().get());
+		if (options.appDropLink().isPresent())
+			command.add("--app-drop-link", options.appDropLink().get());
+		if (options.windowPosition().isPresent())
+			command.add("--window-pos", options.windowPosition().get());
+		if (options.volumeIcon().isPresent())
+			command.add("--volicon", options.volumeIcon().get().toString());
+		if (options.backgroundImage().isPresent())
+			command.add("--background", options.backgroundImage().get().toString());
+		if (options.eula().isPresent())
+			command.add("--eula", options.eula().get().toString());
 		
 		command.add(targetImageFile.toString());
 		command.add(appFolder.toString());
@@ -72,16 +76,6 @@ public abstract class DMGPackager {
 
 	abstract ProcessExecutor processExecutor();
 	abstract long timeout();
-	
-	abstract Optional<String> volumeName();
-	abstract Optional<String> windowPosition();
-	abstract Optional<String> windowSize();
-	abstract Optional<String> iconSize();
-	abstract Optional<String> icon();
-	abstract Optional<String> appDropLink();
-	abstract Optional<Path> volumeIcon();
-	abstract Optional<Path> backgroundImage();
-	abstract Optional<Path> eula();
 	
 	public static Builder builder(ProcessExecutor executor) {
 		return new AutoValue_DMGPackager.Builder()
@@ -94,17 +88,45 @@ public abstract class DMGPackager {
 		Builder() {}
 		abstract Builder processExecutor(ProcessExecutor executor);
 		public abstract Builder timeout(long timeout);
-		
-		public abstract Builder volumeName(Optional<String> volumeName);
-		public abstract Builder windowPosition(Optional<String> windowPosition);
-		public abstract Builder windowSize(Optional<String> windowSize);
-		public abstract Builder iconSize(Optional<String> iconSize);
-		public abstract Builder icon(Optional<String> icon);
-		public abstract Builder appDropLink(Optional<String> appDropLink);
-		public abstract Builder volumeIcon(Optional<Path> volumeIcon);
-		public abstract Builder backgroundImage(Optional<Path> backgroundImage);
-		public abstract Builder eula(Optional<Path> eula);
-		
+
 		public abstract DMGPackager build();
+	}
+	
+
+	@AutoValue
+	public static abstract class Options {
+		
+		Options() {}
+		
+		abstract Optional<String> volumeName();
+		abstract Optional<String> windowPosition();
+		abstract Optional<String> windowSize();
+		abstract Optional<String> iconSize();
+		abstract Optional<String> icon();
+		abstract Optional<String> appDropLink();
+		abstract Optional<Path> volumeIcon();
+		abstract Optional<Path> backgroundImage();
+		abstract Optional<Path> eula();
+		
+		public static Builder builder() {
+			return new AutoValue_DMGPackager_Options.Builder();
+		}
+		
+		@AutoValue.Builder
+		public abstract static class Builder {
+			Builder() {}
+			
+			public abstract Builder volumeName(Optional<String> volumeName);
+			public abstract Builder windowPosition(Optional<String> windowPosition);
+			public abstract Builder windowSize(Optional<String> windowSize);
+			public abstract Builder iconSize(Optional<String> iconSize);
+			public abstract Builder icon(Optional<String> icon);
+			public abstract Builder appDropLink(Optional<String> appDropLink);
+			public abstract Builder volumeIcon(Optional<Path> volumeIcon);
+			public abstract Builder backgroundImage(Optional<Path> backgroundImage);
+			public abstract Builder eula(Optional<Path> eula);
+			
+			public abstract Options build();
+		}
 	}
 }

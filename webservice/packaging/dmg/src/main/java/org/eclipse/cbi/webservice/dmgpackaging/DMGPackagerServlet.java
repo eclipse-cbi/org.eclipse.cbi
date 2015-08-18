@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.cbi.common.util.Paths;
+import org.eclipse.cbi.webservice.dmgpackaging.DMGPackager.Options;
 import org.eclipse.cbi.webservice.servlet.RequestFacade;
 import org.eclipse.cbi.webservice.servlet.ResponseFacade;
 import org.slf4j.Logger;
@@ -42,9 +43,8 @@ public abstract class DMGPackagerServlet extends HttpServlet {
 	
 	DMGPackagerServlet() {}
 	
-	abstract DMGPackagerServletRequestParser.Builder requestParserBuilder();
-	abstract RequestFacade.Builder requestFacadeBuilder();
-	abstract DMGPackager.Builder dmgPackagerBuilder();
+	abstract Path tempFolder();
+	abstract DMGPackager dmgPackager();
 	
 	public static Builder builder() {
 		return new AutoValue_DMGPackagerServlet.Builder();
@@ -53,9 +53,8 @@ public abstract class DMGPackagerServlet extends HttpServlet {
 	@AutoValue.Builder
 	public static abstract class Builder {
 		Builder() {}
-		public abstract Builder requestParserBuilder(DMGPackagerServletRequestParser.Builder parserBuilder);
-		public abstract Builder requestFacadeBuilder(RequestFacade.Builder requestFacadeBuilder);
-		public abstract Builder dmgPackagerBuilder(DMGPackager.Builder dmgPackageBuilder);
+		public abstract Builder dmgPackager(DMGPackager dmgPackager);
+		public abstract Builder tempFolder(Path tempFolder);
 		public abstract DMGPackagerServlet build();
 	}
 	
@@ -66,10 +65,13 @@ public abstract class DMGPackagerServlet extends HttpServlet {
 				.session(req.getSession())
 				.build();
 		
+//		.dmgPackagerBuilder(DMGPackager.builder(executor).timeout(conf.getTimeout()))
+		
 		Path targetImageFile = null;
-		try(RequestFacade requestFacade = requestFacadeBuilder().request(req).build();
-				DMGPackagerServletRequestParser parser = requestParserBuilder().requestFacade(requestFacade).build()) {
-			final DMGPackager packager = dmgPackagerBuilder()
+		try(RequestFacade requestFacade = RequestFacade.builder(tempFolder()).request(req).build();
+				DMGPackagerServletRequestParser parser = DMGPackagerServletRequestParser.builder(tempFolder()).requestFacade(requestFacade).build()) {
+			
+			final Options options = Options.builder()
 				.appDropLink(parser.getAppDropLink())
 				.backgroundImage(parser.getBackgroundImage())
 				.eula(parser.getEula())
@@ -82,7 +84,7 @@ public abstract class DMGPackagerServlet extends HttpServlet {
 				.build();
 			
 			Path source = parser.getSource();
-			targetImageFile = packager.packageImageFile(source, source.normalize().getParent().resolve(source.getFileName().toString() + DOT_DMG));
+			targetImageFile = dmgPackager().packageImageFile(source, source.normalize().getParent().resolve(source.getFileName().toString() + DOT_DMG), options);
 			String filename = requestFacade.getSubmittedFileName(DMGPackagerServletRequestParser.SOURCE_PART_NAME).toString().replace(DOT_TAR_GZ, DOT_DMG);
 			responseFacade.replyWithFile(APPLE_DISKIMAGE_MEDIA_TYPE, filename, targetImageFile);
 		} catch (Exception e) {

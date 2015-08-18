@@ -44,7 +44,7 @@ public abstract class SigningServlet extends HttpServlet {
 				.servletResponse(resp)
 				.session(req.getSession()).build();
 		
-		try (RequestFacade requestFacade = requestFacadeBuilder().request(req).build()) {
+		try (RequestFacade requestFacade = RequestFacade.builder(tempFolder()).request(req).build()) {
 			doSign(requestFacade, responseFacade);
 		} catch (Exception e) {
 			responseFacade.internalServerError(e);
@@ -71,7 +71,7 @@ public abstract class SigningServlet extends HttpServlet {
 	}
 	
 	abstract OSSLCodesigner osslCodesigner();
-	abstract RequestFacade.Builder requestFacadeBuilder();
+	abstract Path tempFolder();
 	
 	@AutoValue.Builder
 	public static abstract class Builder {
@@ -79,6 +79,6 @@ public abstract class SigningServlet extends HttpServlet {
 
 		public abstract Builder osslCodesigner(OSSLCodesigner codesigner);
 
-		public abstract Builder requestFacadeBuilder(RequestFacade.Builder builder);
+		public abstract Builder tempFolder(Path tempFolder);
 	}
 }

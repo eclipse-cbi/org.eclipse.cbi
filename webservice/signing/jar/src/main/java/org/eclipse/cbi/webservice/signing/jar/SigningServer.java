@@ -21,7 +21,6 @@ import org.eclipse.cbi.util.ProcessExecutor;
 import org.eclipse.cbi.util.PropertiesReader;
 import org.eclipse.cbi.webservice.server.EmbeddedServer;
 import org.eclipse.cbi.webservice.server.EmbeddedServerProperties;
-import org.eclipse.cbi.webservice.servlet.RequestFacade;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -66,7 +65,7 @@ public class SigningServer {
 			
 			final SigningServlet codeSignServlet = SigningServlet.builder()
 				.jarSigner(jarSigner)
-				.requestFacadeBuilder(RequestFacade.builder(tempFolder))
+				.tempFolder(tempFolder)
 				.build();
 			
 			final EmbeddedServer server = EmbeddedServer.builder()

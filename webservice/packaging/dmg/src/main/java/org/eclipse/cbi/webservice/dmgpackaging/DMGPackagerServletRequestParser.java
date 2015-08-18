@@ -26,7 +26,6 @@ import javax.servlet.ServletException;
 
 import org.eclipse.cbi.common.util.Paths;
 import org.eclipse.cbi.common.util.Zips;
-import org.eclipse.cbi.util.ProcessExecutor;
 import org.eclipse.cbi.webservice.servlet.RequestFacade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +57,7 @@ public abstract class DMGPackagerServletRequestParser implements Closeable {
 	@Override
 	public void close() throws IOException {
 		Set<Path> pathToClean = new LinkedHashSet<>(tempPaths);
-		tempPaths.clear();;
+		tempPaths.clear();
 		
 		pathToClean.forEach(p -> {
 			try {
@@ -178,11 +177,8 @@ public abstract class DMGPackagerServletRequestParser implements Closeable {
 
 	abstract Path tempFolder();
 
-	abstract ProcessExecutor processExecutor();
-	
-	public static Builder builder(ProcessExecutor executor, Path tempFolder) {
+	public static Builder builder(Path tempFolder) {
 		return new AutoValue_DMGPackagerServletRequestParser.Builder()
-			.processExecutor(executor)
 			.tempFolder(tempFolder);
 	}
 
@@ -191,7 +187,6 @@ public abstract class DMGPackagerServletRequestParser implements Closeable {
 		Builder() {}
 		public abstract Builder requestFacade(RequestFacade requestFacade);
 		abstract Builder tempFolder(Path path);
-		abstract Builder processExecutor(ProcessExecutor executor);
 		abstract DMGPackagerServletRequestParser autoBuild();
 		public DMGPackagerServletRequestParser build() {
 			DMGPackagerServletRequestParser parser = autoBuild();

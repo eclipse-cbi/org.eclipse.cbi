@@ -17,6 +17,8 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.Nullable;
+
 import org.eclipse.cbi.util.ProcessExecutor;
 
 import com.google.auto.value.AutoValue;
@@ -71,6 +73,13 @@ public abstract class JarSigner {
 	abstract int httpsProxyPort();
 	
 	/**
+	 * Returns the digest algorithm to be used by the {@link #jarSigner()}.
+	 * @return the digest algorithm to be used by the {@link #jarSigner()}.
+	 */
+	@Nullable
+	abstract MessageDigestAlgorihtm digestAlgorithm();
+	
+	/**
 	 * Returns the executor that will execute the native command
 	 * 
 	 * @return the executor that will execute the native command
@@ -94,7 +103,8 @@ public abstract class JarSigner {
 			.httpProxyHost("")
 			.httpProxyPort(0)
 			.httpsProxyHost("")
-			.httpsProxyPort(0);
+			.httpsProxyPort(0)
+			.digestAlgorithm(null);
 	}
 	
 	/**
@@ -152,6 +162,8 @@ public abstract class JarSigner {
 		 */
 		public abstract Builder timeout(long timeout);
 		
+		public abstract Builder digestAlgorithm(@Nullable MessageDigestAlgorihtm digestAlg);
+		
 		public abstract Builder httpProxyHost(String proxyHost);
 		public abstract Builder httpProxyPort(int proxyPort);
 		public abstract Builder httpsProxyHost(String proxyHost);
@@ -189,8 +201,26 @@ public abstract class JarSigner {
 	 *             if the execution of the command did not end properly.
 	 */
 	public Path signJar(Path jar) throws IOException {
+		return signJar(jar, null);
+	}
+	
+	/**
+	 * Sign the given jar file with the configured jarsigner command.
+	 * 
+	 * @param jar
+	 *            the jar to be sign
+	 * @param digestAlg
+	 *            the message digest algorithm to use when digesting the entries
+	 *            of a JAR file. If <code>null</code>, jarsigner will use its
+	 *            default digest algorithm.
+	 * @return the path to the signed jar file (the same as the one given in
+	 *         parameter).
+	 * @throws IOException
+	 *             if the execution of the command did not end properly.
+	 */
+	public Path signJar(Path jar, MessageDigestAlgorihtm digestAlg) throws IOException {
 		final StringBuffer output = new StringBuffer();
-		int jarSignerExitValue = processExecutor().exec(createCommand(jar), output , timeout(), TimeUnit.SECONDS);
+		int jarSignerExitValue = processExecutor().exec(createCommand(jar, digestAlg), output , timeout(), TimeUnit.SECONDS);
 		if (jarSignerExitValue != 0) {
 			throw new IOException(Joiner.on('\n').join(
 					"The '" + jarSigner().toString() + "' command exited with value '" + jarSignerExitValue + "'",
@@ -205,10 +235,13 @@ public abstract class JarSigner {
 	 * 
 	 * @param jar
 	 *            the path of the file to be signed.
+	 * @param digestAlg
+	 *            the message digest algorithm to use when digesting the entries
+	 *            of a JAR file. May be <code>null</code>.
 	 * @return a list of string composing the command (see
 	 *         {@link ProcessBuilder} for format).
 	 */
-	private ImmutableList<String> createCommand(Path jar) {
+	private ImmutableList<String> createCommand(Path jar, MessageDigestAlgorihtm digestAlg) {
 		ImmutableList.Builder<String> command = ImmutableList.<String>builder().add(jarSigner().toString());
 		
 		if (!Strings.isNullOrEmpty(httpProxyHost())) {
@@ -217,6 +250,10 @@ public abstract class JarSigner {
 		
 		if (!Strings.isNullOrEmpty(httpProxyHost())) {
 			command.add("-J-Dhttps.proxyHost=" + httpsProxyHost()).add("-J-Dhttps.proxyPort=" + httpsProxyPort());
+		}
+		
+		if (digestAlg != null) {
+			command.add("-digestalg", digestAlg.standardName());
 		}
 
 		command.add("-tsa", timestampingAuthority().toString())

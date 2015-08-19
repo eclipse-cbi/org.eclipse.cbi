@@ -56,6 +56,9 @@
   <properties>
     <minimum-maven-version>3.1.1</minimum-maven-version>
     <apache-httpclient-version>4.3.3</apache-httpclient-version>
+    <!-- This is the version on which webservices/* and maven-plugins/* depends
+      on, NOT the version of cbi-common module in the source tree. If an update
+      of this version is required, do it in cbi-common/pom.xml -->
     <cbi-common-version>1.2.0-SNAPSHOT</cbi-common-version>
   </properties>
 
@@ -63,15 +66,28 @@
     <maven>${minimum-maven-version}</maven>
   </prerequisites>
 
+  <repositories>
+    <repository>
+      <id>repo.eclipse.org</id>
+      <url>https://repo.eclipse.org/content/repositories/cbi-releases/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
   <distributionManagement>
     <repository>
       <id>repo.eclipse.org</id>
-      <name>Eclipse CBI Nexus Repository - Releases</name>
+      <name>Eclipse CBI Repository - Releases</name>
       <url>https://repo.eclipse.org/content/repositories/cbi-releases/</url>
     </repository>
     <snapshotRepository>
       <id>repo.eclipse.org</id>
-      <name>Ecilpse CBI Nexus Repository - Snapshots</name>
+      <name>Eclipse CBI Repository - Snapshots</name>
       <url>https://repo.eclipse.org/content/repositories/cbi-snapshots/</url>
     </snapshotRepository>
     <site>
@@ -80,28 +96,6 @@
       <url>file:///${user.dir}/sitedocs</url>
     </site>
   </distributionManagement>
-
-  <modules>
-    <module>checkstyle</module>
-    <module>common</module>
-
-    <!-- maven-plugins submodules If you add something in there, think about
-    also adding it to maven-plugins/pom.xml -->
-    <module>maven-plugins/common</module>
-    <module>maven-plugins/eclipse-cbi-plugin</module>
-    <module>maven-plugins/eclipse-jarsigner-plugin</module>
-    <module>maven-plugins/eclipse-macsigner-plugin</module>
-    <module>maven-plugins/eclipse-winsigner-plugin</module>
-    <module>maven-plugins/eclipse-dmg-packager</module>
-
-    <!-- webservices submodules. If you add something in there, think about
-    also adding it to webservice/pom.xml -->
-    <module>webservice/common</module>
-    <module>webservice/packaging/dmg</module>
-    <module>webservice/signing/jar</module>
-    <module>webservice/signing/windows</module>
-    <module>webservice/signing/macosx</module>
-  </modules>
 
   <build>
     <plugins>
@@ -152,11 +146,11 @@
             </archive>
           </configuration>
           <executions>
-              <execution>
-                  <goals>
-                      <goal>test-jar</goal>
-                  </goals>
-              </execution>
+            <execution>
+              <goals>
+                <goal>test-jar</goal>
+              </goals>
+            </execution>
           </executions>
         </plugin>
         <plugin>
@@ -190,13 +184,11 @@
           <version>3.4</version>
         </plugin>
         <plugin>
-          <!--
-             This maven-enforcer-plugin configuration to actually break the build if
-             run with older maven.
-             prerequisites section is kept for now as even if it doesn't break the build, it
-             is used by other plugins like versions-maven-plugin which check and warn
-             for using plugins with older than they require Maven version.
-          -->
+          <!-- This maven-enforcer-plugin configuration to actually break
+            the build if run with older maven. prerequisites section is kept for now
+            as even if it doesn't break the build, it is used by other plugins like versions-maven-plugin
+            which check and warn for using plugins with older than they require Maven
+            version. -->
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
           <version>1.4</version>
@@ -225,10 +217,11 @@
               <artifactId>checkstyle</artifactId>
               <version>1.0.0-SNAPSHOT</version>
             </dependency>
-            <dependency> <!-- this one is necessary to run checkstyle:2.15 on maven 3.3.x, remove when upgrade to 2.16 (not released as of today) -->
-                <groupId>org.slf4j</groupId>
-                <artifactId>jcl-over-slf4j</artifactId>
-                <version>1.7.5</version>
+            <dependency> <!-- this one is necessary to run checkstyle:2.15 on maven 3.3.x, remove
+                when upgrade to 2.16 (not released as of today) -->
+              <groupId>org.slf4j</groupId>
+              <artifactId>jcl-over-slf4j</artifactId>
+              <version>1.7.5</version>
             </dependency>
           </dependencies>
           <configuration>
@@ -266,16 +259,21 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-plugin-plugin</artifactId>
           <version>3.3</version>
-            <configuration>
-              <requirements>
-                <maven>${minimum-maven-version}</maven>
-              </requirements>
-            </configuration>
+          <configuration>
+            <requirements>
+              <maven>${minimum-maven-version}</maven>
+            </requirements>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-project-info-reports-plugin</artifactId>
           <version>2.7</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>2.5.2</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -299,15 +297,15 @@
         <version>1.1</version>
         <scope>compile</scope>
       </dependency>
-      <dependency>
+      <dependency> <!-- Nullable annotations -->
         <groupId>com.google.code.findbugs</groupId>
         <artifactId>jsr305</artifactId>
         <version>3.0.0</version>
       </dependency>
       <dependency>
-         <groupId>org.apache.maven</groupId>
-         <artifactId>maven-plugin-api</artifactId>
-         <version>${minimum-maven-version}</version>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-plugin-api</artifactId>
+        <version>${minimum-maven-version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
@@ -323,11 +321,6 @@
         <groupId>org.eclipse.cbi</groupId>
         <artifactId>checkstyle</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-      </dependency>
-      <dependency> <!-- Nullable annotations -->
-        <groupId>com.google.code.findbugs</groupId>
-        <artifactId>jsr305</artifactId>
-        <version>3.0.0</version>
       </dependency>
 
       <!-- Dependency scope: test -->

@@ -47,10 +47,10 @@
   </organization>
 
   <scm>
-    <connection>scm:git:git://git.eclipse.org/gitroot/cbi/org.eclipse.cbi.maven.plugins</connection>
-    <developerConnection>scm:git:ssh://user@git.eclipse.org:29418/cbi/org.eclipse.cbi.maven.plugins</developerConnection>
+    <connection>scm:git:https://git.eclipse.org/r/cbi/org.eclipse.cbi</connection>
+    <developerConnection>scm:git:ssh://git.eclipse.org:29418/cbi/org.eclipse.cbi</developerConnection>
     <tag>master</tag>
-    <url>http://git.eclipse.org/c/cbi/org.eclipse.cbi.maven.plugins.git/</url>
+    <url>http://git.eclipse.org/c/cbi/org.eclipse.cbi.git/</url>
   </scm>
 
   <properties>
@@ -152,6 +152,11 @@
               </goals>
             </execution>
           </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <version>2.5.2</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>

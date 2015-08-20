@@ -15,4 +15,17 @@
   <groupId>org.eclipse.cbi</groupId>
   <artifactId>checkstyle</artifactId>
   <version>1.0.0-SNAPSHOT</version>
+
+  <distributionManagement>
+    <repository>
+      <id>repo.eclipse.org</id>
+      <name>Eclipse CBI Repository - Releases</name>
+      <url>https://repo.eclipse.org/content/repositories/cbi-releases/</url>
+    </repository>
+    <snapshotRepository>
+      <id>repo.eclipse.org</id>
+      <name>Eclipse CBI Repository - Snapshots</name>
+      <url>https://repo.eclipse.org/content/repositories/cbi-snapshots/</url>
+    </snapshotRepository>
+  </distributionManagement>
 </project>

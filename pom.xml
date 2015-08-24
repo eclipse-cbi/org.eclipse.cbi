@@ -56,8 +56,8 @@
   <properties>
     <minimum-maven-version>3.1.1</minimum-maven-version>
     <apache-httpclient-version>4.3.3</apache-httpclient-version>
-    <!-- This is the version on which webservices/* and maven-plugins/* depends
-      on, NOT the version of cbi-common module in the source tree. If an update
+    <!-- This is the version on which webservices/* and maven-plugins/* depends 
+      on, NOT the version of cbi-common module in the source tree. If an update 
       of this version is required, do it in cbi-common/pom.xml -->
     <cbi-common-version>1.2.0-SNAPSHOT</cbi-common-version>
   </properties>
@@ -155,11 +155,6 @@
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-release-plugin</artifactId>
-          <version>2.5.2</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.18.1</version>
         </plugin>
@@ -189,10 +184,10 @@
           <version>3.4</version>
         </plugin>
         <plugin>
-          <!-- This maven-enforcer-plugin configuration to actually break
-            the build if run with older maven. prerequisites section is kept for now
-            as even if it doesn't break the build, it is used by other plugins like versions-maven-plugin
-            which check and warn for using plugins with older than they require Maven
+          <!-- This maven-enforcer-plugin configuration to actually break 
+            the build if run with older maven. prerequisites section is kept for now 
+            as even if it doesn't break the build, it is used by other plugins like versions-maven-plugin 
+            which check and warn for using plugins with older than they require Maven 
             version. -->
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
@@ -222,7 +217,7 @@
               <artifactId>checkstyle</artifactId>
               <version>1.0.0-SNAPSHOT</version>
             </dependency>
-            <dependency> <!-- this one is necessary to run checkstyle:2.15 on maven 3.3.x, remove
+            <dependency> <!-- this one is necessary to run checkstyle:2.15 on maven 3.3.x, remove 
                 when upgrade to 2.16 (not released as of today) -->
               <groupId>org.slf4j</groupId>
               <artifactId>jcl-over-slf4j</artifactId>

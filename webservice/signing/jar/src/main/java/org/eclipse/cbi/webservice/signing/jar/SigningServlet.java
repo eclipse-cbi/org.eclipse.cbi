@@ -36,6 +36,7 @@ public abstract class SigningServlet extends HttpServlet {
 	private static final String TEMP_FILE_PREFIX = SigningServlet.class.getSimpleName() + "-";
 	private static final String FILE_PART_NAME = "file";
 	private static final String DIGEST_ALG_PARAMETER = "digestalg";
+	private static final String RESIGNING_STRATEGY_PARAMETER = "resigningStrategy";
 
 	/**
 	 * {@inheritDoc}
@@ -58,7 +59,8 @@ public abstract class SigningServlet extends HttpServlet {
 			String submittedFileName = requestFacade.getSubmittedFileName(FILE_PART_NAME).get();
 			if (submittedFileName.endsWith(".jar")) {
 				Path unsignedJar = requestFacade.getPartPath(FILE_PART_NAME, TEMP_FILE_PREFIX).get();
-				Path signedJar = jarSigner().signJar(unsignedJar, getDigestAlgorithm(requestFacade));
+				MessageDigestAlgorithm digestAlgorithm = getDigestAlgorithm(requestFacade);
+				Path signedJar = jarSigner().signJar(unsignedJar, digestAlgorithm, getResigningStrategy(requestFacade, digestAlgorithm));
 				responseFacade.replyWithFile(JAR_CONTENT_TYPE, submittedFileName, signedJar);
 			} else {
 				responseFacade.replyPlain(HttpServletResponse.SC_BAD_REQUEST, "Submitted '" + FILE_PART_NAME + "' '" + submittedFileName + "' must ends with '.jar' ");
@@ -68,13 +70,45 @@ public abstract class SigningServlet extends HttpServlet {
 		}
 	}
 
-	private MessageDigestAlgorihtm getDigestAlgorithm(final RequestFacade requestFacade) throws IOException {
-		Optional<String> digestAlgorithmParameter = requestFacade.getParameter(DIGEST_ALG_PARAMETER);
-		final MessageDigestAlgorihtm digestAlgorihtm;
-		if (digestAlgorithmParameter.isPresent()) {
-			digestAlgorihtm = MessageDigestAlgorihtm.fromStandardName(digestAlgorithmParameter.get());
+	private ResigningStrategy getResigningStrategy(RequestFacade requestFacade, MessageDigestAlgorithm digestAlgorithm) throws IOException {
+		final ResigningStrategy resigningStrategy;
+		Optional<String> resigningStrategyParameter = requestFacade.getParameter(RESIGNING_STRATEGY_PARAMETER);
+		if (resigningStrategyParameter.isPresent()) {
+			switch (resigningStrategyParameter.get()) {
+				case "DoNotResign":
+					resigningStrategy = ResigningStrategy.doNotResign();
+					break;
+				case "ThrowException":
+					resigningStrategy = ResigningStrategy.throwException();
+					break;
+				case "Resign":
+					resigningStrategy  = ResigningStrategy.resign(jarSigner(), digestAlgorithm);
+					break;
+				case "ResignWithSameDigestAlgorithm":
+					resigningStrategy = ResigningStrategy.resignWithSameDigestAlgorithm(jarSigner());
+					break;
+				case "Overwrite":
+					resigningStrategy  = ResigningStrategy.overwrite(jarSigner(), digestAlgorithm, tempFolder());
+					break;
+				case "OverwriteWithSameDigestAlgorithm":
+					resigningStrategy = ResigningStrategy.overwriteWithSameDigestAlgorithm(jarSigner(), tempFolder());
+				default:
+					throw new IllegalArgumentException("Unknown resigning strategy '" + resigningStrategyParameter.get() + "'. Valid values are 'DoNotResign', "
+							+ "'ThrowException', 'Resign', 'ResignWithSameDigestAlgorithm', 'Overwrite' and 'OverwriteWithSameDigestAlgorithm'.");
+			}
 		} else {
-			digestAlgorihtm = null;
+			resigningStrategy  = ResigningStrategy.resign(jarSigner(), MessageDigestAlgorithm.DEFAULT);
+		}
+		return resigningStrategy;
+	}
+
+	private MessageDigestAlgorithm getDigestAlgorithm(final RequestFacade requestFacade) throws IOException {
+		Optional<String> digestAlgorithmParameter = requestFacade.getParameter(DIGEST_ALG_PARAMETER);
+		final MessageDigestAlgorithm digestAlgorihtm;
+		if (digestAlgorithmParameter.isPresent()) {
+			digestAlgorihtm = MessageDigestAlgorithm.fromStandardName(digestAlgorithmParameter.get());
+		} else {
+			digestAlgorihtm = MessageDigestAlgorithm.DEFAULT;
 		}
 		return digestAlgorihtm;
 	}

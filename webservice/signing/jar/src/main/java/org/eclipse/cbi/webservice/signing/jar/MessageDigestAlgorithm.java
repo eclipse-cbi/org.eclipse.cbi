@@ -23,13 +23,13 @@ import com.google.common.base.Strings;
  * "http://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#MessageDigest">
  * standard names for algorithms</a>".
  */
-public enum MessageDigestAlgorihtm {
-	MD2("MD2"), MD5("MD5"), SHA_1("SHA-1"), SHA_224("SHA-224"), SHA_256("SHA-256"), SHA_384("SHA-384"), SHA_512(
-			"SHA-512");
+public enum MessageDigestAlgorithm {
+	DEFAULT("JVM-Default-Message-Digest-Algorithm"), MD2("MD2"), MD5("MD5"), SHA_1("SHA-1"), SHA_224(
+			"SHA-224"), SHA_256("SHA-256"), SHA_384("SHA-384"), SHA_512("SHA-512");
 
 	private final String standardName;
 
-	private MessageDigestAlgorihtm(String standardName) {
+	private MessageDigestAlgorithm(String standardName) {
 		this.standardName = standardName;
 	}
 
@@ -45,9 +45,9 @@ public enum MessageDigestAlgorihtm {
 		return this.standardName;
 	}
 
-	public static MessageDigestAlgorihtm fromStandardName(String digestAlg) {
+	public static MessageDigestAlgorithm fromStandardName(String digestAlg) {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(digestAlg));
-		Optional<MessageDigestAlgorihtm> ret = EnumSet.allOf(MessageDigestAlgorihtm.class).stream().filter(d -> digestAlg.equals(d.standardName))
+		Optional<MessageDigestAlgorithm> ret = EnumSet.allOf(MessageDigestAlgorithm.class).stream().filter(d -> digestAlg.equals(d.standardName))
 				.findFirst();
 		if (!ret.isPresent()) {
 			throw new IllegalArgumentException("Unknow digest algorithm '" + digestAlg + "'");

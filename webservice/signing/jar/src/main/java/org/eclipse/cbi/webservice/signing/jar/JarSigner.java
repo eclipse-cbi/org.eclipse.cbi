@@ -14,8 +14,12 @@ import static com.google.common.base.Preconditions.checkState;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.CodeSigner;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 
 import javax.annotation.Nullable;
 
@@ -77,7 +81,7 @@ public abstract class JarSigner {
 	 * @return the digest algorithm to be used by the {@link #jarSigner()}.
 	 */
 	@Nullable
-	abstract MessageDigestAlgorihtm digestAlgorithm();
+	abstract MessageDigestAlgorithm digestAlgorithm();
 	
 	/**
 	 * Returns the executor that will execute the native command
@@ -162,7 +166,7 @@ public abstract class JarSigner {
 		 */
 		public abstract Builder timeout(long timeout);
 		
-		public abstract Builder digestAlgorithm(@Nullable MessageDigestAlgorihtm digestAlg);
+		public abstract Builder digestAlgorithm(@Nullable MessageDigestAlgorithm digestAlg);
 		
 		public abstract Builder httpProxyHost(String proxyHost);
 		public abstract Builder httpProxyPort(int proxyPort);
@@ -201,7 +205,7 @@ public abstract class JarSigner {
 	 *             if the execution of the command did not end properly.
 	 */
 	public Path signJar(Path jar) throws IOException {
-		return signJar(jar, null);
+		return signJar(jar, MessageDigestAlgorithm.DEFAULT);
 	}
 	
 	/**
@@ -218,7 +222,56 @@ public abstract class JarSigner {
 	 * @throws IOException
 	 *             if the execution of the command did not end properly.
 	 */
-	public Path signJar(Path jar, MessageDigestAlgorihtm digestAlg) throws IOException {
+	public Path signJar(Path jar, MessageDigestAlgorithm digestAlg) throws IOException {
+		return signJar(jar, digestAlg, ResigningStrategy.resign(this, MessageDigestAlgorithm.DEFAULT));
+	}
+	
+	/**
+	 * Sign the given jar file with the configured jarsigner command. If the jar
+	 * is already signed, use the given {@link ResigningStrategy} to resign it.
+	 * 
+	 * @param jar
+	 *            the jar to be sign
+	 * @param digestAlg
+	 *            the message digest algorithm to use when digesting the entries
+	 *            of a JAR file. If <code>null</code>, jarsigner will use its
+	 *            default digest algorithm.
+	 * @param resigningStrategy
+	 *            the strategy to be used if the given jar is already signed.
+	 * @return the path to the signed jar file (the same as the one given in
+	 *         parameter).
+	 * @throws IOException
+	 *             if the execution of the command did not end properly.
+	 */
+	public Path signJar(Path jar, MessageDigestAlgorithm digestAlg, ResigningStrategy resigningStrategy) throws IOException {
+		final boolean alreadySigned = isAlreadySigned(jar);
+		
+		if (alreadySigned) {
+			return resigningStrategy.resignJar(jar);
+		} else {
+			return doSign(jar, digestAlg);
+		}
+	}
+
+	private static boolean isAlreadySigned(Path jar) throws IOException {
+		final boolean alreadySigned;
+		try (JarInputStream jis = new JarInputStream(Files.newInputStream(jar))) {
+			JarEntry nextJarEntry = jis.getNextJarEntry();
+			if (nextJarEntry != null) {
+				CodeSigner[] codeSigners = nextJarEntry.getCodeSigners();
+				if (codeSigners != null) {
+					alreadySigned = codeSigners.length > 0;
+				} else {
+					alreadySigned = false;
+				}
+			} else {
+				alreadySigned = false;
+			}
+		}
+		return alreadySigned;
+	}
+	
+	Path doSign(Path jar, MessageDigestAlgorithm digestAlg) throws IOException {
 		final StringBuffer output = new StringBuffer();
 		int jarSignerExitValue = processExecutor().exec(createCommand(jar, digestAlg), output , timeout(), TimeUnit.SECONDS);
 		if (jarSignerExitValue != 0) {
@@ -241,7 +294,7 @@ public abstract class JarSigner {
 	 * @return a list of string composing the command (see
 	 *         {@link ProcessBuilder} for format).
 	 */
-	private ImmutableList<String> createCommand(Path jar, MessageDigestAlgorihtm digestAlg) {
+	private ImmutableList<String> createCommand(Path jar, MessageDigestAlgorithm digestAlg) {
 		ImmutableList.Builder<String> command = ImmutableList.<String>builder().add(jarSigner().toString());
 		
 		if (!Strings.isNullOrEmpty(httpProxyHost())) {
@@ -252,7 +305,7 @@ public abstract class JarSigner {
 			command.add("-J-Dhttps.proxyHost=" + httpsProxyHost()).add("-J-Dhttps.proxyPort=" + httpsProxyPort());
 		}
 		
-		if (digestAlg != null) {
+		if (digestAlg != MessageDigestAlgorithm.DEFAULT) {
 			command.add("-digestalg", digestAlg.standardName());
 		}
 

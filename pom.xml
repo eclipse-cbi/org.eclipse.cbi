@@ -79,6 +79,21 @@
     </repository>
   </repositories>
 
+  <!-- This is required by maven-checkstyle-plugin as it will look for dependencies 
+    in pluginRepositories and not repositories -->
+  <pluginRepositories>
+    <pluginRepository>
+      <id>repo.eclipse.org</id>
+      <url>https://repo.eclipse.org/content/repositories/cbi-releases/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
+
   <distributionManagement>
     <repository>
       <id>repo.eclipse.org</id>
@@ -210,18 +225,12 @@
         </plugin>
         <plugin>
           <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>2.15</version>
+          <version>2.16</version>
           <dependencies>
             <dependency>
               <groupId>org.eclipse.cbi</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>1.0.0-SNAPSHOT</version>
-            </dependency>
-            <dependency> <!-- this one is necessary to run checkstyle:2.15 on maven 3.3.x, remove 
-                when upgrade to 2.16 (not released as of today) -->
-              <groupId>org.slf4j</groupId>
-              <artifactId>jcl-over-slf4j</artifactId>
-              <version>1.7.5</version>
+              <version>1.0.0</version>
             </dependency>
           </dependencies>
           <configuration>
@@ -320,7 +329,7 @@
       <dependency>
         <groupId>org.eclipse.cbi</groupId>
         <artifactId>checkstyle</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
       </dependency>
 
       <!-- Dependency scope: test -->

@@ -13,13 +13,13 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.eclipse.cbi</groupId>
   <artifactId>checkstyle</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1-SNAPSHOT</version>
 
   <scm>
     <connection>scm:git:https://git.eclipse.org/r/cbi/org.eclipse.cbi</connection>
     <!-- The release in done on Hudson, and it can only right the git repo with file uri -->
     <developerConnection>scm:git:/gitroot/cbi/org.eclipse.cbi.git</developerConnection>
-    <tag>checkstyle-1.0.0</tag>
+    <tag>master</tag>
     <url>http://git.eclipse.org/c/cbi/org.eclipse.cbi.git/</url>
   </scm>
 

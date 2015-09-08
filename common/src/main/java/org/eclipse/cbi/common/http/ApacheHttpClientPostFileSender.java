@@ -14,6 +14,7 @@ package org.eclipse.cbi.common.http;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,10 +35,11 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.InputStreamBody;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.codehaus.plexus.util.IOUtil;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.io.CharStreams;
 
 /**
  * A class that send a file to as a post request to an HTTP server adn replace 
@@ -198,8 +200,8 @@ public class ApacheHttpClientPostFileSender implements HttpPostFileSender {
 			logDebug("Signing server did not replied OK.");
 		}
 		if (resEntity != null) {
-			try (InputStream is = new BufferedInputStream(resEntity.getContent())) {
-				String message = IOUtil.toString(is, "UTF-8");
+			try (InputStreamReader is = new InputStreamReader(new BufferedInputStream(resEntity.getContent()), Charsets.UTF_8)) {
+				String message = CharStreams.toString(is);
 				logDebug("Signing server failed by returning content '" + message + "'");
 			} catch (IOException e) {
 				logDebug("Error occurred while reading the content returned by the signing server", e);

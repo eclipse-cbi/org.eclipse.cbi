@@ -35,17 +35,20 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.InputStreamBody;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.eclipse.cbi.common.FileProcessor;
+import org.eclipse.cbi.common.Logger;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.io.CharStreams;
 
 /**
- * A class that send a file to as a post request to an HTTP server adn replace 
+ * A class that send a file to as a post request to an HTTP server and replace 
  * the send file with the reply.
  */
-public class ApacheHttpClientPostFileSender implements HttpPostFileSender {
+public class ApacheHttpClientFileProcessor implements FileProcessor {
 
 	/**
 	 * The URI of the server where the file will be send.
@@ -53,20 +56,29 @@ public class ApacheHttpClientPostFileSender implements HttpPostFileSender {
 	private final URI serverURI;
 
 	/**
-	 * The log for providing {@code DEBUG} feedback about the signing process.
+	 * The log for providing {@code DEBUG} feedback about the process.
 	 */
 	private final Logger log;
+
+	/**
+	 * The name of the part that will be send.
+	 */
+	private final String partName;
 
 	/**
 	 * Default constructor.
 	 * 
 	 * @param serverURI
 	 *            the URI of the server where the file will be send.
+	 * @param partName
+	 *            the name of the part that will be send
 	 * @param log
-	 *            the log for providing {@code DEBUG} feedback about the signing process
+	 *            the log for providing {@code DEBUG} feedback about the process
 	 */
-	public ApacheHttpClientPostFileSender(URI serverURI, Logger log) {
+	public ApacheHttpClientFileProcessor(URI serverURI, String partName, Logger log) {
 		this.serverURI = Objects.requireNonNull(serverURI);
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(partName), "'partName' must not be empty or null");
+		this.partName = partName;
 		this.log = Objects.requireNonNull(log);
 	}
 
@@ -74,40 +86,40 @@ public class ApacheHttpClientPostFileSender implements HttpPostFileSender {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public boolean post(Path path, String partName) throws IOException {
-		return post(path, partName, 0, 0, TimeUnit.SECONDS); 
+	public boolean process(Path path) throws IOException {
+		return process(path, 0, 0, TimeUnit.SECONDS); 
 	}
 	
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public boolean post(Path path, String partName, int maxRetries, int retryInterval, TimeUnit unit) throws IOException {
+	public boolean process(Path path, int maxRetries, int retryInterval, TimeUnit unit) throws IOException {
 		if (path == null || !Files.exists(path) || !Files.isRegularFile(path)) {
 			throw new IllegalArgumentException("'source' must be an existing regular file.");
 		}
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(partName), "'partName' must not be empty or null");
 		checkPositive(maxRetries, "'maxRetries' must be positive");
 		checkPositive(retryInterval, "'retryInterval' must be positive");
 		Objects.requireNonNull(unit, "'unit' must not be null");
 		
 		try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
-			boolean sucessfullySigned = false;
+			boolean sucess = false;
 			
 			Exception lastThrownException = null;
-			for (int retryCount = 0; !sucessfullySigned && retryCount <= maxRetries; retryCount++) {
-				if (!sucessfullySigned && retryCount > 0) {
-					logDebug("Unable to sign '"+path+"' on '"+ serverURI +"'. Will retry ("+(retryCount)+" / "+maxRetries+") in "+ retryInterval +" "+unit.name()+"...");
+			for (int retryCount = 0; !sucess && retryCount <= maxRetries; retryCount++) {
+				if (!sucess && retryCount > 0) {
+					logDebug("Unable to process '"+path+"' on '"+ serverURI +"'. Will retry ("+(retryCount)+" / "+maxRetries+") in "+ retryInterval +" "+unit.name()+"...");
 					try {
 						unit.sleep(retryInterval);
 					} catch (InterruptedException e) {
-						logDebug("Signing thread has been interrupted", e);
+						logDebug("Thread has been interrupted", e);
 						Thread.currentThread().interrupt();
+						break;
 					}
 				} 
 				
 				try {
-					sucessfullySigned = sign(path, partName, httpClient);
+					sucess = process(path, partName, httpClient);
 				} catch (Exception e) {
 					lastThrownException = e;
 					logDebug("Error occured while communicating with '"+ serverURI +"'", e);
@@ -115,20 +127,11 @@ public class ApacheHttpClientPostFileSender implements HttpPostFileSender {
 			}
 			
 			if (lastThrownException != null) {
-				propagate(lastThrownException);
+				Throwables.propagateIfInstanceOf(lastThrownException, IOException.class);
+				throw Throwables.propagate(lastThrownException);
 			}
 			
-			return sucessfullySigned;
-		}
-	}
-
-	private static void propagate(Exception exception) throws IOException {
-		if (exception instanceof RuntimeException) {
-			throw (RuntimeException)exception;
-		} else if (exception instanceof IOException) {
-			throw (IOException)exception;
-		} else {
-			throw new RuntimeException(exception);
+			return sucess;
 		}
 	}
 
@@ -140,8 +143,8 @@ public class ApacheHttpClientPostFileSender implements HttpPostFileSender {
 		}
 	}
 
-	private boolean sign(Path source, String partName, CloseableHttpClient httpClient) throws IOException {
-		try (CloseableHttpResponse response = sendSigningRequest(source, partName, httpClient)) {
+	private boolean process(Path source, String partName, CloseableHttpClient httpClient) throws IOException {
+		try (CloseableHttpResponse response = sendProcessingRequest(source, partName, httpClient)) {
 			final StatusLine statusLine = response.getStatusLine();
 			final HttpEntity resEntity = response.getEntity();
 		
@@ -163,22 +166,22 @@ public class ApacheHttpClientPostFileSender implements HttpPostFileSender {
 	/**
 	 * Send the given file to the server and return its response.
 	 * 
-	 * @param filetoBeSigned
-	 *            the file to be signed.
+	 * @param path
+	 *            the file to be processed.
 	 * @return the HTTP response of the server.
 	 * @throws IOException
 	 *             if something wrong happen during the request.
 	 */
-	private CloseableHttpResponse sendSigningRequest(Path filetoBeSigned, String partName, CloseableHttpClient client) throws IOException {
-		logDebug("Sending '" + filetoBeSigned.toString() + "' for signing to '" + serverURI + "'");
+	private CloseableHttpResponse sendProcessingRequest(Path path, String partName, CloseableHttpClient client) throws IOException {
+		logDebug("Sending '" + path.toString() + "' for processing to '" + serverURI + "'");
 		
 		HttpPost post = new HttpPost(serverURI);
 
 		MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 		builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
 
-		try (InputStream inputStream = new BufferedInputStream(Files.newInputStream(filetoBeSigned, StandardOpenOption.READ))) {
-			InputStreamBody inputStreamBody = new InputStreamBody(inputStream, ContentType.DEFAULT_BINARY, filetoBeSigned.getFileName().toString());
+		try (InputStream inputStream = new BufferedInputStream(Files.newInputStream(path, StandardOpenOption.READ))) {
+			InputStreamBody inputStreamBody = new InputStreamBody(inputStream, ContentType.DEFAULT_BINARY, path.getFileName().toString());
 			builder.addPart(partName, inputStreamBody);
 			post.setEntity(builder.build());
 			return client.execute(post);
@@ -195,16 +198,16 @@ public class ApacheHttpClientPostFileSender implements HttpPostFileSender {
 	 */
 	private void handleError(final StatusLine statusLine, final HttpEntity resEntity) {
 		if (statusLine != null) {
-			logDebug("Signing server replied with: '" + statusLine.toString() + "'");
+			logDebug("Server replied with: '" + statusLine.toString() + "'");
 		} else {
-			logDebug("Signing server did not replied OK.");
+			logDebug("Server did not replied OK.");
 		}
 		if (resEntity != null) {
 			try (InputStreamReader is = new InputStreamReader(new BufferedInputStream(resEntity.getContent()), Charsets.UTF_8)) {
 				String message = CharStreams.toString(is);
-				logDebug("Signing server failed by returning content '" + message + "'");
+				logDebug("Server failed by returning content '" + message + "'");
 			} catch (IOException e) {
-				logDebug("Error occurred while reading the content returned by the signing server", e);
+				logDebug("Error occurred while reading the content returned by the server", e);
 			}
 		}
 	}

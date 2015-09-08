@@ -40,6 +40,7 @@ import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
 
+import com.google.common.io.ByteStreams;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 
@@ -271,7 +272,7 @@ public class ZipsTest {
 		assertEquals(expectedEntryName, entry.getName());
 		
 		if (!Files.isDirectory(originalPath)) {
-			assertArrayEquals(Files.readAllBytes(originalPath), SampleFilesGenerators.readAllBytes(zis));
+			assertArrayEquals(Files.readAllBytes(originalPath), ByteStreams.toByteArray(zis));
 			assertEquals(Files.size(originalPath), entry.getSize());
 		}
 		

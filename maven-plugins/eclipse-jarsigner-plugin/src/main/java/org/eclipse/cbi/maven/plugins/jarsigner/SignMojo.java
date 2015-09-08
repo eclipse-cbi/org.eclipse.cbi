@@ -22,8 +22,8 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
-import org.eclipse.cbi.common.http.ApacheHttpClientPostFileSender;
-import org.eclipse.cbi.common.http.HttpPostFileSender;
+import org.eclipse.cbi.common.FileProcessor;
+import org.eclipse.cbi.common.http.ApacheHttpClientFileProcessor;
 import org.eclipse.cbi.maven.common.MavenLogger;
 
 /**
@@ -39,6 +39,8 @@ import org.eclipse.cbi.maven.common.MavenLogger;
  */
 public class SignMojo extends AbstractMojo {
 
+	private static final String PART_NAME = "file";
+	
 	/**
      * Maven Project
      *
@@ -237,7 +239,7 @@ public class SignMojo extends AbstractMojo {
      */
 	private JarSigner createJarSigner() {
 		URI signerURI = URI.create(signerUrl);
-		final HttpPostFileSender signer = new ApacheHttpClientPostFileSender(signerURI, new MavenLogger(getLog()));
+		final FileProcessor signer = new ApacheHttpClientFileProcessor(signerURI, PART_NAME, new MavenLogger(getLog()));
         JarSigner.Builder jarSignerBuilder = JarSigner.builder(signer);
         jarSignerBuilder.logOn(getLog()).maxRetry(retryLimit).waitBeforeRetry(retryTimer, TimeUnit.SECONDS);
         

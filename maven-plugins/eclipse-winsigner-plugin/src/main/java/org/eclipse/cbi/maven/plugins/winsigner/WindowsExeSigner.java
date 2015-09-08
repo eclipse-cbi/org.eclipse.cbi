@@ -25,22 +25,22 @@ import java.util.concurrent.TimeUnit;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
-import org.eclipse.cbi.common.http.HttpPostFileSender;
-import org.eclipse.cbi.common.util.Strings;
+import org.eclipse.cbi.common.FileProcessor;
 import org.eclipse.cbi.maven.common.ExceptionHandler;
 import org.eclipse.cbi.maven.common.MojoExecutionExceptionWrapper;
 
+import com.google.common.base.Joiner;
+
 public class WindowsExeSigner {
 
-	private static final String PART_NAME = "file";
-	private final HttpPostFileSender signer;
+	private final FileProcessor signer;
 	private final int maxRetry;
 	private final int retryInterval;
 	private final TimeUnit retryIntervalUnit;
 	private final Log log;
 	private final ExceptionHandler exceptionHandler;
 
-	private WindowsExeSigner(HttpPostFileSender signer, boolean continueOnFail, Log log, int maxRetry, int retryInterval, TimeUnit retryIntervalUnit) {
+	private WindowsExeSigner(FileProcessor signer, boolean continueOnFail, Log log, int maxRetry, int retryInterval, TimeUnit retryIntervalUnit) {
 		this.signer = signer;
 		this.log = log;
 		this.maxRetry = maxRetry;
@@ -72,7 +72,7 @@ public class WindowsExeSigner {
 		} catch (MojoExecutionExceptionWrapper e) {
 			throw e.getCause();
 		} catch (IOException e) {
-			exceptionHandler.handleError("Error occured while signing Windows binary (" + Strings.join(", ", pathMatchers) + ")", e);
+			exceptionHandler.handleError("Error occured while signing Windows binary (" + Joiner.on(", ").join(pathMatchers) + ")", e);
 		}
 		return ret;
 	}
@@ -96,7 +96,7 @@ public class WindowsExeSigner {
     	boolean ret = false; 
         try {
         	log.info("[" + new Date() + "] Signing Windows executable '" + file + "'...");
-            if (!signer.post(file, PART_NAME, maxRetry, retryInterval, retryIntervalUnit)) {
+            if (!signer.process(file, maxRetry, retryInterval, retryIntervalUnit)) {
             	exceptionHandler.handleError("Signing of Windows executable '" + file + "' failed. Activate debug (-X, --debug) to see why.");
             } else {
             	ret = true;
@@ -107,7 +107,7 @@ public class WindowsExeSigner {
         return ret;
     }
     
-    public static Builder builder(HttpPostFileSender signer) {
+    public static Builder builder(FileProcessor signer) {
     	return new Builder(signer);
     }
 
@@ -153,7 +153,7 @@ public class WindowsExeSigner {
 	 */
 	public static class Builder {
 
-		private final HttpPostFileSender signer;
+		private final FileProcessor signer;
 		
 		private boolean continueOnFail = false;
 
@@ -165,7 +165,7 @@ public class WindowsExeSigner {
 
 		private TimeUnit waitTimerUnit = TimeUnit.SECONDS;
 
-		Builder(HttpPostFileSender signer) {
+		Builder(FileProcessor signer) {
 			this.signer = Objects.requireNonNull(signer);
 		}
 		
@@ -192,7 +192,7 @@ public class WindowsExeSigner {
 		}
 		
 		/**
-		 * The maximum number of retry that will be passed to the {@link HttpPostFileSender}.
+		 * The maximum number of retry that will be passed to the {@link FileProcessor}.
 		 * @param maxRetry
 		 * @return this builder for chained calls.
 		 */
@@ -205,7 +205,7 @@ public class WindowsExeSigner {
 		}
 		
 		/**
-		 * The time to wait between each try (passed to the {@link HttpPostFileSender}).
+		 * The time to wait between each try (passed to the {@link FileProcessor}).
 		 * @param waitTimer
 		 * @param timeUnit
 		 * @return this builder for chained calls.

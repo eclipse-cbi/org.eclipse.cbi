@@ -1,6 +1,6 @@
 package org.eclipse.cbi.common.http;
 
-import org.eclipse.cbi.common.http.Logger;
+import org.eclipse.cbi.common.Logger;
 
 public class NullLog implements Logger {
 

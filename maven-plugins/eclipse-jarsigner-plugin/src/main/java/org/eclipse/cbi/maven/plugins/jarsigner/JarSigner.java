@@ -26,7 +26,7 @@ import java.util.zip.ZipInputStream;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
-import org.eclipse.cbi.common.http.HttpPostFileSender;
+import org.eclipse.cbi.common.FileProcessor;
 import org.eclipse.cbi.common.util.Paths;
 import org.eclipse.cbi.common.util.Zips;
 import org.eclipse.cbi.maven.common.ExceptionHandler;
@@ -36,8 +36,6 @@ import org.eclipse.cbi.maven.common.MojoExecutionExceptionWrapper;
  * Utility class that signs a Jar and the nested Jar.
  */
 public class JarSigner {
-
-	private static final String PART_NAME = "file";
 
 	/**
 	 * {@code eclispe.inf} property to exclude this Jar from signing.
@@ -67,20 +65,20 @@ public class JarSigner {
 	/**
 	 * The signer to which the Jar will be send for signing.
 	 */
-	private final HttpPostFileSender signer;
+	private final FileProcessor signer;
 
 	/**
-	 * The retry limit that will be passed to the {@link HttpPostFileSender#trySign(Path, int, int, TimeUnit)}.
+	 * The retry limit that will be passed to the {@link FileProcessor#trySign(Path, int, int, TimeUnit)}.
 	 */
 	private final int retryLimit;
 
 	/**
-	 * The retry timer that will be passed to the {@link HttpPostFileSender#trySign(Path, int, int, TimeUnit)}.
+	 * The retry timer that will be passed to the {@link FileProcessor#trySign(Path, int, int, TimeUnit)}.
 	 */
 	private final int retryTimer;
 
 	/**
-	 * The retry timer time unit that will be passed to the {@link HttpPostFileSender#trySign(Path, int, int, TimeUnit)}.
+	 * The retry timer time unit that will be passed to the {@link FileProcessor#trySign(Path, int, int, TimeUnit)}.
 	 */
 	private final TimeUnit retryTimerUnit;
 
@@ -103,7 +101,7 @@ public class JarSigner {
 	 * @param retryTimer
 	 * @param retryTimerUnit
 	 */
-	private JarSigner(HttpPostFileSender signer, int maxdepth, boolean continueOnFail, Log log, int retryLimit, int retryTimer, TimeUnit retryTimerUnit) {
+	private JarSigner(FileProcessor signer, int maxdepth, boolean continueOnFail, Log log, int retryLimit, int retryTimer, TimeUnit retryTimerUnit) {
 		this.signer = signer;
 		this.maxDepth = maxdepth;
 		this.log = log;
@@ -235,7 +233,7 @@ public class JarSigner {
 			nestedJarsSigned = signNestedJars(file, currentDepth);
 		}
 
-		if (!signer.post(file, PART_NAME, retryLimit, retryTimer, retryTimerUnit)) {
+		if (!signer.process(file, retryLimit, retryTimer, retryTimerUnit)) {
 			exceptionHandler.handleError("Signing of jar '" + file + "' failed. Activate debug (-X, --debug) to see why.");
 			return nestedJarsSigned;
 		} else {
@@ -319,7 +317,7 @@ public class JarSigner {
 	 *            the signer to delegate to.
 	 * @return the builder of {@link JarSigner}.
 	 */
-	public static JarSigner.Builder builder(HttpPostFileSender signer) {
+	public static JarSigner.Builder builder(FileProcessor signer) {
 		return new Builder(signer);
 	}
 	
@@ -335,7 +333,7 @@ public class JarSigner {
 	 */
 	public static class Builder {
 
-		private final HttpPostFileSender signer;
+		private final FileProcessor signer;
 		
 		private boolean continueOnFail = false;
 
@@ -349,7 +347,7 @@ public class JarSigner {
 
 		private int maxDepth = 0;
 
-		Builder(HttpPostFileSender signer) {
+		Builder(FileProcessor signer) {
 			this.signer = Objects.requireNonNull(signer);
 		}
 		
@@ -389,7 +387,7 @@ public class JarSigner {
 		}
 		
 		/**
-		 * The maximum number of retry that will be passed to the {@link HttpPostFileSender}.
+		 * The maximum number of retry that will be passed to the {@link FileProcessor}.
 		 * @param maxRetry
 		 * @return this builder for chained calls.
 		 */
@@ -402,7 +400,7 @@ public class JarSigner {
 		}
 		
 		/**
-		 * The time to wait between each try (passed to the {@link HttpPostFileSender}).
+		 * The time to wait between each try (passed to the {@link FileProcessor}).
 		 * @param waitTimer
 		 * @param timeUnit
 		 * @return this builder for chained calls.

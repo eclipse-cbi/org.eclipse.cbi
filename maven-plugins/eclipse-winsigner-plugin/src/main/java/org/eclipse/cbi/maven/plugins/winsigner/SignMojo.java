@@ -24,8 +24,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
-import org.eclipse.cbi.common.http.ApacheHttpClientPostFileSender;
-import org.eclipse.cbi.common.http.HttpPostFileSender;
+import org.eclipse.cbi.common.FileProcessor;
+import org.eclipse.cbi.common.http.ApacheHttpClientFileProcessor;
 import org.eclipse.cbi.maven.common.MavenLogger;
 
 /**
@@ -42,6 +42,8 @@ public class SignMojo extends AbstractMojo {
 	private static final String ECLIPSEC_EXE = "eclipsec.exe";
 
 	private static final String ECLIPSE_EXE = "eclipse.exe";
+	
+	private static final String PART_NAME = "file";
 
 	/**
      * The signing service URL for signing Windows binaries
@@ -164,7 +166,7 @@ public class SignMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException {
     	
-    	final HttpPostFileSender signer = new ApacheHttpClientPostFileSender(URI.create(signerUrl), new MavenLogger(getLog()));
+    	final FileProcessor signer = new ApacheHttpClientFileProcessor(URI.create(signerUrl), PART_NAME, new MavenLogger(getLog()));
     	WindowsExeSigner.Builder winExeSignerBuilder = WindowsExeSigner.builder(signer).logOn(getLog()).maxRetry(retryLimit).waitBeforeRetry(retryTimer, TimeUnit.SECONDS);
     	if (continueOnFail) {
     		winExeSignerBuilder.continueOnFail();

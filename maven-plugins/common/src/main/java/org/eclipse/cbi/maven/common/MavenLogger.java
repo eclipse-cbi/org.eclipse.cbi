@@ -11,7 +11,7 @@
 package org.eclipse.cbi.maven.common;
 
 import org.apache.maven.plugin.logging.Log;
-import org.eclipse.cbi.common.http.Logger;
+import org.eclipse.cbi.common.Logger;
 
 public class MavenLogger implements Logger {
 

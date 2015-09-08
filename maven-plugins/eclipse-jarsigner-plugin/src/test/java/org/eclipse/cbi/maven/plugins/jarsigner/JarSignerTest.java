@@ -9,8 +9,8 @@ import java.nio.file.Path;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
-import org.eclipse.cbi.common.test.util.DummySigner;
-import org.eclipse.cbi.common.test.util.NotSigningSigner;
+import org.eclipse.cbi.common.test.util.DummyProcessor;
+import org.eclipse.cbi.common.test.util.FailingProcessor;
 import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
 import org.eclipse.cbi.common.util.Paths;
 import org.eclipse.cbi.common.util.Zips;
@@ -46,14 +46,14 @@ public class JarSignerTest {
 	
 	@Test
 	public void testSigningNullFile() throws MojoExecutionException {
-		JarSigner jarSigner = JarSigner.builder(new DummySigner()).logOn(log).maxDepth(0).build();
+		JarSigner jarSigner = JarSigner.builder(new DummyProcessor()).logOn(log).maxDepth(0).build();
 		assertEquals(0, jarSigner.signJar(null));
 	}
 	
 	@Theory
 	public void testSigningTxtFile(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {	
-			JarSigner jarSigner = JarSigner.builder(new DummySigner()).logOn(log).maxDepth(0).build();
+			JarSigner jarSigner = JarSigner.builder(new DummyProcessor()).logOn(log).maxDepth(0).build();
 			Path fileToSign = fs.getPath("testFile.txt");
 			SampleFilesGenerators.writeFile(fileToSign, "content of the file");
 			assertEquals(0, jarSigner.signJar(fileToSign));
@@ -63,7 +63,7 @@ public class JarSignerTest {
 	@Theory
 	public void testSigningDeactivatedJar1(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {	
-			JarSigner jarSigner = JarSigner.builder(new DummySigner()).logOn(log).maxDepth(0).build();
+			JarSigner jarSigner = JarSigner.builder(new DummyProcessor()).logOn(log).maxDepth(0).build();
 			Path jarToSign = createJarWithEclipseInf(fs.getPath("jarToSign.jar"), "jarprocessor.exclude=true");
 			assertEquals(0, jarSigner.signJar(jarToSign));
 		}
@@ -72,7 +72,7 @@ public class JarSignerTest {
 	@Theory
 	public void testSigningDeactivatedJar2(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {	
-			JarSigner jarSigner = JarSigner.builder(new DummySigner()).logOn(log).maxDepth(0).build();
+			JarSigner jarSigner = JarSigner.builder(new DummyProcessor()).logOn(log).maxDepth(0).build();
 			Path jarToSign = createJarWithEclipseInf(fs.getPath("jarToSign.jar"), "jarprocessor.exclude.sign=true");
 			assertEquals(0, jarSigner.signJar(jarToSign));
 		}
@@ -81,7 +81,7 @@ public class JarSignerTest {
 	@Theory
 	public void testSigningDeactivatedJar3(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {	
-			JarSigner jarSigner = JarSigner.builder(new DummySigner()).logOn(log).maxDepth(0).build();
+			JarSigner jarSigner = JarSigner.builder(new DummyProcessor()).logOn(log).maxDepth(0).build();
 			Path jarToSign = createJarWithEclipseInf(fs.getPath("jarToSign.jar"), "jarprocessor.exclude.sign=true\n"
 					+ "jarprocessor.exclude=true");
 			assertEquals(0, jarSigner.signJar(jarToSign));
@@ -91,7 +91,7 @@ public class JarSignerTest {
 	@Theory
 	public void testSigningDeactivatedJar4(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {	
-			JarSigner jarSigner = JarSigner.builder(new DummySigner()).logOn(log).maxDepth(0).build();
+			JarSigner jarSigner = JarSigner.builder(new DummyProcessor()).logOn(log).maxDepth(0).build();
 			Path jarToSign = createJarWithEclipseInf(fs.getPath("jarToSign.jar"), "jarprocessor.exclude.sign=false\n"
 					+ "jarprocessor.exclude=true");
 			assertEquals(0, jarSigner.signJar(jarToSign));
@@ -101,7 +101,7 @@ public class JarSignerTest {
 	@Theory
 	public void testSigningDeactivatedJar5(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {	
-			JarSigner jarSigner = JarSigner.builder(new DummySigner()).logOn(log).maxDepth(0).build();
+			JarSigner jarSigner = JarSigner.builder(new DummyProcessor()).logOn(log).maxDepth(0).build();
 			Path jarToSign = createJarWithEclipseInf(fs.getPath("jarToSign.jar"), "jarprocessor.exclude.sign=true\n"
 					+ "jarprocessor.exclude=false");
 			assertEquals(0, jarSigner.signJar(jarToSign));
@@ -111,7 +111,7 @@ public class JarSignerTest {
 	@Theory
 	public void testSigningDeactivatedJar6(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {	
-			JarSigner jarSigner = JarSigner.builder(new DummySigner()).logOn(log).maxDepth(0).build();
+			JarSigner jarSigner = JarSigner.builder(new DummyProcessor()).logOn(log).maxDepth(0).build();
 			Path jarToSign = createJarWithEclipseInf(fs.getPath("jarToSign.jar"), "jarprocessor.exclude.sign=false");
 			assertEquals(1, jarSigner.signJar(jarToSign));
 		}
@@ -120,7 +120,7 @@ public class JarSignerTest {
 	@Theory
 	public void testSigningDeactivatedJar7(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {	
-			JarSigner jarSigner = JarSigner.builder(new DummySigner()).logOn(log).maxDepth(0).build();
+			JarSigner jarSigner = JarSigner.builder(new DummyProcessor()).logOn(log).maxDepth(0).build();
 			Path jarToSign = createJarWithEclipseInf(fs.getPath("jarToSign.jar"), "jarprocessor.exclude=false");
 			assertEquals(1, jarSigner.signJar(jarToSign));
 		}
@@ -129,7 +129,7 @@ public class JarSignerTest {
 	@Theory
 	public void testSigningSimpleJarFile(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {	
-			JarSigner jarSigner = JarSigner.builder(new DummySigner()).logOn(log).maxDepth(0).build();
+			JarSigner jarSigner = JarSigner.builder(new DummyProcessor()).logOn(log).maxDepth(0).build();
 			Path jarToSign = createJar(fs.getPath("jarToSign.jar"));
 			assertEquals(1, jarSigner.signJar(jarToSign));
 		}
@@ -138,7 +138,7 @@ public class JarSignerTest {
 	@Theory
 	public void testSigningSimpleJarAbsoluteFile(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {	
-			JarSigner jarSigner = JarSigner.builder(new DummySigner()).logOn(log).maxDepth(0).build();
+			JarSigner jarSigner = JarSigner.builder(new DummyProcessor()).logOn(log).maxDepth(0).build();
 			Path jarToSign = createJar(fs.getPath("jarToSign.jar").toAbsolutePath());
 			assertEquals(1, jarSigner.signJar(jarToSign));
 		}
@@ -148,7 +148,7 @@ public class JarSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testNotSigningSimpleJarFile1(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {	
-			JarSigner jarSigner = JarSigner.builder(new NotSigningSigner()).logOn(log).maxDepth(0).build();
+			JarSigner jarSigner = JarSigner.builder(new FailingProcessor()).logOn(log).maxDepth(0).build();
 			Path jarToSign = createJar(fs.getPath("jarToSign.jar"));
 			jarSigner.signJar(jarToSign);
 		}
@@ -158,7 +158,7 @@ public class JarSignerTest {
 	@Test
 	public void testNotSigningSimpleJarFile2(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {	
-			JarSigner jarSigner = JarSigner.builder(new NotSigningSigner()).logOn(log).continueOnFail().maxDepth(0).build();
+			JarSigner jarSigner = JarSigner.builder(new FailingProcessor()).logOn(log).continueOnFail().maxDepth(0).build();
 			Path jarToSign = createJar(fs.getPath("jarToSign.jar"));
 			assertEquals(0, jarSigner.signJar(jarToSign));
 		}
@@ -167,7 +167,7 @@ public class JarSignerTest {
 	@Theory
 	public void testSigningNestedJarFile(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {	
-			JarSigner jarSigner = JarSigner.builder(new DummySigner()).logOn(log).maxDepth(0).build();
+			JarSigner jarSigner = JarSigner.builder(new DummyProcessor()).logOn(log).maxDepth(0).build();
 			Path jarToSign = createJarWithNestedJars(fs.getPath("jarToSign.jar"), 1);
 			assertEquals(1, jarSigner.signJar(jarToSign));
 		}
@@ -176,7 +176,7 @@ public class JarSignerTest {
 	@Theory
 	public void testRecursiveSigningNestedJarFile1(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {	
-			JarSigner jarSigner = JarSigner.builder(new DummySigner()).logOn(log).maxDepth(Integer.MAX_VALUE).build();
+			JarSigner jarSigner = JarSigner.builder(new DummyProcessor()).logOn(log).maxDepth(Integer.MAX_VALUE).build();
 			Path jarToSign = createJarWithNestedJars(fs.getPath("jarToSign.jar").toAbsolutePath(), 1);
 			assertEquals(9, jarSigner.signJar(jarToSign));
 		}
@@ -185,7 +185,7 @@ public class JarSignerTest {
 	@Theory
 	public void testRecursiveSigningNestedJarFile2(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {	
-			JarSigner jarSigner = JarSigner.builder(new DummySigner()).logOn(log).maxDepth(Integer.MAX_VALUE).build();
+			JarSigner jarSigner = JarSigner.builder(new DummyProcessor()).logOn(log).maxDepth(Integer.MAX_VALUE).build();
 			Path jarToSign = createJarWithNestedJars(fs.getPath("jarToSign.jar").toAbsolutePath(), 2);
 			assertEquals(21, jarSigner.signJar(jarToSign));
 		}
@@ -194,7 +194,7 @@ public class JarSignerTest {
 	@Theory
 	public void testRecursiveSigningNestedJarFile3(Configuration fsConf) throws IOException, MojoExecutionException {
 			try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {	
-			JarSigner jarSigner = JarSigner.builder(new DummySigner()).logOn(log).maxDepth(Integer.MAX_VALUE).build();
+			JarSigner jarSigner = JarSigner.builder(new DummyProcessor()).logOn(log).maxDepth(Integer.MAX_VALUE).build();
 			Path jarToSign = createJarWithNestedJars(fs.getPath("jarToSign.jar").toAbsolutePath(), 3);
 			assertEquals(45, jarSigner.signJar(jarToSign));
 		}

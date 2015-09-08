@@ -8,7 +8,7 @@
  * Contributors:
  *   Mikael Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.common.http;
+package org.eclipse.cbi.common;
 
 import java.io.PrintStream;
 

@@ -16,9 +16,9 @@ import java.util.Set;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
-import org.eclipse.cbi.common.test.util.DummySigner;
-import org.eclipse.cbi.common.test.util.ErrorSigner;
-import org.eclipse.cbi.common.test.util.NotSigningSigner;
+import org.eclipse.cbi.common.test.util.DummyProcessor;
+import org.eclipse.cbi.common.test.util.ErrorProcessor;
+import org.eclipse.cbi.common.test.util.FailingProcessor;
 import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -51,7 +51,7 @@ public class WindowsExeSignerTest {
 	
 	@Test(expected=NullPointerException.class)
 	public void testSigningNullFiles() throws MojoExecutionException {
-		WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummySigner()).logOn(log).build();
+		WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummyProcessor()).logOn(log).build();
 		winExeSigner.signExecutable(null);
 	}
 	
@@ -59,7 +59,7 @@ public class WindowsExeSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningNonExistingFile(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummySigner()).logOn(log).build();
+			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummyProcessor()).logOn(log).build();
 			winExeSigner.signExecutable(fs.getPath("test"));
 		}
 	}
@@ -68,7 +68,7 @@ public class WindowsExeSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningFolder(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummySigner()).logOn(log).build();
+			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummyProcessor()).logOn(log).build();
 			winExeSigner.signExecutable(Files.createDirectories(fs.getPath("test")));
 		}
 	}
@@ -76,7 +76,7 @@ public class WindowsExeSignerTest {
 	@Theory
 	public void testSigningFile(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummySigner()).logOn(log).build();
+			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummyProcessor()).logOn(log).build();
 			Path path = SampleFilesGenerators.writeFile(fs.getPath("file.txt"), "content of the file");
 			assertTrue(winExeSigner.signExecutable(path));
 		}
@@ -86,7 +86,7 @@ public class WindowsExeSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningFileWithNotSigningSigner(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new NotSigningSigner()).logOn(log).build();
+			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new FailingProcessor()).logOn(log).build();
 			Path path = SampleFilesGenerators.writeFile(fs.getPath("file.txt"), "content of the file");
 			assertFalse(winExeSigner.signExecutable(path));
 		}
@@ -95,7 +95,7 @@ public class WindowsExeSignerTest {
 	@Theory
 	public void testSigningFileWithNotSigningSignerButContinueOnFail(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new NotSigningSigner()).logOn(log).continueOnFail().build();
+			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new FailingProcessor()).logOn(log).continueOnFail().build();
 			Path path = SampleFilesGenerators.writeFile(fs.getPath("file.txt"), "content of the file");
 			assertFalse(winExeSigner.signExecutable(path));
 		}
@@ -105,7 +105,7 @@ public class WindowsExeSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningFileWithErrorSigner(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new ErrorSigner()).logOn(log).build();
+			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new ErrorProcessor()).logOn(log).build();
 			Path path = SampleFilesGenerators.writeFile(fs.getPath("file.txt"), "content of the file");
 			assertFalse(winExeSigner.signExecutable(path));
 		}
@@ -114,7 +114,7 @@ public class WindowsExeSignerTest {
 	@Theory
 	public void testSigningFileWithErrorSignerButContinueOnFail(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new ErrorSigner()).logOn(log).continueOnFail().build();
+			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new ErrorProcessor()).logOn(log).continueOnFail().build();
 			Path path = SampleFilesGenerators.writeFile(fs.getPath("file.txt"), "content of the file");
 			assertFalse(winExeSigner.signExecutable(path));
 		}
@@ -123,7 +123,7 @@ public class WindowsExeSignerTest {
 	@Theory
 	public void testSigningFiles(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummySigner()).logOn(log).build();
+			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummyProcessor()).logOn(log).build();
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			assertEquals(1, winExeSigner.signExecutables(newSet(baseDir.resolve("app1.exe"))));
 		}
@@ -132,7 +132,7 @@ public class WindowsExeSignerTest {
 	@Theory
 	public void testSigningFiles2(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummySigner()).logOn(log).build();
+			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummyProcessor()).logOn(log).build();
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			assertEquals(2, winExeSigner.signExecutables(newSet(baseDir.resolve("app1.exe"), baseDir.resolve("subFolder/app3.exe"))));
 		}
@@ -142,7 +142,7 @@ public class WindowsExeSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningFiles3(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummySigner()).logOn(log).build();
+			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummyProcessor()).logOn(log).build();
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			winExeSigner.signExecutables(newSet(baseDir.resolve("app1.exe"), baseDir.resolve("subFolder/appX.exe")));
 		}
@@ -151,7 +151,7 @@ public class WindowsExeSignerTest {
 	@Theory
 	public void testSigningFiles3ButContinueOnFail(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummySigner()).logOn(log).continueOnFail().build();
+			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummyProcessor()).logOn(log).continueOnFail().build();
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			assertEquals(1, winExeSigner.signExecutables(newSet(baseDir.resolve("app1.exe"), baseDir.resolve("subFolder/appX.exe"))));
 		}
@@ -160,7 +160,7 @@ public class WindowsExeSignerTest {
 	@Theory
 	public void testSigningFilesWithLookup(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummySigner()).logOn(log).build();
+			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummyProcessor()).logOn(log).build();
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			assertEquals(0, winExeSigner.signExecutables(baseDir, new LinkedHashSet<PathMatcher>()));
 		}
@@ -169,7 +169,7 @@ public class WindowsExeSignerTest {
 	@Theory
 	public void testSigningFilesWithLookupWithMojoMatchers(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummySigner()).logOn(log).build();
+			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummyProcessor()).logOn(log).build();
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			assertEquals(1, winExeSigner.signExecutables(baseDir, SignMojo.getPathMatchers(fs, newSet("app4.exe"), log)));
 		}
@@ -178,7 +178,7 @@ public class WindowsExeSignerTest {
 	@Theory
 	public void testSigningFilesWithLookupWithMojoMatchers2(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummySigner()).logOn(log).build();
+			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummyProcessor()).logOn(log).build();
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			assertEquals(4, winExeSigner.signExecutables(baseDir, SignMojo.getPathMatchers(fs, new LinkedHashSet<String>(), log)));
 		}
@@ -187,7 +187,7 @@ public class WindowsExeSignerTest {
 	@Theory
 	public void testSigningFilesWithLookupPattern(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummySigner()).logOn(log).build();
+			WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummyProcessor()).logOn(log).build();
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			assertEquals(10, winExeSigner.signExecutables(baseDir, SignMojo.getPathMatchers(fs, newSet("*.exe"), log)));
 		}

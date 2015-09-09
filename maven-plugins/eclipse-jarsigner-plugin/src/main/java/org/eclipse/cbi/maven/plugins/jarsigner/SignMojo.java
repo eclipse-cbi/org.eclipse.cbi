@@ -21,6 +21,9 @@ import java.util.concurrent.TimeUnit;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.cbi.common.FileProcessor;
 import org.eclipse.cbi.common.http.ApacheHttpClientFileProcessor;
@@ -30,229 +33,217 @@ import org.eclipse.cbi.maven.common.MavenLogger;
  * Signs project main and attached artifact using <a href=
  * "http://wiki.eclipse.org/IT_Infrastructure_Doc#Sign_my_plugins.2FZIP_files.3F">
  * Eclipse jarsigner webservice</a>. Only artifacts that have extension
- * ``.jar'', other artifacts are not signed with a debug log message.
- *
- * @goal sign
- * @phase package
- * @requiresProject
- * @description runs the eclipse signing process
+ * {@code .jar} are signed, other artifacts are not signed with a debug log
+ * message.
  */
+@Mojo(name = "sign", defaultPhase = LifecyclePhase.PACKAGE)
 public class SignMojo extends AbstractMojo {
 
-	private static final String PART_NAME = "file";
-	
 	/**
-     * Maven Project
-     *
-     * @parameter property="project"
-     * @readonly
-     */
-    private MavenProject project;
+	 * The name of the part as it will be send to the signing server.
+	 */
+	private static final String PART_NAME = "file";
 
-    /**
-     * The signing service URL for signing Jar files
-     *
-     * <p>
-     * This service should return a signed jar file.
-     * </p>
-     *
-     * <p>
-     * The Official Eclipse signer service URL as described in the <a href=
-     * "http://wiki.eclipse.org/IT_Infrastructure_Doc#Sign_my_plugins.2FZIP_files.3F">
-     * wiki</a>.
-     * </p>
-     *
-     * <p>
-     * <b>Configuration via Maven commandline</b>
-     * </p>
-     * 
-     * <pre>
-     * -Dcbi.jarsigner.signerUrl=http://localhost/sign.php
-     * </pre>
-     *
-     * <p>
-     * <b>Configuration via pom.xml</b>
-     * </p>
-     * 
-     * <pre>
-     * {@code
-     * <configuration>
-     *   <signerUrl>http://localhost/sign</signerUrl>
-     * </configuration>
-     * }
-     * </pre>
-     *
-     * @parameter property="cbi.jarsigner.signerUrl"
-     *            default-value="http://build.eclipse.org:31338/sign"
-     * @required
-     * @since 1.0.4
-     */
-    private String signerUrl;
+	/**
+	 * The default number of seconds the process will wait if 
+	 */
+	private static final String DEFAULT_RETRY_TIMER_STRING = "30";
+	private static final int DEFAULT_RETRY_TIMER = Integer.parseInt(DEFAULT_RETRY_TIMER_STRING);
 
-    /**
-     * Maven build directory
-     *
-     * @parameter property="project.build.directory"
-     * @readonly
-     * @deprecated not used anymore. Use {@code java.io.tmpdir} property instead. 
-     */
-    @SuppressWarnings("unused")
+	private static final String DEFAULT_RETRY_LIMIT_STRING = "3";
+	private static final int DEFAULT_RETRY_LIMIT = Integer.parseInt(DEFAULT_RETRY_LIMIT_STRING);
+
+	/**
+	 * The Maven project.
+	 */
+	@Parameter(defaultValue = "${project}", readonly = true)
+	private MavenProject project;
+
+	/**
+	 * The Maven build directory.
+	 *
+	 * @deprecated not used anymore. All temporary file are created in the
+	 *             parent folder of the artifact (i.e., the project build
+	 *             directory).
+	 */
 	@Deprecated
-    private File workdir;
+	@Parameter(defaultValue = "${project.build.directory}", readonly = true)
+	private File workdir;
 
-    /**
-     * Skips the execution of this plugin
-     *
-     * @parameter property="cbi.jarsigner.skip" default-value="false"
-     * @since 1.0.4
-     */
-    private boolean skip;
+	/**
+	 * The signing service URL for signing Jar files. This service should return
+	 * a signed jar file.
+	 * 
+	 * @since 1.0.4
+	 */
+	@Parameter(required = true, property = "cbi.jarsigner.signerUrl", defaultValue = "http://build.eclipse.org:31338/sign")
+	private String signerUrl;
 
-    /**
-     * Continue the build even if signing fails
-     *
-     * <p>
-     * <b>Configuration via Maven commandline</b>
-     * </p>
-     * 
-     * <pre>
-     * -DcontinueOnFail=true
-     * </pre>
-     *
-     * <p>
-     * <b>Configuration via pom.xml</b>
-     * </p>
-     * 
-     * <pre>
-     * {@code
-     * <configuration>
-     *   <continueOnFail>true</continueOnFail>
-     * </configuration>
-     * }
-     * </pre>
-     *
-     * @parameter property="continueOnFail" default-value="false"
-     * @since 1.0.5
-     */
-    private boolean continueOnFail;
+	/**
+	 * Whether the execution of this plugin should be skipped.
+	 *
+	 * @since 1.0.4
+	 */
+	@Parameter(property = "cbi.jarsigner.skip", defaultValue = "false")
+	private boolean skip;
 
-    /**
-     * Number of times to retry signing if server fails to sign
-     *
-     * @parameter property="retryLimit" default-value="3"
-     * @since 1.1.0
-     */
-    private int retryLimit;
+	/**
+	 * Whether the build should be stopped if the signing process fails.
+	 *
+	 * @since 1.0.5 (for the user property, since 1.2.0 for the parameter).
+	 * @deprecated The user property {@code continueOnFail} is deprecated. You
+	 *             should use the qualified property
+	 *             {@code cbi.jarsigner.continueOnFail} instead. The
+	 *             {@code deprecatedContinueOnFail} parameter has been
+	 *             introduced to support this deprecated user property for
+	 *             backward compatibility only.
+	 */
+	@Deprecated
+	@Parameter(property = "continueOnFail", defaultValue = "false")
+	private boolean deprecatedContinueOnFail;
 
-    /**
-     * Number of seconds to wait before retrying to sign
-     *
-     * @parameter property="retryTimer" default-value="30"
-     * @since 1.1.0
-     */
-    private int retryTimer;
+	/**
+	 * Whether the build should be stopped if the signing process fails.
+	 *
+	 * @since 1.0.5 (for the parameter, since 1.2.0 for the qualified user
+	 *        property).
+	 */
+	@Parameter(property = "cbi.jarsigner.continueOnFail", defaultValue = "false")
+	private boolean continueOnFail;
 
-    /**
-     * Excludes signing inner jars
-     *
-     * <p>
-     * <b>Configuration via pom.xml</b>
-     * </p>
-     * 
-     * <pre>
-     * {@code
-     * <configuration>
-     *   <excludeInnerJars>true</excludeInnerJars>
-     * </configuration>
-     * }
-     * </pre>
-     *
-     * @parameter default-value="false"
-     * @since 1.0.5
-     */
-    private boolean excludeInnerJars;
+	/**
+	 * Number of times to retry signing if the server fails to sign.
+	 *
+	 * @since 1.1.0 (for the property, since 1.2.0 for the parameter)
+	 * @deprecated The user property {@code retryLimit} is deprecated. You
+	 *             should use the qualified property
+	 *             {@code cbi.jarsigner.retryLimit} instead. The
+	 *             {@code deprecatedRetryLimit} parameter has been introduced to
+	 *             support this deprecated user property for backward
+	 *             compatibility only.
+	 */
+	@Deprecated
+	@Parameter(property = "retryLimit", defaultValue = DEFAULT_RETRY_LIMIT_STRING)
+	private int deprecatedRetryLimit;
 
-    /**
-     * Project types which this plugin supports
-     *
-     * <p>
-     * <b>Default Types Supported</b>
-     * </p>
-     * 
-     * <pre>
-     * jar                 : standard jars
-     * bundle              : felix/bnd bundles
-     * maven-plugin        : maven plugins
-     * eclipse-plugin      : Tycho eclipse-plugin
-     * eclipse-test-plugin : Tycho eclipse-test-plugin
-     * eclipse-feature     : Tycho eclipse-feature
-     * </pre>
-     *
-     * @parameter
-     */
-    private List<String> supportedProjectTypes = Arrays.asList("jar", // standard
-                                                                      // jars
-            "war", // java war files
-            "bundle", // felix/bnd bundles
-            "maven-plugin", // maven plugins
-            // tycho
-            "eclipse-plugin", "eclipse-test-plugin", "eclipse-feature");
+	/**
+	 * Number of times to retry signing if the server fails to sign.
+	 * 
+	 * @since 1.1.0 (for the parameter, since 1.2.0 for the qualified user user
+	 *        property)
+	 */
+	@Parameter(property = "cbi.jarsigner.retryLimit", defaultValue = DEFAULT_RETRY_LIMIT_STRING)
+	private int retryLimit;
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void execute() throws MojoExecutionException {
-        if (skip) {
-            getLog().info("Skipping artifact signing");
-            return;
-        }
+	/**
+	 * Number of seconds to wait before retrying to sign.
+	 *
+	 * @since 1.1.0 (for the user property, since 1.2.0 for the parameter).
+	 * @deprecated The user property {@code retryTimer} is deprecated. You
+	 *             should use the qualified property
+	 *             {@code cbi.jarsigner.retryTimer} instead. The
+	 *             {@code deprecatedRetryTimer} parameter has been introduced to
+	 *             support this deprecated user property for backward
+	 *             compatibility only.
+	 */
+	@Deprecated
+	@Parameter(property = "retryTimer", defaultValue = DEFAULT_RETRY_TIMER_STRING)
+	private int deprecatedRetryTimer;
 
-        final String packaging = project.getPackaging();
-		if (!supportedProjectTypes.contains(packaging)) {
-            getLog().debug("Packaging type '" + packaging + "' of project '" + project + "' is not supported");
-            return;
-        }
+	/**
+	 * Number of seconds to wait before retrying to sign.
+	 * 
+	 * @since 1.1.0 (for the parameter, since 1.2.0 for the qualified user user
+	 *        property)
+	 */
+	@Parameter(property = "cbi.jarsigner.retryTimer", defaultValue = DEFAULT_RETRY_TIMER_STRING)
+	private int retryTimer;
 
-        final JarSigner jarSigner = createJarSigner();
+	/**
+	 * Whether to excludes signing inner jars (not recursive, only apply to
+	 * first level Jars inside the build Jar file; deepest are ignored in all
+	 * cases).
+	 *
+	 * @since 1.0.5
+	 */
+	@Parameter(defaultValue = "false")
+	private boolean excludeInnerJars;
 
-        final Artifact mainArtifact = project.getArtifact();
-        if (mainArtifact != null) {
-        	signArtifact(jarSigner, mainArtifact);
-        }
+	/**
+	 * Project types which this plugin supports.
+	 * 
+	 * @deprecated Not used anymore.
+	 */
+	@Deprecated
+	@Parameter
+	private List<String> supportedProjectTypes = Arrays.asList("jar", "war", "bundle", "maven-plugin", "eclipse-plugin",
+			"eclipse-test-plugin", "eclipse-feature");
 
-        for (Artifact artifact : project.getAttachedArtifacts()) {
-        	signArtifact(jarSigner, artifact);
-        }
-    }
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void execute() throws MojoExecutionException {
+		if (skip) {
+			getLog().info("Skipping Jar signing");
+			return;
+		}
 
-	private static void signArtifact(final JarSigner jarSigner, final Artifact artifact) throws MojoExecutionException {
-		File artifactFile = artifact.getFile();
-		if (artifactFile != null) {
-			jarSigner.signJar(artifactFile.toPath());
+		final JarSigner jarSigner = createJarSigner();
+
+		final Artifact mainArtifact = project.getArtifact();
+		if (mainArtifact != null) {
+			signArtifact(jarSigner, mainArtifact);
+		}
+
+		for (Artifact artifact : project.getAttachedArtifacts()) {
+			signArtifact(jarSigner, artifact);
 		}
 	}
 
-    /**
-     * Creates and returns the {@link JarSigner} according to the injected Mojo parameter.
-     * @return the {@link JarSigner} according to the injected Mojo parameter.
-     */
+	private void signArtifact(final JarSigner jarSigner, final Artifact artifact) throws MojoExecutionException {
+		File artifactFile = artifact.getFile();
+		if (artifactFile != null) {
+			jarSigner.signJar(artifactFile.toPath());
+		} else {
+			getLog().warn("Can't find associated file with artifact '" + artifact.toString() + "'");
+		}
+	}
+
+	/**
+	 * Creates and returns the {@link JarSigner} according to the injected Mojo
+	 * parameter.
+	 * 
+	 * @return the {@link JarSigner} according to the injected Mojo parameter.
+	 */
 	private JarSigner createJarSigner() {
 		URI signerURI = URI.create(signerUrl);
 		final FileProcessor signer = new ApacheHttpClientFileProcessor(signerURI, PART_NAME, new MavenLogger(getLog()));
-        JarSigner.Builder jarSignerBuilder = JarSigner.builder(signer);
-        jarSignerBuilder.logOn(getLog()).maxRetry(retryLimit).waitBeforeRetry(retryTimer, TimeUnit.SECONDS);
-        
-        if (continueOnFail) {
-        	jarSignerBuilder.continueOnFail();
-        }
-        
-        if (excludeInnerJars) {
-        	jarSignerBuilder.maxDepth(0);
-        } else {
-        	jarSignerBuilder.maxDepth(1);
-        }
-        
-        return jarSignerBuilder.build();
+		JarSigner.Builder jarSignerBuilder = JarSigner.builder(signer);
+		jarSignerBuilder.logOn(getLog());
+
+		if (deprecatedRetryLimit != DEFAULT_RETRY_LIMIT && retryLimit == DEFAULT_RETRY_LIMIT) {
+			jarSignerBuilder.maxRetry(deprecatedRetryLimit);
+		} else {
+			jarSignerBuilder.maxRetry(retryLimit);
+		}
+
+		if (deprecatedRetryTimer != DEFAULT_RETRY_TIMER && retryTimer == DEFAULT_RETRY_TIMER) {
+			jarSignerBuilder.waitBeforeRetry(deprecatedRetryTimer, TimeUnit.SECONDS);
+		} else {
+			jarSignerBuilder.waitBeforeRetry(retryTimer, TimeUnit.SECONDS);
+		}
+
+		if (deprecatedContinueOnFail || continueOnFail) {
+			jarSignerBuilder.continueOnFail();
+		}
+
+		if (excludeInnerJars) {
+			jarSignerBuilder.maxDepth(0);
+		} else {
+			jarSignerBuilder.maxDepth(1);
+		}
+
+		return jarSignerBuilder.build();
 	}
 }

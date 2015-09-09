@@ -17,11 +17,11 @@ import org.apache.maven.plugin.MojoExecutionException;
 /**
  * An {@link IOException} that wraps a {@link MojoExecutionException}.
  */
-public final class MojoExecutionExceptionWrapper extends IOException {
+public final class MojoExecutionIOExceptionWrapper extends IOException {
 
 	private static final long serialVersionUID = 3043861903313797221L;
 
-	public MojoExecutionExceptionWrapper(MojoExecutionException e) {
+	public MojoExecutionIOExceptionWrapper(MojoExecutionException e) {
 		super(e);
 	}
 

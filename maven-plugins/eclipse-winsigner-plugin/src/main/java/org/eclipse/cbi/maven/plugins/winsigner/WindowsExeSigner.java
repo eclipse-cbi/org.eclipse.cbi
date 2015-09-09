@@ -27,7 +27,7 @@ import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.eclipse.cbi.common.FileProcessor;
 import org.eclipse.cbi.maven.common.ExceptionHandler;
-import org.eclipse.cbi.maven.common.MojoExecutionExceptionWrapper;
+import org.eclipse.cbi.maven.common.MojoExecutionIOExceptionWrapper;
 
 import com.google.common.base.Joiner;
 
@@ -69,7 +69,7 @@ public class WindowsExeSigner {
 			WindowsBinarySignerVisitor signerVisitor = new WindowsBinarySignerVisitor(pathMatchers);
 			Files.walkFileTree(baseSearchDir, signerVisitor);
 			ret = signerVisitor.getSignedExecutableCount();
-		} catch (MojoExecutionExceptionWrapper e) {
+		} catch (MojoExecutionIOExceptionWrapper e) {
 			throw e.getCause();
 		} catch (IOException e) {
 			exceptionHandler.handleError("Error occured while signing Windows binary (" + Joiner.on(", ").join(pathMatchers) + ")", e);
@@ -130,7 +130,7 @@ public class WindowsExeSigner {
 							signedExecutableCount++;
 						}
 					} catch (MojoExecutionException e) {
-						throw new MojoExecutionExceptionWrapper(e);
+						throw new MojoExecutionIOExceptionWrapper(e);
 					}
 				}
 			}

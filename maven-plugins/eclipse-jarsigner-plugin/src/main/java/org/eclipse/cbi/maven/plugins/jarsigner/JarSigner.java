@@ -30,7 +30,7 @@ import org.eclipse.cbi.common.FileProcessor;
 import org.eclipse.cbi.common.util.Paths;
 import org.eclipse.cbi.common.util.Zips;
 import org.eclipse.cbi.maven.common.ExceptionHandler;
-import org.eclipse.cbi.maven.common.MojoExecutionExceptionWrapper;
+import org.eclipse.cbi.maven.common.MojoExecutionIOExceptionWrapper;
 
 /**
  * Utility class that signs a Jar and the nested Jar.
@@ -267,7 +267,7 @@ public class JarSigner {
 			Zips.packJar(jarUnpackFolder, file, false);
 			
 			numberOfSignedNestedJar = nestedJarSigner.getNumberOfSignedNestedJar();
-		} catch (MojoExecutionExceptionWrapper e) {
+		} catch (MojoExecutionIOExceptionWrapper e) {
 			throw e.getCause();
 		} catch (IOException e) {
 			exceptionHandler.handleError("Signing of nested jar '" + file + "' failed.", e);
@@ -300,7 +300,7 @@ public class JarSigner {
 				numberOfSignedNestedJar += signJar(file, currentDepth+1);
 			} catch (MojoExecutionException e) {
 				// wrap exception (to be unwrapped later).
-				throw new MojoExecutionExceptionWrapper(e);
+				throw new MojoExecutionIOExceptionWrapper(e);
 			}
 			return FileVisitResult.CONTINUE;
 		}

@@ -29,7 +29,7 @@ import org.eclipse.cbi.common.FileProcessor;
 import org.eclipse.cbi.common.util.Paths;
 import org.eclipse.cbi.common.util.Zips;
 import org.eclipse.cbi.maven.common.ExceptionHandler;
-import org.eclipse.cbi.maven.common.MojoExecutionExceptionWrapper;
+import org.eclipse.cbi.maven.common.MojoExecutionIOExceptionWrapper;
 
 import com.google.common.base.Joiner;
 
@@ -117,7 +117,7 @@ public class OSXAppSigner {
 			OSXApplicationSignerVisitor applicationSignerVisitor = new OSXApplicationSignerVisitor(pathMatchers);
 			Files.walkFileTree(baseSearchDir, applicationSignerVisitor);
 			ret = applicationSignerVisitor.getSignedAppCount();
-		} catch (MojoExecutionExceptionWrapper e) {
+		} catch (MojoExecutionIOExceptionWrapper e) {
 			throw e.getCause();
 		} catch (IOException e) {
 			exceptionHandler.handleError("Error occured while signing OS X application (" + Joiner.on(", ").join(pathMatchers) + ").", e);
@@ -186,13 +186,13 @@ public class OSXAppSigner {
 			return FileVisitResult.CONTINUE;
 		}
 
-		private FileVisitResult signApp(Path dir) throws MojoExecutionExceptionWrapper {
+		private FileVisitResult signApp(Path dir) throws MojoExecutionIOExceptionWrapper {
 			try {
 				if (signApplication(signer, dir)) {
 					signedAppCount++;
 				}
 			} catch (MojoExecutionException e) {
-				throw new MojoExecutionExceptionWrapper(e);
+				throw new MojoExecutionIOExceptionWrapper(e);
 			}
 			return FileVisitResult.SKIP_SUBTREE;
 		}

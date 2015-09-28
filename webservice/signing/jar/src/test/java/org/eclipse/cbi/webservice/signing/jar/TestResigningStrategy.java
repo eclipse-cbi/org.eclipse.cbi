@@ -299,8 +299,8 @@ public class TestResigningStrategy {
 		return jarSigner;
 	}
 	
-	private Path copyResource(String resourcePath, Path target) throws IOException {
-		URL resource = this.getClass().getResource(resourcePath);
+	static Path copyResource(String resourcePath, Path target) throws IOException {
+		URL resource = TestResigningStrategy.class.getResource(resourcePath);
 		try (InputStream is = new BufferedInputStream(resource.openStream())) {
 			Files.copy(is, target);
 			return target;

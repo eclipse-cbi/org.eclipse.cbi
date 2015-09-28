@@ -16,8 +16,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.CodeSigner;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
@@ -26,6 +26,7 @@ import javax.annotation.Nullable;
 import org.eclipse.cbi.util.ProcessExecutor;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -253,19 +254,17 @@ public abstract class JarSigner {
 		}
 	}
 
-	private static boolean isAlreadySigned(Path jar) throws IOException {
-		final boolean alreadySigned;
+	@VisibleForTesting static boolean isAlreadySigned(Path jar) throws IOException {
+		boolean alreadySigned = false;
 		try (JarInputStream jis = new JarInputStream(Files.newInputStream(jar))) {
 			JarEntry nextJarEntry = jis.getNextJarEntry();
-			if (nextJarEntry != null) {
-				CodeSigner[] codeSigners = nextJarEntry.getCodeSigners();
-				if (codeSigners != null) {
-					alreadySigned = codeSigners.length > 0;
-				} else {
-					alreadySigned = false;
+			while (nextJarEntry != null && !alreadySigned) {
+				nextJarEntry = jis.getNextJarEntry();
+				Attributes attributes = nextJarEntry.getAttributes();
+				if (attributes != null) {
+					alreadySigned = attributes.keySet().stream().anyMatch(k -> k.toString().endsWith("-Digest"));
 				}
-			} else {
-				alreadySigned = false;
+				nextJarEntry = jis.getNextJarEntry();
 			}
 		}
 		return alreadySigned;

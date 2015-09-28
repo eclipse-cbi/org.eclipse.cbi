@@ -92,6 +92,7 @@ public abstract class SigningServlet extends HttpServlet {
 					break;
 				case "OverwriteWithSameDigestAlgorithm":
 					resigningStrategy = ResigningStrategy.overwriteWithSameDigestAlgorithm(jarSigner(), tempFolder());
+					break;
 				default:
 					throw new IllegalArgumentException("Unknown resigning strategy '" + resigningStrategyParameter.get() + "'. Valid values are 'DoNotResign', "
 							+ "'ThrowException', 'Resign', 'ResignWithSameDigestAlgorithm', 'Overwrite' and 'OverwriteWithSameDigestAlgorithm'.");

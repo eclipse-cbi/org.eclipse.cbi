@@ -232,6 +232,17 @@
               <artifactId>checkstyle</artifactId>
               <version>1.0.0</version>
             </dependency>
+            <!-- workaround https://issues.apache.org/jira/browse/MCHECKSTYLE-309 -->
+            <dependency>
+              <groupId>org.slf4j</groupId>
+              <artifactId>slf4j-jdk14</artifactId>
+              <version>1.7.5</version>
+            </dependency>
+            <dependency>
+              <groupId>org.slf4j</groupId>
+              <artifactId>jcl-over-slf4j</artifactId>
+              <version>1.7.5</version>
+            </dependency>
           </dependencies>
           <configuration>
             <configLocation>eclipse_checkstyle.xml</configLocation>

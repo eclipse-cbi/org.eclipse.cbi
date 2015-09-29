@@ -33,7 +33,7 @@ public abstract class DMGPackager {
 	public Path packageImageFile(Path appFolder, Path targetImageFile, Options options) throws IOException {
 		ImmutableList<String> command = createCommand(appFolder, targetImageFile, options);
 	
-		final StringBuffer output = new StringBuffer();
+		final StringBuilder output = new StringBuilder();
 		int createImageFileExitValue = processExecutor().exec(command, output , timeout(), TimeUnit.SECONDS);
 		if (createImageFileExitValue != 0) {
 			throw new IOException(Joiner.on('\n').join(

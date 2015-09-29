@@ -59,7 +59,7 @@ public interface ProcessExecutor {
 	 *             {@link Process#destroyForcibly() destroyed} after the
 	 *             timeout.
 	 */
-	int exec(ImmutableList<String> command, StringBuffer processOutput, long timeout, TimeUnit timeoutUnit) throws IOException;
+	int exec(ImmutableList<String> command, StringBuilder processOutput, long timeout, TimeUnit timeoutUnit) throws IOException;
 	
 	/**
 	 * Execute the given command as a forked process. The process will be
@@ -96,7 +96,7 @@ public interface ProcessExecutor {
 		/**
 		 * {@inheritDoc}
 		 */
-		public int exec(ImmutableList<String> command, StringBuffer processOutput, long timeout, TimeUnit timeoutUnit) throws IOException {
+		public int exec(ImmutableList<String> command, StringBuilder processOutput, long timeout, TimeUnit timeoutUnit) throws IOException {
 			Objects.requireNonNull(command);
 			Preconditions.checkArgument(!command.isEmpty(), "Command must not be empty");
 			Objects.requireNonNull(processOutput);
@@ -145,13 +145,13 @@ public interface ProcessExecutor {
 			return logOutput(arg0, p.exitValue(), processOutput);
 		}
 
-		private void printStrackTrace(Exception e, StringBuffer output) {
+		private void printStrackTrace(Exception e, StringBuilder output) {
 			StringWriter stackTrace = new StringWriter();
 			e.printStackTrace(new PrintWriter(stackTrace));
 			output.append(stackTrace.getBuffer().toString());
 		}
 
-		private void gatherOutput(StringBuffer processOutput, Future<String> streamGobbler) {
+		private void gatherOutput(StringBuilder processOutput, Future<String> streamGobbler) {
 			try {
 				// give 3sec to the stream gobbler to gather all the output.
 				processOutput.append(streamGobbler.get(STREAM_GLOBBER_GRACETIME, TimeUnit.SECONDS));
@@ -162,7 +162,7 @@ public interface ProcessExecutor {
 			}
 		}
 
-		private int logOutput(String arg0, final int exitValue, StringBuffer processOutput) {
+		private int logOutput(String arg0, final int exitValue, StringBuilder processOutput) {
 			String output = processOutput.toString();
 			if (exitValue == 0) {
 				logger.info("Process '" + arg0 + "' exited with value '" + exitValue +"'");
@@ -187,7 +187,7 @@ public interface ProcessExecutor {
 		 */
 		@Override
 		public int exec(ImmutableList<String> command, long timeout, TimeUnit timeoutUnit) throws IOException {
-			return exec(command, new StringBuffer(), timeout, timeoutUnit);
+			return exec(command, new StringBuilder(), timeout, timeoutUnit);
 		}
 
 		/**

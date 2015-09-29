@@ -317,7 +317,7 @@ public class TestResigningStrategy {
 		}
 
 		@Override
-		public int exec(ImmutableList<String> command, StringBuffer processOutput, long timeout, TimeUnit timeoutUnit) throws IOException {
+		public int exec(ImmutableList<String> command, StringBuilder processOutput, long timeout, TimeUnit timeoutUnit) throws IOException {
 			this.command = command;
 			return 0;
 		}

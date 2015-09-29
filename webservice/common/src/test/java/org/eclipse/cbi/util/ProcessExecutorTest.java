@@ -24,7 +24,7 @@ public class ProcessExecutorTest {
 
 	@Test
 	public void testEcho() throws IOException {
-		StringBuffer output = new StringBuffer();
+		StringBuilder output = new StringBuilder();
 		ProcessExecutor executor = new ProcessExecutor.BasicImpl();
 		int exitValue = executor.exec(ImmutableList.of("echo", "Hello World"), output, 10, TimeUnit.SECONDS);
 		assertEquals(0, exitValue);

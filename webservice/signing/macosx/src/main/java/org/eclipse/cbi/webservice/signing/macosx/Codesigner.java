@@ -124,7 +124,7 @@ public abstract class Codesigner {
 			unlockKeychain();
 		}
 		
-		final StringBuffer output = new StringBuffer();
+		final StringBuilder output = new StringBuilder();
 		final int codesignExitValue = processExecutor().exec(codesignCommand(app), output, codesignTimeout(), TimeUnit.SECONDS);
 		if (codesignExitValue == 0) {
 			return true;
@@ -137,7 +137,7 @@ public abstract class Codesigner {
 	}
 	
 	private void unlockKeychain() throws IOException {
-		final StringBuffer output = new StringBuffer();
+		final StringBuilder output = new StringBuilder();
 		final int securityExitValue = processExecutor().exec(securityUnlockCommand(), output , securityUnlockTimeout(), TimeUnit.SECONDS);
 		if (securityExitValue != 0) {
 			throw new IOException(Joiner.on('\n').join(

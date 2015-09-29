@@ -271,7 +271,7 @@ public abstract class JarSigner {
 	}
 	
 	Path doSign(Path jar, MessageDigestAlgorithm digestAlg) throws IOException {
-		final StringBuffer output = new StringBuffer();
+		final StringBuilder output = new StringBuilder();
 		int jarSignerExitValue = processExecutor().exec(createCommand(jar, digestAlg), output , timeout(), TimeUnit.SECONDS);
 		if (jarSignerExitValue != 0) {
 			throw new IOException(Joiner.on('\n').join(

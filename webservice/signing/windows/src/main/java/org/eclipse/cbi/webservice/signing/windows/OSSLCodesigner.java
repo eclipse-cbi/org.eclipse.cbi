@@ -36,7 +36,7 @@ public abstract class OSSLCodesigner {
 		Path out = null;
 		try {
 			out = Files.createTempFile(tempFolder(), TEMP_FILE_PREFIX, file.getFileName().toString());
-			StringBuffer output = new StringBuffer();
+			StringBuilder output = new StringBuilder();
 			int osslsigncodeExitValue = processExecutor().exec(createCommand(file, out), output, timeout(), TimeUnit.SECONDS);
 			if (osslsigncodeExitValue != 0) {
 				throw new IOException(Joiner.on('\n').join(

@@ -70,7 +70,7 @@ public class SigningServer {
 				.appendServiceVersionToPathSpec(serverConf.isServiceVersionAppendedToPathSpec())
 				.servlet(codeSignServlet)
 				.tempFolder(tempFolder)
-				.log4jConfiguration(confPath)
+				.log4jConfiguration(serverConf.getLog4jProperties())
 				.build();
 
 			server.start();

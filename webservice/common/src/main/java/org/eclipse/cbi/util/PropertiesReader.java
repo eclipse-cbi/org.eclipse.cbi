@@ -17,8 +17,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+
+import autovalue.shaded.com.google.common.common.collect.ImmutableMap;
+import autovalue.shaded.com.google.common.common.collect.ImmutableMap.Builder;
 
 /**
  * Class with utilities method for {@link Properties} objects.
@@ -182,5 +186,15 @@ public class PropertiesReader {
 		} else {
 			return Boolean.valueOf(propertyValue);
 		}
+	}
+	
+	/**
+	 * Returns a copy of the all the read properties
+	 * @return
+	 */
+	public Map<String, String> toMap() {
+		Builder<String, String> ret = ImmutableMap.builder();
+		properties.entrySet().forEach(e -> ret.put(e.getKey().toString(), e.getValue().toString()));
+		return ret.build();
 	}
 }

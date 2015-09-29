@@ -133,4 +133,17 @@ public final class EmbeddedServerProperties {
 	public boolean isServiceVersionAppendedToPathSpec() {
 		return propertiesReader.getBoolean(SERVICE_PATH_SPEC_VERSIONED, DEFAULT_SERVICE_PATH_SPEC_VERSIONED);
 	}
+	
+	/**
+	 * Gets all properties starting with {@code log4j.*}.
+	 * 
+	 * @return all properties starting with {@code log4j.*}.
+	 */
+	public Properties getLog4jProperties() {
+		Properties p = new Properties();
+		propertiesReader.toMap().entrySet().stream()
+			.filter(e -> e.getKey().startsWith("log4j."))
+			.forEach(e -> p.setProperty(e.getKey(), e.getValue()));
+		return p;
+	}
 }

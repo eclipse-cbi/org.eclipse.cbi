@@ -96,12 +96,26 @@ public class EmbeddedServerPropertiesTest {
 		}
 	}
 	
+	@Test
+	public void testGetLog4jConfiguration() throws IOException {
+		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
+			EmbeddedServerProperties propertiesReader = new EmbeddedServerProperties(new PropertiesReader(createTestProperties(), fs));
+			Properties log4jProperties = propertiesReader.getLog4jProperties();
+			assertEquals(2, log4jProperties.size());
+			assertEquals("INFO", log4jProperties.getProperty("log4j.rootLogger"));
+			assertEquals("10", log4jProperties.getProperty("log4j.appender.file.MaxBackupIndex"));
+		}
+	}
+	
 	private static Properties createTestProperties() {
 		Properties properties = new Properties();
 		properties.setProperty("server.access.log", "/var/log/access.log   ");
 		properties.setProperty("server.temp.folder", "/tmp/X");
 		properties.setProperty("server.port", "1025");
 		properties.setProperty("server.service.pathspec", "service/serve");
+		properties.setProperty("log4j.rootLogger", "INFO");
+		properties.setProperty("log4j.appender.file.MaxBackupIndex", "10");
+		properties.setProperty("log4jsubSection", "None");
 		return properties;
 	}
 }

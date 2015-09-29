@@ -12,6 +12,7 @@ package org.eclipse.cbi.webservice.server;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Properties;
 
 import javax.servlet.MultipartConfigElement;
 import javax.servlet.Servlet;
@@ -88,7 +89,7 @@ public abstract class EmbeddedServer {
 	abstract Path accessLogFile();
 	
 	/**
-	 * Returns the file containing the log4j configuration, e.g.:
+	 * Returns the properties containing the log4j configuration, e.g.:
 	 * <p>
 	 * 
 	 * <pre>
@@ -104,9 +105,9 @@ public abstract class EmbeddedServer {
 	 * log4j.appender.file.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n
 	 * </pre>
 	 * 
-	 * @return the file containing the log4j configuration.
+	 * @return the properties containing the log4j configuration.
 	 */
-	abstract Path log4jConfiguration();
+	abstract Properties log4jConfiguration();
 	
 	/**
 	 * Creates and returns a new builder for this class.
@@ -196,7 +197,7 @@ public abstract class EmbeddedServer {
 		 *            build server. Must not be null.
 		 * @return this builder for daisy chaining.
 		 */
-		public abstract Builder log4jConfiguration(Path configuration);
+		public abstract Builder log4jConfiguration(Properties configuration);
 		
 		abstract EmbeddedServer autoBuild();
 		
@@ -216,7 +217,6 @@ public abstract class EmbeddedServer {
 			Preconditions.checkState(!server.servicePathSpec().trim().isEmpty(), "Service path spec must not be empty");
 			Preconditions.checkState(Files.exists(server.tempFolder()), "Temp folder must exists");
 			Preconditions.checkState(Files.isDirectory(server.tempFolder()), "Temp folder must be a directory");
-			Preconditions.checkState(Files.exists(server.log4jConfiguration()), "Log4j configuration file must exists");
 			Preconditions.checkState(Files.exists(server.accessLogFile().normalize().getParent()), "Parent folder of access log file must exists");
 			return server;
 		}
@@ -229,7 +229,7 @@ public abstract class EmbeddedServer {
 	 * @throws Exception
 	 */
 	public void start() throws Exception {
-		PropertyConfigurator.configure(log4jConfiguration().toString());
+		PropertyConfigurator.configure(log4jConfiguration());
 		
 		server = new Server(port());
 

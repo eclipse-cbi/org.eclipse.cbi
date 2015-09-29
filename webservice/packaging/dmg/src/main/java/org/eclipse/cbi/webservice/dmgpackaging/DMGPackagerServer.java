@@ -60,7 +60,7 @@ public class DMGPackagerServer {
 				.appendServiceVersionToPathSpec(serverConf.isServiceVersionAppendedToPathSpec())
 				.servlet(createDMGServlet)
 				.tempFolder(tempFolder)
-				.log4jConfiguration(confPath)
+				.log4jConfiguration(serverConf.getLog4jProperties())
 				.build();
 
 			server.start();

@@ -31,7 +31,7 @@ public class EmbeddedServerPropertiesTest {
 	@Test(expected=IllegalStateException.class)
 	public void testEmptyPropertiesGetAccessLog() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			EmbeddedServerProperties propertiesReader = new EmbeddedServerProperties(new PropertiesReader(new Properties(), fs));
+			EmbeddedServerConfiguration propertiesReader = new EmbeddedServerProperties(new PropertiesReader(new Properties(), fs));
 			propertiesReader.getAccessLogFile();
 		}
 	}
@@ -39,7 +39,7 @@ public class EmbeddedServerPropertiesTest {
 	@Test(expected=IllegalStateException.class)
 	public void testEmptyPropertiesGetServicePathSpec() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			EmbeddedServerProperties propertiesReader = new EmbeddedServerProperties(new PropertiesReader(new Properties(), fs));
+			EmbeddedServerConfiguration propertiesReader = new EmbeddedServerProperties(new PropertiesReader(new Properties(), fs));
 			propertiesReader.getServicePathSpec();
 		}
 	}
@@ -47,7 +47,7 @@ public class EmbeddedServerPropertiesTest {
 	@Test
 	public void testEmptyPropertiesGetTempFolder() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			EmbeddedServerProperties propertiesReader = new EmbeddedServerProperties(new PropertiesReader(new Properties(), fs));
+			EmbeddedServerConfiguration propertiesReader = new EmbeddedServerProperties(new PropertiesReader(new Properties(), fs));
 			assertEquals(fs.getPath(System.getProperty("java.io.tmpdir")), propertiesReader.getTempFolder());
 		}
 	}
@@ -55,7 +55,7 @@ public class EmbeddedServerPropertiesTest {
 	@Test
 	public void testEmptyPropertiesGetServerPort() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			EmbeddedServerProperties propertiesReader = new EmbeddedServerProperties(new PropertiesReader(new Properties(), fs));
+			EmbeddedServerConfiguration propertiesReader = new EmbeddedServerProperties(new PropertiesReader(new Properties(), fs));
 			assertEquals(8080, propertiesReader.getServerPort());
 		}
 	}
@@ -63,7 +63,7 @@ public class EmbeddedServerPropertiesTest {
 	@Test
 	public void testGetAccessLog() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			EmbeddedServerProperties propertiesReader = new EmbeddedServerProperties(new PropertiesReader(createTestProperties(), fs));
+			EmbeddedServerConfiguration propertiesReader = new EmbeddedServerProperties(new PropertiesReader(createTestProperties(), fs));
 			Path accessLog = fs.getPath("/var/log/access.log");
 			assertEquals(accessLog, propertiesReader.getAccessLogFile());
 			assertTrue(Files.exists(accessLog.getParent()));
@@ -73,7 +73,7 @@ public class EmbeddedServerPropertiesTest {
 	@Test
 	public void testGetServicePathSpec() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			EmbeddedServerProperties propertiesReader = new EmbeddedServerProperties(new PropertiesReader(createTestProperties(), fs));
+			EmbeddedServerConfiguration propertiesReader = new EmbeddedServerProperties(new PropertiesReader(createTestProperties(), fs));
 			assertEquals("service/serve", propertiesReader.getServicePathSpec());
 		}
 	}
@@ -81,7 +81,7 @@ public class EmbeddedServerPropertiesTest {
 	@Test
 	public void testGetTempFolder() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			EmbeddedServerProperties propertiesReader = new EmbeddedServerProperties(new PropertiesReader(createTestProperties(), fs));
+			EmbeddedServerConfiguration propertiesReader = new EmbeddedServerProperties(new PropertiesReader(createTestProperties(), fs));
 			Path tmpFolder = fs.getPath("/tmp/X");
 			assertEquals(tmpFolder, propertiesReader.getTempFolder());
 			assertTrue(Files.exists(tmpFolder));
@@ -91,7 +91,7 @@ public class EmbeddedServerPropertiesTest {
 	@Test
 	public void testGetServerPort() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			EmbeddedServerProperties propertiesReader = new EmbeddedServerProperties(new PropertiesReader(createTestProperties(), fs));
+			EmbeddedServerConfiguration propertiesReader = new EmbeddedServerProperties(new PropertiesReader(createTestProperties(), fs));
 			assertEquals(1025, propertiesReader.getServerPort());
 		}
 	}
@@ -99,7 +99,7 @@ public class EmbeddedServerPropertiesTest {
 	@Test
 	public void testGetLog4jConfiguration() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			EmbeddedServerProperties propertiesReader = new EmbeddedServerProperties(new PropertiesReader(createTestProperties(), fs));
+			EmbeddedServerConfiguration propertiesReader = new EmbeddedServerProperties(new PropertiesReader(createTestProperties(), fs));
 			Properties log4jProperties = propertiesReader.getLog4jProperties();
 			assertEquals(2, log4jProperties.size());
 			assertEquals("INFO", log4jProperties.getProperty("log4j.rootLogger"));

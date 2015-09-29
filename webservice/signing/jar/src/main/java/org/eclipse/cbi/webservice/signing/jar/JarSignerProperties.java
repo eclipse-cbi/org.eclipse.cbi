@@ -20,7 +20,7 @@ import org.eclipse.cbi.util.PropertiesReader;
 /**
  * Properties reader of {@link JarSigner}.
  */
-public class JarSignerProperties {
+public class JarSignerProperties implements JarSignerConfiguration {
 
 	private static final long JARSIGNER_TIMEOUT_DEFAULT = TimeUnit.MINUTES.toSeconds(2);
 	private static final String JARSIGNER_TIMEOUT = "jarsigner.timeout";
@@ -54,6 +54,7 @@ public class JarSignerProperties {
 	 * 
 	 * @return the path to the jarsigner executable.
 	 */
+	@Override
 	public Path getJarSigner() {
 		return propertiesReader.getRegularFile(JARSIGNER_BIN);
 	}
@@ -63,6 +64,7 @@ public class JarSignerProperties {
 	 * 
 	 * @return the path to the keystore file.
 	 */
+	@Override
 	public Path getKeystore() {
 		return propertiesReader.getRegularFile(JARSIGNER_KEYSTORE);
 	}
@@ -73,6 +75,7 @@ public class JarSignerProperties {
 	 * 
 	 * @return the name of the alias of the key to be used in the keystore.
 	 */
+	@Override
 	public String getKeystoreAlias() {
 		return propertiesReader.getString(JARSIGNER_KEYSTORE_ALIAS);
 	}
@@ -83,6 +86,7 @@ public class JarSignerProperties {
 	 * 
 	 * @return the path to the file containing the password of the keystore.
 	 */
+	@Override
 	public String getKeystorePassword() {
 		return propertiesReader.getFileContent(JARSIGNER_KEYSTORE_PASSWORD);
 	}
@@ -94,6 +98,7 @@ public class JarSignerProperties {
 	 * @return the URI of the timestamping authority to be used by the jarsigner
 	 *         command
 	 */
+	@Override
 	public URI getTimeStampingAuthority() {
 		String value = propertiesReader.getString(JARSIGNER_TSA);
 		try {
@@ -108,22 +113,27 @@ public class JarSignerProperties {
 	 * {@value #JARSIGNER_TIMEOUT} property can be found returns the default
 	 * value '120' seconds.
 	 */
+	@Override
 	public long getTimeout() {
 		return propertiesReader.getLong(JARSIGNER_TIMEOUT, JARSIGNER_TIMEOUT_DEFAULT);
 	}
 	
+	@Override
 	public String getHttpProxyHost() {
 		return propertiesReader.getString(JARSIGNER_HTTP_PROXY_HOST, "");
 	}
 	
+	@Override
 	public String getHttpsProxyHost() {
 		return propertiesReader.getString(JARSIGNER_HTTPS_PROXY_HOST, "");
 	}
 	
+	@Override
 	public int getHttpProxyPort() {
 		return propertiesReader.getInt(JARSIGNER_HTTP_PROXY_PORT, 0);
 	}
 	
+	@Override
 	public int getHttpsProxyPort() {
 		return propertiesReader.getInt(JARSIGNER_HTTPS_PROXY_PORT, 0);
 	}

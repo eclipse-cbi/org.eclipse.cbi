@@ -21,7 +21,7 @@ import org.eclipse.cbi.util.PropertiesReader;
  * A reader of {@link Properties} of {@link EmbeddedServer}. It provides
  * sanity checks and sensible default values for optional properties.
  */
-public final class EmbeddedServerProperties {
+public final class EmbeddedServerProperties implements EmbeddedServerConfiguration {
 
 	private static final int DEFAULT_SERVER_PORT = 8080;
 	private static final boolean DEFAULT_SERVICE_PATH_SPEC_VERSIONED = true;
@@ -62,6 +62,7 @@ public final class EmbeddedServerProperties {
 	 *             if the property is not specified or if the parent folder
 	 *             doesn't exist and can't be created.
 	 */
+	@Override
 	public Path getAccessLogFile() {
 		final Path logFilePath = propertiesReader.getPath(ACCESS_LOG_FILE);
 		final Path logFileParent = logFilePath.getParent();
@@ -87,6 +88,7 @@ public final class EmbeddedServerProperties {
 	 * @throws IllegalStateException
 	 *             if the folder doesn't exist and can't be created.
 	 */
+	@Override
 	public Path getTempFolder() {
 		Path tempFolder = propertiesReader.getPath(TEMP_FOLDER, System.getProperty(JAVA_IO_TMPDIR));
 		if (!Files.exists(tempFolder)) {
@@ -110,6 +112,7 @@ public final class EmbeddedServerProperties {
 	 *             if the specified server port can not be parsed as a valid
 	 *             integer.
 	 */
+	@Override
 	public int getServerPort() {
 		return propertiesReader.getInt(SERVER_PORT, DEFAULT_SERVER_PORT);
 	}
@@ -121,6 +124,7 @@ public final class EmbeddedServerProperties {
 	 * @throws IllegalStateException
 	 *             if the property is not specified in the properties
 	 */
+	@Override
 	public String getServicePathSpec() {
 		return propertiesReader.getString(SERVICE_PATH_SPEC);
 	}
@@ -130,6 +134,7 @@ public final class EmbeddedServerProperties {
 	 * 
 	 * @return true if the service version should be appended to service path spec.
 	 */
+	@Override
 	public boolean isServiceVersionAppendedToPathSpec() {
 		return propertiesReader.getBoolean(SERVICE_PATH_SPEC_VERSIONED, DEFAULT_SERVICE_PATH_SPEC_VERSIONED);
 	}
@@ -139,6 +144,7 @@ public final class EmbeddedServerProperties {
 	 * 
 	 * @return all properties starting with {@code log4j.*}.
 	 */
+	@Override
 	public Properties getLog4jProperties() {
 		Properties p = new Properties();
 		propertiesReader.toMap().entrySet().stream()

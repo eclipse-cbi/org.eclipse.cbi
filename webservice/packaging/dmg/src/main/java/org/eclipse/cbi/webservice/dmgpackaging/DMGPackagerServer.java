@@ -20,6 +20,7 @@ import java.util.List;
 import org.eclipse.cbi.util.ProcessExecutor;
 import org.eclipse.cbi.util.PropertiesReader;
 import org.eclipse.cbi.webservice.server.EmbeddedServer;
+import org.eclipse.cbi.webservice.server.EmbeddedServerConfiguration;
 import org.eclipse.cbi.webservice.server.EmbeddedServerProperties;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
@@ -42,7 +43,7 @@ public class DMGPackagerServer {
 	private void doMain(FileSystem fs, String[] args) throws Exception, InterruptedException {
 		if (parseCmdLineArguments(fs, args)) {
 			final Path confPath = fs.getPath(configurationFilePath);
-			final EmbeddedServerProperties serverConf = new EmbeddedServerProperties(PropertiesReader.create(confPath));
+			final EmbeddedServerConfiguration serverConf = new EmbeddedServerProperties(PropertiesReader.create(confPath));
 			final Path tempFolder = serverConf.getTempFolder();
 
 			final DMGPackagerProperties conf = new DMGPackagerProperties(PropertiesReader.create(confPath));

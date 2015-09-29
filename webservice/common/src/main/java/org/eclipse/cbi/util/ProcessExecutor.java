@@ -18,15 +18,21 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * Utility class to execute a native command in a forked process.
@@ -82,6 +88,8 @@ public interface ProcessExecutor {
 	public class BasicImpl implements ProcessExecutor {
 		
 		private static final Logger logger = LoggerFactory.getLogger(BasicImpl.class);
+		
+		private final ExecutorService executor = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("Process-Stream-Gobbler-%d").build());
 
 		private static final int STREAM_GLOBBER_GRACETIME = 3; // in seconds
 		
@@ -103,33 +111,32 @@ public interface ProcessExecutor {
 			Process p = pb.start();
 
 			// redirect output/error streams of process.
-			Thread streamGobbler = new Thread(new StreamRedirection(p.getInputStream(), processOutput));
-			streamGobbler.start();
+			Future<String> streamGobbler = executor.submit(new StreamRedirection(p.getInputStream()));
 
 			try {
-				if (!p.waitFor(timeout, timeoutUnit)) {
+				if (!p.waitFor(timeout, timeoutUnit)) { //timeout
+					gatherOutput(processOutput, streamGobbler);
 					p.destroyForcibly();
 					throw new IOException(Joiner.on('\n').join(
 							"Process '" + arg0 + "' has been stopped forcibly. It did not complete in " + timeout + " " + timeoutUnit,
 							"Process '" + arg0 + "' output: " + processOutput.toString()));
+				} else {
+					gatherOutput(processOutput, streamGobbler); 
 				}
-				
-				streamGobbler.join(TimeUnit.SECONDS.toMillis(STREAM_GLOBBER_GRACETIME)); // give 3sec to the stream gobbler to gather all the output.
-				streamGobbler.interrupt();
-			} catch (InterruptedException e) {
+			} catch (InterruptedException e) { // we've been interrupted
+				p.destroyForcibly(); // kill the subprocess
+
 				logger.error("Thread '" + Thread.currentThread().getName() + "' has been interrupted while waiting for the process '" + arg0 + "' to complete.", e);
-
-				streamGobbler.interrupt();
-
 				processOutput.append("Thread '" + Thread.currentThread().getName() + "' has been interrupted while waiting for the process '" + arg0 + "' to complete.\n");
-				StringWriter stackTrace = new StringWriter();
-				e.printStackTrace(new PrintWriter(stackTrace));
-				processOutput.append(stackTrace.getBuffer().toString());
+				printStrackTrace(e, processOutput);
 				
-				if (p.isAlive())
+				gatherOutput(processOutput, streamGobbler);
+				
+				if (!p.isAlive()) {
 					logOutput(arg0, p.exitValue(), processOutput);
-				else 
+				} else { 
 					logger.error("Process '" + arg0 + "' output: " + processOutput.toString());
+				}
 				
 				// Restore the interrupted status
 				Thread.currentThread().interrupt();
@@ -138,13 +145,39 @@ public interface ProcessExecutor {
 			return logOutput(arg0, p.exitValue(), processOutput);
 		}
 
+		private void printStrackTrace(Exception e, StringBuffer output) {
+			StringWriter stackTrace = new StringWriter();
+			e.printStackTrace(new PrintWriter(stackTrace));
+			output.append(stackTrace.getBuffer().toString());
+		}
+
+		private void gatherOutput(StringBuffer processOutput, Future<String> streamGobbler) {
+			try {
+				// give 3sec to the stream gobbler to gather all the output.
+				processOutput.append(streamGobbler.get(STREAM_GLOBBER_GRACETIME, TimeUnit.SECONDS));
+			} catch (TimeoutException | InterruptedException | ExecutionException e) {
+				processOutput.append("Process output can not be gathered'");
+				printStrackTrace(e, processOutput);
+				streamGobbler.cancel(true);
+			}
+		}
+
 		private int logOutput(String arg0, final int exitValue, StringBuffer processOutput) {
+			String output = processOutput.toString();
 			if (exitValue == 0) {
 				logger.info("Process '" + arg0 + "' exited with value '" + exitValue +"'");
-				logger.info("Process '" + arg0 + "' output: " + processOutput.toString());
+				if (!output.isEmpty()) {
+					logger.info("Process '" + arg0 + "' output:\n" + output);
+				} else {
+					logger.info("Process '" + arg0 + "' exited with no output");
+				}
 			} else {
 				logger.error("Process '" + arg0 + "' exited with value '" + exitValue +"'");
-				logger.error("Process '" + arg0 + "' output: " + processOutput.toString());
+				if (!output.isEmpty()) {
+					logger.error("Process '" + arg0 + "' output:\n" + output);
+				} else {
+					logger.error("Process '" + arg0 + "' exited with no output");
+				}
 			}
 			return exitValue;
 		}
@@ -161,11 +194,10 @@ public interface ProcessExecutor {
 		 * A runnable that will continuously read from an {@link InputStream}
 		 * and write the result in an {@link Appendable}.
 		 */
-		private static final class StreamRedirection implements Runnable {
+		private static final class StreamRedirection implements Callable<String> {
 
 			private static final String NL = System.getProperty("line.separator");
 			private final InputStream is;
-			private final Appendable appendable;
 
 			/**
 			 * Creates a
@@ -176,25 +208,19 @@ public interface ProcessExecutor {
 			 *            where the read characters will be written to. Should
 			 *            be a thread safe implementation.
 			 */
-			StreamRedirection(InputStream is, Appendable appendable) {
-				this.is = is;
-				this.appendable = appendable;
+			StreamRedirection(InputStream is) {
+				this.is = is;;
 			}
 
-			/**
-			 * {@inheritDoc}
-			 */
-		    @Override
-		    public void run() {
-		    	BufferedReader r = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
-		        try {
-		            String line = null;
-		            while ((line = r.readLine()) != null && !Thread.currentThread().isInterrupted())
-		            	appendable.append(line).append(NL);
-		        } catch (IOException e) {
-		            throw Throwables.propagate(e);
-		        }
-		    }
+			@Override
+			public String call() throws Exception {
+				final StringBuilder buffer = new StringBuilder();
+				BufferedReader r = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+				String line = null;
+				while ((line = r.readLine()) != null && !Thread.currentThread().isInterrupted())
+					buffer.append(line).append(NL);
+				return buffer.toString();
+			}
 		}
 	}
 }

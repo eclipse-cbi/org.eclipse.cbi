@@ -10,12 +10,17 @@
  *******************************************************************************/
 package org.eclipse.cbi.webservice.server;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
 import javax.servlet.MultipartConfigElement;
 import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.Handler;
@@ -29,6 +34,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 /**
  * Base class to create a simple (one servlet) embedded Jetty server.
@@ -244,6 +250,8 @@ public abstract class EmbeddedServer {
 			fullPathSpec = servicePathSpec();
 		}
 		contextHandler.addServlet(servletHolder, fullPathSpec);
+		contextHandler.addServlet(createHearbeatServlet(), "/heartbeat");
+		contextHandler.addServlet(createVersionServlet(), "/version");
 
 		HandlerCollection handlers = new HandlerCollection();
 		RequestLogHandler requestLogHandler = new RequestLogHandler();
@@ -258,6 +266,39 @@ public abstract class EmbeddedServer {
 
 		server.start();
 		server.join();
+	}
+
+	private ServletHolder createVersionServlet() {
+		ServletHolder versionServlet = new ServletHolder(new HttpServlet() {
+			private static final long serialVersionUID = -6359788282999575281L;
+
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				String version = servlet().getClass().getPackage().getImplementationVersion();
+				if (Strings.isNullOrEmpty(version)) {
+					version = "dev";
+				}
+				
+				resp.setStatus(HttpServletResponse.SC_OK);
+				resp.setContentType("text/plain");
+				resp.getWriter().println(version);
+			}
+		});
+		return versionServlet;
+	}
+
+	private ServletHolder createHearbeatServlet() {
+		ServletHolder hearbeatServlet = new ServletHolder(new HttpServlet() {
+			private static final long serialVersionUID = -6359788282999575281L;
+
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.setStatus(HttpServletResponse.SC_OK);
+				resp.setContentType("text/plain");
+				resp.getWriter().println("Server is online");
+			}
+		});
+		return hearbeatServlet;
 	}
 	
 	/**

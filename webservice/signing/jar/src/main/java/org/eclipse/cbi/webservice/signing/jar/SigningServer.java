@@ -48,39 +48,43 @@ public class SigningServer {
 			final Path confPath = fs.getPath(configurationFilePath);
 			final EmbeddedServerConfiguration serverConf = new EmbeddedServerProperties(PropertiesReader.create(confPath));
 			final JarSignerConfiguration conf = new JarSignerProperties(PropertiesReader.create(confPath));
-			final Path tempFolder = serverConf.getTempFolder();
-
-			final JarSigner jarSigner = JarSigner.builder()
-				.jarSigner(conf.getJarSigner())
-				.keystore(conf.getKeystore())
-				.keystoreAlias(conf.getKeystoreAlias())
-				.keystorePassword(conf.getKeystorePassword())
-				.timestampingAuthority(conf.getTimeStampingAuthority())
-				.httpProxyHost(conf.getHttpProxyHost())
-				.httpProxyPort(conf.getHttpProxyPort())
-				.httpsProxyHost(conf.getHttpsProxyHost())
-				.httpsProxyPort(conf.getHttpsProxyPort())
-				.processExecutor(new ProcessExecutor.BasicImpl())
-				.timeout(conf.getTimeout())
-				.build();
-			
-			final SigningServlet codeSignServlet = SigningServlet.builder()
-				.jarSigner(jarSigner)
-				.tempFolder(tempFolder)
-				.build();
-			
-			final EmbeddedServer server = EmbeddedServer.builder()
-				.port(serverConf.getServerPort())
-				.accessLogFile(serverConf.getAccessLogFile())
-				.servicePathSpec(serverConf.getServicePathSpec())
-				.appendServiceVersionToPathSpec(serverConf.isServiceVersionAppendedToPathSpec())
-				.servlet(codeSignServlet)
-				.tempFolder(tempFolder)
-				.log4jConfiguration(serverConf.getLog4jProperties())
-				.build();
-
-			server.start();
+			startServer(serverConf, conf);
 		}
+	}
+
+	public void startServer(final EmbeddedServerConfiguration serverConf, final JarSignerConfiguration jarSignerConf) throws Exception {
+		final Path tempFolder = serverConf.getTempFolder();
+
+		final JarSigner jarSigner = JarSigner.builder()
+			.jarSigner(jarSignerConf.getJarSigner())
+			.keystore(jarSignerConf.getKeystore())
+			.keystoreAlias(jarSignerConf.getKeystoreAlias())
+			.keystorePassword(jarSignerConf.getKeystorePassword())
+			.timestampingAuthority(jarSignerConf.getTimeStampingAuthority())
+			.httpProxyHost(jarSignerConf.getHttpProxyHost())
+			.httpProxyPort(jarSignerConf.getHttpProxyPort())
+			.httpsProxyHost(jarSignerConf.getHttpsProxyHost())
+			.httpsProxyPort(jarSignerConf.getHttpsProxyPort())
+			.processExecutor(new ProcessExecutor.BasicImpl())
+			.timeout(jarSignerConf.getTimeout())
+			.build();
+		
+		final SigningServlet codeSignServlet = SigningServlet.builder()
+			.jarSigner(jarSigner)
+			.tempFolder(tempFolder)
+			.build();
+		
+		final EmbeddedServer server = EmbeddedServer.builder()
+			.port(serverConf.getServerPort())
+			.accessLogFile(serverConf.getAccessLogFile())
+			.servicePathSpec(serverConf.getServicePathSpec())
+			.appendServiceVersionToPathSpec(serverConf.isServiceVersionAppendedToPathSpec())
+			.servlet(codeSignServlet)
+			.tempFolder(tempFolder)
+			.log4jConfiguration(serverConf.getLog4jProperties())
+			.build();
+
+		server.start();
 	}
 
 	private boolean parseCmdLineArguments(FileSystem fs, String[] args) {

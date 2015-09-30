@@ -26,10 +26,10 @@ import java.util.zip.ZipInputStream;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
-import org.eclipse.cbi.common.FileProcessor;
 import org.eclipse.cbi.common.util.Paths;
 import org.eclipse.cbi.common.util.Zips;
 import org.eclipse.cbi.maven.common.ExceptionHandler;
+import org.eclipse.cbi.maven.common.FileProcessor;
 import org.eclipse.cbi.maven.common.MojoExecutionIOExceptionWrapper;
 
 /**
@@ -56,12 +56,12 @@ public class JarSigner {
 	 * Jar file extension.
 	 */
 	private static final String DOT_JAR_GLOB_PATTERN = "glob:**.jar";
-	
+
 	/**
 	 * The log on which feedback will be provided.
 	 */
 	private final Log log;
-	
+
 	/**
 	 * The signer to which the Jar will be send for signing.
 	 */
@@ -83,7 +83,7 @@ public class JarSigner {
 	private final TimeUnit retryTimerUnit;
 
 	/**
-	 * Whether the nested Jars should be signed (when >= 1). Signs all nested Jars recursively 
+	 * Whether the nested Jars should be signed (when >= 1). Signs all nested Jars recursively
 	 * when {@link Integer#MAX_VALUE}. Set to 0 if you want to avoid signing nested Jars.
 	 */
 	private final int maxDepth;
@@ -91,8 +91,8 @@ public class JarSigner {
 	private final ExceptionHandler exceptionHandler;
 
 	/**
-	 * Default constructor. 
-	 * 
+	 * Default constructor.
+	 *
 	 * @param signer
 	 * @param maxdepth
 	 * @param continueOnFail Whether exceptions should be thrown when the signing process of this Jar or one of its nested Jar (if {@code maxDepth} is >= 1) fails.
@@ -110,10 +110,10 @@ public class JarSigner {
 		this.retryTimerUnit = retryTimerUnit;
 		this.exceptionHandler = new ExceptionHandler(log, continueOnFail);
 	}
-	
+
 	/**
 	 * Sign the given Jar file.
-	 * 
+	 *
 	 * @param jarfile
 	 *            the file to sign.
 	 * @return the number of Jar that has been signed.
@@ -122,15 +122,15 @@ public class JarSigner {
 	public int signJar(Path jarfile) throws MojoExecutionException {
 		return signJar(jarfile, 0);
 	}
-	
+
 	/**
 	 * Sign the given Jar and its nested Jar if it {@link #shouldBeSigned(Path)}.
-	 * 
+	 *
 	 * @param file
 	 *            the file to sign
 	 * @param currentDepth
 	 *            the current nesting depth of this Jar
-	 * @return the number of Jar that has been signed. 
+	 * @return the number of Jar that has been signed.
 	 * @throws MojoExecutionException
 	 */
 	private int signJar(Path file, int currentDepth) throws MojoExecutionException {
@@ -156,9 +156,9 @@ public class JarSigner {
 	 * the properties {@value #JARPROCESSOR_EXCLUDE_SIGN} or
 	 * {@value #JARPROCESSOR_EXCLUDE}</li>
 	 * </ul>
-	 * 
+	 *
 	 * @param file the file to check
-	 * @param currentDepth 
+	 * @param currentDepth
 	 * @return true if the file should be signed, false otherwise.
 	 * @throws IOException
 	 */
@@ -187,7 +187,7 @@ public class JarSigner {
 	 * Checks and returns whether the given Jar file has signing disabled by an
 	 * file {@value #META_INF_ECLIPSE_INF} with the either the properties
 	 * {@value #JARPROCESSOR_EXCLUDE_SIGN} or {@value #JARPROCESSOR_EXCLUDE}.
-	 * 
+	 *
 	 * @param file
 	 * @return true if it finds a property that excludes this file for signing.
 	 * @throws IOException
@@ -203,7 +203,7 @@ public class JarSigner {
 					found = true;
 					Properties eclipseInf = new Properties();
 					eclipseInf.load(zis);
-					
+
 					isDisabled = Boolean.parseBoolean(eclipseInf.getProperty(JARPROCESSOR_EXCLUDE))
 							|| Boolean.parseBoolean(eclipseInf.getProperty(JARPROCESSOR_EXCLUDE_SIGN));
 				}
@@ -215,12 +215,12 @@ public class JarSigner {
 
 	/**
 	 * Sign this Jar and its nested Jar.
-	 * 
+	 *
 	 * @param file
 	 *            the file to sign
 	 * @param currentDepth
 	 *            the current nesting depth of the current file.
-	 * @param signedFile 
+	 * @param signedFile
 	 * @return the number of Jar that has been signed.
 	 * @throws IOException
 	 * @throws MojoExecutionException
@@ -246,7 +246,7 @@ public class JarSigner {
 	 *
 	 * @param file
 	 *            jar file containing inner jars to be signed
-	 * @param currentDepth 
+	 * @param currentDepth
 	 * @param innerJars
 	 *            A list of inner jars that needs to be signed
 	 * @return the number of Jar that has been signed.
@@ -262,10 +262,10 @@ public class JarSigner {
 			// sign inner jars
 			NestedJarSigner nestedJarSigner = new NestedJarSigner(currentDepth);
 			Files.walkFileTree(jarUnpackFolder, nestedJarSigner);
-			
+
 			// rejaring with the signed inner jars
 			Zips.packJar(jarUnpackFolder, file, false);
-			
+
 			numberOfSignedNestedJar = nestedJarSigner.getNumberOfSignedNestedJar();
 		} catch (MojoExecutionIOExceptionWrapper e) {
 			throw e.getCause();
@@ -275,20 +275,20 @@ public class JarSigner {
 			if (jarUnpackFolder != null) {
 				Paths.deleteQuietly(jarUnpackFolder);
 			}
-			
+
 			if (tmpSignedJar != null) {
 				Paths.deleteQuietly(tmpSignedJar);
 			}
 		}
 		return numberOfSignedNestedJar;
 	}
-	
+
 	private final class NestedJarSigner extends SimpleFileVisitor<Path> {
 
 		private final int currentDepth;
 
 		private int numberOfSignedNestedJar;
-		
+
 		NestedJarSigner(int currentDepth) {
 			this.currentDepth = currentDepth;
 			this.numberOfSignedNestedJar = 0;
@@ -304,15 +304,15 @@ public class JarSigner {
 			}
 			return FileVisitResult.CONTINUE;
 		}
-		
+
 		public int getNumberOfSignedNestedJar() {
 			return numberOfSignedNestedJar;
 		}
 	}
-	
+
 	/**
 	 * Creates a builder of {@link JarSigner}.
-	 * 
+	 *
 	 * @param signer
 	 *            the signer to delegate to.
 	 * @return the builder of {@link JarSigner}.
@@ -320,7 +320,7 @@ public class JarSigner {
 	public static JarSigner.Builder builder(FileProcessor signer) {
 		return new Builder(signer);
 	}
-	
+
 	/**
 	 * A builder of {@link JarSigner}. Default value for options are:
 	 * <ul>
@@ -329,12 +329,12 @@ public class JarSigner {
 	 * <li>{@link #maxDepth(int)}: 0</li>
 	 * <li>{@link #maxRetry(int)}: 0</li>
 	 * <li>{@link #waitBeforeRetry(int, TimeUnit)}: 0 {@link TimeUnit#SECONDS seconds}</li>
-	 * <ul> 
+	 * <ul>
 	 */
 	public static class Builder {
 
 		private final FileProcessor signer;
-		
+
 		private boolean continueOnFail = false;
 
 		private Log log = new SystemStreamLog();
@@ -350,29 +350,29 @@ public class JarSigner {
 		Builder(FileProcessor signer) {
 			this.signer = Objects.requireNonNull(signer);
 		}
-		
+
 		/**
 		 * Configure the {@link JarSigner} to <strong>not</strong> throw
 		 * {@link MojoExecutionException} if it can't sign the Jar. Instead, it
 		 * will only log a warning.
-		 * 
+		 *
 		 * @return this builder for chained calls.
 		 */
 		public Builder continueOnFail() {
 			this.continueOnFail = true;
 			return this;
 		}
-		
+
 		/**
 		 * The {@link Log} onto which the feedback should be printed.
-		 * @param log 
+		 * @param log
 		 * @return this builder for chained calls.
 		 */
 		public Builder logOn(Log log) {
 			this.log = log;
 			return this;
 		}
-		
+
 		/**
 		 * The maximum depth of nested Jars that should be signed. If 0 is passed, only the given Jar will signed.
 		 * @param maxDepth
@@ -385,7 +385,7 @@ public class JarSigner {
 			this.maxDepth = maxDepth;
 			return this;
 		}
-		
+
 		/**
 		 * The maximum number of retry that will be passed to the {@link FileProcessor}.
 		 * @param maxRetry
@@ -398,7 +398,7 @@ public class JarSigner {
 			this.maxRetry = maxRetry;
 			return this;
 		}
-		
+
 		/**
 		 * The time to wait between each try (passed to the {@link FileProcessor}).
 		 * @param waitTimer
@@ -410,15 +410,15 @@ public class JarSigner {
 			this.waitTimerUnit = timeUnit;
 			return this;
 		}
-		
+
 		/**
 		 * Creates and returns a new JarSigner configured with the options
 		 * specified to this builder.
-		 * 
+		 *
 		 * @return a new JarSigner.
 		 */
 		public JarSigner build() {
-			return new JarSigner(this.signer, this.maxDepth, this.continueOnFail, 
+			return new JarSigner(this.signer, this.maxDepth, this.continueOnFail,
 					this.log, this.maxRetry, this.waitTimer, this.waitTimerUnit);
 		}
 	}

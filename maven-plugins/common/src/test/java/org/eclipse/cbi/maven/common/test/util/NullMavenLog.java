@@ -1,4 +1,4 @@
-package org.eclipse.cbi.maven.common.tests;
+package org.eclipse.cbi.maven.common.test.util;
 
 import org.apache.maven.plugin.logging.Log;
 

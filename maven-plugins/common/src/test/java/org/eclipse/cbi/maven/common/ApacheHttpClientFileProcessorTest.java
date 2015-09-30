@@ -1,4 +1,4 @@
-package org.eclipse.cbi.common.http;
+package org.eclipse.cbi.maven.common;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -19,8 +19,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.entity.ContentType;
-import org.eclipse.cbi.common.http.ApacheHttpClientFileProcessor;
 import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
+import org.eclipse.cbi.maven.common.ApacheHttpClientFileProcessor;
+import org.eclipse.cbi.maven.common.test.util.NullJettyLogger;
+import org.eclipse.cbi.maven.common.test.util.NullLog;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.NetworkConnector;
@@ -41,13 +43,13 @@ public class ApacheHttpClientFileProcessorTest {
 	public static void beforeClass() {
 		Log.setLog(new NullJettyLogger());
 	}
-	
+
 	@Test(expected=IllegalArgumentException.class)
 	public void testProcessNullFile() throws IOException {
 		ApacheHttpClientFileProcessor processor = createLocalProcessor("localhost", 8080);
 		processor.process(null);
 	}
-	
+
 	@Test(expected=IllegalArgumentException.class)
 	public void testProcessNonExistingFile() throws Exception {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -56,7 +58,7 @@ public class ApacheHttpClientFileProcessorTest {
 			processor.process(path);
 		}
 	}
-	
+
 	@Test(expected=IllegalArgumentException.class)
 	public void testProcessDirectory() throws Exception {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -66,7 +68,7 @@ public class ApacheHttpClientFileProcessorTest {
 			processor.process(path);
 		}
 	}
-	
+
 	public void testProcessOfflineServer() throws Exception {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			ApacheHttpClientFileProcessor processor = createLocalProcessor("qwerty", 8080);
@@ -74,7 +76,7 @@ public class ApacheHttpClientFileProcessorTest {
 			assertFalse(processor.process(path));
 		}
 	}
-	
+
 	@Test(expected=IllegalArgumentException.class)
 	public void testRetryNegativeTimes() throws Exception {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -83,7 +85,7 @@ public class ApacheHttpClientFileProcessorTest {
 			processor.process(path, -1, 0, TimeUnit.SECONDS);
 		}
 	}
-	
+
 	@Test(expected=IllegalArgumentException.class)
 	public void testRetryNegativeInterval() throws Exception {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -92,7 +94,7 @@ public class ApacheHttpClientFileProcessorTest {
 			processor.process(path, 5, -4, TimeUnit.SECONDS);
 		}
 	}
-	
+
 	@Test(expected=NullPointerException.class)
 	public void testRetryNullUnit() throws Exception {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -101,7 +103,7 @@ public class ApacheHttpClientFileProcessorTest {
 			processor.process(path, 5, 4, null);
 		}
 	}
-	
+
 	@Test
 	public void testProcessStandardFile() throws Exception {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -118,7 +120,7 @@ public class ApacheHttpClientFileProcessorTest {
 			}
 		}
 	}
-	
+
 	@Test
 	public void testProcessRequest() throws Exception {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -135,7 +137,7 @@ public class ApacheHttpClientFileProcessorTest {
 			}
 		}
 	}
-	
+
 	@Test
 	public void testServerError() throws Exception {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -155,7 +157,7 @@ public class ApacheHttpClientFileProcessorTest {
 			}
 		}
 	}
-	
+
 	@Test
 	public void testRetryOnServerError() throws Exception {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -175,7 +177,7 @@ public class ApacheHttpClientFileProcessorTest {
 			}
 		}
 	}
-	
+
 	@Test(expected=IOException.class)
 	public void testRetryOnException() throws Exception {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -192,7 +194,7 @@ public class ApacheHttpClientFileProcessorTest {
 	private static ApacheHttpClientFileProcessor createLocalProcessor(String host, int port) {
 		return new ApacheHttpClientFileProcessor(URI.create("http://"+host+":"+port+"/processing-service"), "file", new NullLog());
 	}
-	
+
 	private static Server createProcessingServer(Handler handler) throws Exception {
 		Server server = new Server(0);
         server.setHandler(handler);
@@ -227,14 +229,14 @@ public class ApacheHttpClientFileProcessorTest {
 			}
 		};
 	}
-	
+
 	private static ServiceUnavailableHandler createServiceUnavailableHandler() {
 		return new ServiceUnavailableHandler();
 	}
 
 	private static final class ServiceUnavailableHandler extends AbstractHandler {
 		int requestCount;
-	
+
 		@Override
 		public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 			requestCount++;
@@ -242,7 +244,7 @@ public class ApacheHttpClientFileProcessorTest {
 			response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
 			response.getWriter().print("Some more explanations about the error from the server!");
 		}
-	
+
 		public int getRequestCount() {
 			return requestCount;
 		}

@@ -24,8 +24,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
-import org.eclipse.cbi.common.FileProcessor;
-import org.eclipse.cbi.common.http.ApacheHttpClientFileProcessor;
+import org.eclipse.cbi.maven.common.FileProcessor;
+import org.eclipse.cbi.maven.common.ApacheHttpClientFileProcessor;
 import org.eclipse.cbi.maven.common.MavenLogger;
 
 /**
@@ -40,9 +40,9 @@ import org.eclipse.cbi.maven.common.MavenLogger;
 public class SignMojo extends AbstractMojo {
 
 	private static final String DOT_APP = ".app";
-	
+
 	private static final String PART_NAME = "file";
-	
+
 	/**
      * The signing service URL for signing Mac binaries
      *
@@ -75,7 +75,7 @@ public class SignMojo extends AbstractMojo {
      * @parameter property="project.build.directory"
      * @readonly
      * @since 1.0.4
-     * @deprecated not used anymore. Use {@code java.io.tmpdir} property instead. 
+     * @deprecated not used anymore. Use {@code java.io.tmpdir} property instead.
      */
     @SuppressWarnings("unused")
 	@Deprecated
@@ -167,7 +167,7 @@ public class SignMojo extends AbstractMojo {
     		appSignerBuilder.continueOnFail();
     	}
     	OSXAppSigner osxAppSigner = appSignerBuilder.build();
-    	
+
         if (signFiles != null && !signFiles.isEmpty()) {
         	//app paths are configured
         	Set<Path> filesToSign = new LinkedHashSet<>();
@@ -175,7 +175,7 @@ public class SignMojo extends AbstractMojo {
 				filesToSign.add(FileSystems.getDefault().getPath(pathString));
 			}
             osxAppSigner.signApplications(filesToSign);
-        } else { 
+        } else {
         	//perform search
         	osxAppSigner.signApplications(FileSystems.getDefault().getPath(baseSearchDir), getPathMatchers(FileSystems.getDefault(), fileNames, getLog()));
         }
@@ -183,7 +183,7 @@ public class SignMojo extends AbstractMojo {
 
 	static Set<PathMatcher> getPathMatchers(FileSystem fs, Set<String> fileNames, Log log) {
 		final Set<PathMatcher> pathMatchers = new LinkedHashSet<>();
-		
+
 		if (fileNames == null || fileNames.isEmpty()) {
 			pathMatchers.add(fs.getPathMatcher("glob:**" + fs.getSeparator() + "Eclipse.app"));
 		} else {

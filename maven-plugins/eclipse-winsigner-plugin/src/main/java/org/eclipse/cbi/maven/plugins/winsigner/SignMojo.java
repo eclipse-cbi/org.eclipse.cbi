@@ -7,7 +7,7 @@
  *
  * Contributors:
  *   Caroline McQuatt, Mike Lim - initial implementation
- *   Mikael Barbero - refactoring with WindowsExeSigner 
+ *   Mikael Barbero - refactoring with WindowsExeSigner
  *******************************************************************************/
 package org.eclipse.cbi.maven.plugins.winsigner;
 
@@ -24,8 +24,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
-import org.eclipse.cbi.common.FileProcessor;
-import org.eclipse.cbi.common.http.ApacheHttpClientFileProcessor;
+import org.eclipse.cbi.maven.common.FileProcessor;
+import org.eclipse.cbi.maven.common.ApacheHttpClientFileProcessor;
 import org.eclipse.cbi.maven.common.MavenLogger;
 
 /**

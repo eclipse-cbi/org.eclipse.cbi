@@ -8,7 +8,7 @@
  * Contributors:
  *   Mikael Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.common;
+package org.eclipse.cbi.maven.common;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -24,7 +24,7 @@ public interface FileProcessor {
 	 * and will wait for a given amount time between each time. Returns true if
 	 * the file has been successfully processed (the file is then modified),
 	 * false otherwise (the file then stay untouched).
-	 * 
+	 *
 	 * @param path
 	 *            the file to be processed (must exists and be a file).
 	 * @param maxRetry
@@ -49,7 +49,7 @@ public interface FileProcessor {
 	 * Process the given file. Returns true if the file has been successfully
 	 * processed (the file is then modified), false otherwise (the file then
 	 * stay untouched).
-	 * 
+	 *
 	 * @param path
 	 *            the file to be processed (must exists and be a file).
 	 * @return true if the file has been successfully processed, false

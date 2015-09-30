@@ -1,4 +1,4 @@
-package org.eclipse.cbi.common.http;
+package org.eclipse.cbi.maven.common.test.util;
 
 import org.eclipse.jetty.util.log.AbstractLogger;
 import org.eclipse.jetty.util.log.Logger;

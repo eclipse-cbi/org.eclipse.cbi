@@ -1,10 +1,10 @@
-package org.eclipse.cbi.common.test.util;
+package org.eclipse.cbi.maven.common.test.util;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.cbi.common.FileProcessor;
+import org.eclipse.cbi.maven.common.FileProcessor;
 
 public class ErrorProcessor implements FileProcessor {
 	@Override

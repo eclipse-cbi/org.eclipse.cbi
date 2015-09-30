@@ -9,7 +9,7 @@
  *   Thanh Ha - initial implementation
  *   Mikael Barbero - code splitting
  *******************************************************************************/
-package org.eclipse.cbi.common.http;
+package org.eclipse.cbi.maven.common;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -35,8 +35,8 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.InputStreamBody;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.eclipse.cbi.common.FileProcessor;
-import org.eclipse.cbi.common.Logger;
+import org.eclipse.cbi.maven.common.FileProcessor;
+import org.eclipse.cbi.maven.common.Logger;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -45,7 +45,7 @@ import com.google.common.base.Throwables;
 import com.google.common.io.CharStreams;
 
 /**
- * A class that send a file to as a post request to an HTTP server and replace 
+ * A class that send a file to as a post request to an HTTP server and replace
  * the send file with the reply.
  */
 public class ApacheHttpClientFileProcessor implements FileProcessor {
@@ -67,7 +67,7 @@ public class ApacheHttpClientFileProcessor implements FileProcessor {
 
 	/**
 	 * Default constructor.
-	 * 
+	 *
 	 * @param serverURI
 	 *            the URI of the server where the file will be send.
 	 * @param partName
@@ -87,9 +87,9 @@ public class ApacheHttpClientFileProcessor implements FileProcessor {
 	 */
 	@Override
 	public boolean process(Path path) throws IOException {
-		return process(path, 0, 0, TimeUnit.SECONDS); 
+		return process(path, 0, 0, TimeUnit.SECONDS);
 	}
-	
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -101,10 +101,10 @@ public class ApacheHttpClientFileProcessor implements FileProcessor {
 		checkPositive(maxRetries, "'maxRetries' must be positive");
 		checkPositive(retryInterval, "'retryInterval' must be positive");
 		Objects.requireNonNull(unit, "'unit' must not be null");
-		
+
 		try (CloseableHttpClient httpClient = HttpClientBuilder.create().build()) {
 			boolean sucess = false;
-			
+
 			Exception lastThrownException = null;
 			for (int retryCount = 0; !sucess && retryCount <= maxRetries; retryCount++) {
 				if (!sucess && retryCount > 0) {
@@ -116,8 +116,8 @@ public class ApacheHttpClientFileProcessor implements FileProcessor {
 						Thread.currentThread().interrupt();
 						break;
 					}
-				} 
-				
+				}
+
 				try {
 					sucess = process(path, partName, httpClient);
 				} catch (Exception e) {
@@ -125,12 +125,12 @@ public class ApacheHttpClientFileProcessor implements FileProcessor {
 					logDebug("Error occured while communicating with '"+ serverURI +"'", e);
 				}
 			}
-			
+
 			if (lastThrownException != null) {
 				Throwables.propagateIfInstanceOf(lastThrownException, IOException.class);
 				throw Throwables.propagate(lastThrownException);
 			}
-			
+
 			return sucess;
 		}
 	}
@@ -147,7 +147,7 @@ public class ApacheHttpClientFileProcessor implements FileProcessor {
 		try (CloseableHttpResponse response = sendProcessingRequest(source, partName, httpClient)) {
 			final StatusLine statusLine = response.getStatusLine();
 			final HttpEntity resEntity = response.getEntity();
-		
+
 			final boolean ret;
 			if (statusLine != null && statusLine.getStatusCode() == HttpStatus.SC_OK && resEntity != null) {
 				try (InputStream is = new BufferedInputStream(resEntity.getContent())) {
@@ -158,14 +158,14 @@ public class ApacheHttpClientFileProcessor implements FileProcessor {
 				handleError(statusLine, resEntity);
 				ret = false;
 			}
-			
+
 			return ret;
 		}
 	}
 
 	/**
 	 * Send the given file to the server and return its response.
-	 * 
+	 *
 	 * @param path
 	 *            the file to be processed.
 	 * @return the HTTP response of the server.
@@ -174,7 +174,7 @@ public class ApacheHttpClientFileProcessor implements FileProcessor {
 	 */
 	private CloseableHttpResponse sendProcessingRequest(Path path, String partName, CloseableHttpClient client) throws IOException {
 		logDebug("Sending '" + path.toString() + "' for processing to '" + serverURI + "'");
-		
+
 		HttpPost post = new HttpPost(serverURI);
 
 		MultipartEntityBuilder builder = MultipartEntityBuilder.create();
@@ -190,7 +190,7 @@ public class ApacheHttpClientFileProcessor implements FileProcessor {
 
 	/**
 	 * Logs the most completely possible the response from the server.
-	 * 
+	 *
 	 * @param statusLine
 	 *            the status line of the response. Can be {@code null}
 	 * @param resEntity
@@ -211,11 +211,11 @@ public class ApacheHttpClientFileProcessor implements FileProcessor {
 			}
 		}
 	}
-	
+
 	private void logDebug(String msg) {
 		log.debug("[" + new Date() + "] " + msg);
 	}
-	
+
 	private void logDebug(String msg, Exception e) {
 		log.debug("[" + new Date() + "] " + msg, e);
 	}

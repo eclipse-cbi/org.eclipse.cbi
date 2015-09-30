@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2015 Eclipse Foundation and others. 
+ * Copyright (c) 2012, 2015 Eclipse Foundation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
- * Contributors: 
- *   Eclipse Foundation - initial API and implementation 
+ * Contributors:
+ *   Eclipse Foundation - initial API and implementation
  *   Thanh Ha (Eclipse Foundation) - Add support for signing inner jars
  *   Mikael Barbero - Use of "try with resource"
  *******************************************************************************/
@@ -25,8 +25,8 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.eclipse.cbi.common.FileProcessor;
-import org.eclipse.cbi.common.http.ApacheHttpClientFileProcessor;
+import org.eclipse.cbi.maven.common.FileProcessor;
+import org.eclipse.cbi.maven.common.ApacheHttpClientFileProcessor;
 import org.eclipse.cbi.maven.common.MavenLogger;
 
 /**
@@ -45,7 +45,7 @@ public class SignMojo extends AbstractMojo {
 	private static final String PART_NAME = "file";
 
 	/**
-	 * The default number of seconds the process will wait if 
+	 * The default number of seconds the process will wait if
 	 */
 	private static final String DEFAULT_RETRY_TIMER_STRING = "30";
 	private static final int DEFAULT_RETRY_TIMER = Integer.parseInt(DEFAULT_RETRY_TIMER_STRING);
@@ -73,7 +73,7 @@ public class SignMojo extends AbstractMojo {
 	/**
 	 * The signing service URL for signing Jar files. This service should return
 	 * a signed jar file.
-	 * 
+	 *
 	 * @since 1.0.4
 	 */
 	@Parameter(required = true, property = "cbi.jarsigner.signerUrl", defaultValue = "http://build.eclipse.org:31338/sign")
@@ -128,7 +128,7 @@ public class SignMojo extends AbstractMojo {
 
 	/**
 	 * Number of times to retry signing if the server fails to sign.
-	 * 
+	 *
 	 * @since 1.1.0 (for the parameter, since 1.2.0 for the qualified user user
 	 *        property)
 	 */
@@ -152,7 +152,7 @@ public class SignMojo extends AbstractMojo {
 
 	/**
 	 * Number of seconds to wait before retrying to sign.
-	 * 
+	 *
 	 * @since 1.1.0 (for the parameter, since 1.2.0 for the qualified user user
 	 *        property)
 	 */
@@ -171,7 +171,7 @@ public class SignMojo extends AbstractMojo {
 
 	/**
 	 * Project types which this plugin supports.
-	 * 
+	 *
 	 * @deprecated Not used anymore.
 	 */
 	@Deprecated
@@ -213,7 +213,7 @@ public class SignMojo extends AbstractMojo {
 	/**
 	 * Creates and returns the {@link JarSigner} according to the injected Mojo
 	 * parameter.
-	 * 
+	 *
 	 * @return the {@link JarSigner} according to the injected Mojo parameter.
 	 */
 	private JarSigner createJarSigner() {

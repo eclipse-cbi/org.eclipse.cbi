@@ -8,7 +8,7 @@
  * Contributors:
  *   Mikael Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.common;
+package org.eclipse.cbi.maven.common;
 
 import java.io.PrintStream;
 
@@ -39,7 +39,7 @@ public interface Logger {
      * @param error
      */
     void debug( Throwable error );
-    
+
     /**
      * Send a message to the user in the <b>info</b> error level.
      *
@@ -65,7 +65,7 @@ public interface Logger {
      * @param error
      */
     void info( Throwable error );
-    
+
     /**
      * Send a message to the user in the <b>warn</b> error level.
      *
@@ -91,7 +91,7 @@ public interface Logger {
      * @param error
      */
     void warn( Throwable error );
-    
+
     /**
      * Send a message to the user in the <b>error</b> error level.
      *
@@ -117,14 +117,14 @@ public interface Logger {
      * @param error
      */
     void error( Throwable error );
-    
+
     public static class SystemLogger implements Logger {
 
     	private static final String ERROR = "[ERROR] ";
 		private static final String WARNING = "[WARNING] ";
 		private static final String DEBUG = "[DEBUG] ";
 		private static final String INFO = "[INFO] ";
-		
+
 		private final boolean useSyserrForWarn;
 		private final boolean useSyserrForErr;
 
@@ -132,7 +132,7 @@ public interface Logger {
 			this.useSyserrForWarn = useSyserrForWarn;
 			this.useSyserrForErr = useSyserrForErr;
     	}
-    	
+
 		@Override
 		public void debug(CharSequence content) {
 			System.out.println(DEBUG + content);
@@ -236,6 +236,6 @@ public interface Logger {
 			out.println(ERROR + error.getMessage());
 			error.printStackTrace(out);
 		}
-    	
+
     }
 }

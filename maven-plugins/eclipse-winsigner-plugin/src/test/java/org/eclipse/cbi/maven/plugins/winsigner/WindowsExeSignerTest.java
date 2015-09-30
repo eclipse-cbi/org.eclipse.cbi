@@ -16,10 +16,10 @@ import java.util.Set;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
-import org.eclipse.cbi.common.test.util.DummyProcessor;
-import org.eclipse.cbi.common.test.util.ErrorProcessor;
-import org.eclipse.cbi.common.test.util.FailingProcessor;
 import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
+import org.eclipse.cbi.maven.common.test.util.DummyProcessor;
+import org.eclipse.cbi.maven.common.test.util.ErrorProcessor;
+import org.eclipse.cbi.maven.common.test.util.FailingProcessor;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.theories.DataPoints;
@@ -43,18 +43,18 @@ public class WindowsExeSignerTest {
 				Configuration.windows(),
 		};
 	}
-	
+
 	@BeforeClass
 	public static void beforeClass() {
 		log = new SystemStreamLog();
 	}
-	
+
 	@Test(expected=NullPointerException.class)
 	public void testSigningNullFiles() throws MojoExecutionException {
 		WindowsExeSigner winExeSigner = WindowsExeSigner.builder(new DummyProcessor()).logOn(log).build();
 		winExeSigner.signExecutable(null);
 	}
-	
+
 	@Theory
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningNonExistingFile(Configuration fsConf) throws MojoExecutionException, IOException {
@@ -63,7 +63,7 @@ public class WindowsExeSignerTest {
 			winExeSigner.signExecutable(fs.getPath("test"));
 		}
 	}
-	
+
 	@Theory
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningFolder(Configuration fsConf) throws MojoExecutionException, IOException {
@@ -72,7 +72,7 @@ public class WindowsExeSignerTest {
 			winExeSigner.signExecutable(Files.createDirectories(fs.getPath("test")));
 		}
 	}
-	
+
 	@Theory
 	public void testSigningFile(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
@@ -81,7 +81,7 @@ public class WindowsExeSignerTest {
 			assertTrue(winExeSigner.signExecutable(path));
 		}
 	}
-	
+
 	@Theory
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningFileWithNotSigningSigner(Configuration fsConf) throws MojoExecutionException, IOException {
@@ -91,7 +91,7 @@ public class WindowsExeSignerTest {
 			assertFalse(winExeSigner.signExecutable(path));
 		}
 	}
-	
+
 	@Theory
 	public void testSigningFileWithNotSigningSignerButContinueOnFail(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
@@ -100,7 +100,7 @@ public class WindowsExeSignerTest {
 			assertFalse(winExeSigner.signExecutable(path));
 		}
 	}
-	
+
 	@Theory
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningFileWithErrorSigner(Configuration fsConf) throws MojoExecutionException, IOException {
@@ -110,7 +110,7 @@ public class WindowsExeSignerTest {
 			assertFalse(winExeSigner.signExecutable(path));
 		}
 	}
-	
+
 	@Theory
 	public void testSigningFileWithErrorSignerButContinueOnFail(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
@@ -119,7 +119,7 @@ public class WindowsExeSignerTest {
 			assertFalse(winExeSigner.signExecutable(path));
 		}
 	}
-	
+
 	@Theory
 	public void testSigningFiles(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
@@ -128,7 +128,7 @@ public class WindowsExeSignerTest {
 			assertEquals(1, winExeSigner.signExecutables(newSet(baseDir.resolve("app1.exe"))));
 		}
 	}
-	
+
 	@Theory
 	public void testSigningFiles2(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
@@ -137,7 +137,7 @@ public class WindowsExeSignerTest {
 			assertEquals(2, winExeSigner.signExecutables(newSet(baseDir.resolve("app1.exe"), baseDir.resolve("subFolder/app3.exe"))));
 		}
 	}
-	
+
 	@Theory
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningFiles3(Configuration fsConf) throws MojoExecutionException, IOException {
@@ -147,7 +147,7 @@ public class WindowsExeSignerTest {
 			winExeSigner.signExecutables(newSet(baseDir.resolve("app1.exe"), baseDir.resolve("subFolder/appX.exe")));
 		}
 	}
-	
+
 	@Theory
 	public void testSigningFiles3ButContinueOnFail(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
@@ -156,7 +156,7 @@ public class WindowsExeSignerTest {
 			assertEquals(1, winExeSigner.signExecutables(newSet(baseDir.resolve("app1.exe"), baseDir.resolve("subFolder/appX.exe"))));
 		}
 	}
-	
+
 	@Theory
 	public void testSigningFilesWithLookup(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
@@ -165,7 +165,7 @@ public class WindowsExeSignerTest {
 			assertEquals(0, winExeSigner.signExecutables(baseDir, new LinkedHashSet<PathMatcher>()));
 		}
 	}
-	
+
 	@Theory
 	public void testSigningFilesWithLookupWithMojoMatchers(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
@@ -174,7 +174,7 @@ public class WindowsExeSignerTest {
 			assertEquals(1, winExeSigner.signExecutables(baseDir, SignMojo.getPathMatchers(fs, newSet("app4.exe"), log)));
 		}
 	}
-	
+
 	@Theory
 	public void testSigningFilesWithLookupWithMojoMatchers2(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
@@ -183,7 +183,7 @@ public class WindowsExeSignerTest {
 			assertEquals(4, winExeSigner.signExecutables(baseDir, SignMojo.getPathMatchers(fs, new LinkedHashSet<String>(), log)));
 		}
 	}
-	
+
 	@Theory
 	public void testSigningFilesWithLookupPattern(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
@@ -192,7 +192,7 @@ public class WindowsExeSignerTest {
 			assertEquals(10, winExeSigner.signExecutables(baseDir, SignMojo.getPathMatchers(fs, newSet("*.exe"), log)));
 		}
 	}
-	
+
 	private Path createTestAppFolders(Path baseDir) throws IOException {
 		Files.createDirectories(baseDir);
 		Files.createFile(baseDir.resolve("app1.exe"));
@@ -209,7 +209,7 @@ public class WindowsExeSignerTest {
 		Files.createFile(subSubFolder2.resolve("eclipsec.exe"));
 		return baseDir;
 	}
-	
+
 	private static <T> Set<T> newSet(@SuppressWarnings("unchecked") T... app) {
 		return new LinkedHashSet<>(Arrays.asList(app));
 	}

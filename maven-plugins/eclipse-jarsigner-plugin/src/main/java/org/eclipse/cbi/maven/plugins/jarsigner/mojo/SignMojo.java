@@ -87,7 +87,7 @@ public class SignMojo extends AbstractMojo {
 	 * @deprecated The user property {@code continueOnFail} is deprecated. You
 	 *             should use the qualified property
 	 *             {@code cbi.jarsigner.continueOnFail} instead. The
-	 *             {@code deprecatedContinueOnFail} parameter has been
+	 *             {@code ¤deprecatedContinueOnFail} parameter has been
 	 *             introduced to support this deprecated user property for
 	 *             backward compatibility only.
 	 */
@@ -111,7 +111,7 @@ public class SignMojo extends AbstractMojo {
 	 * @deprecated The user property {@code retryLimit} is deprecated. You
 	 *             should use the qualified property
 	 *             {@code cbi.jarsigner.retryLimit} instead. The
-	 *             {@code deprecatedRetryLimit} parameter has been introduced to
+	 *             {@code ¤deprecatedRetryLimit} parameter has been introduced to
 	 *             support this deprecated user property for backward
 	 *             compatibility only.
 	 */
@@ -135,7 +135,7 @@ public class SignMojo extends AbstractMojo {
 	 * @deprecated The user property {@code retryTimer} is deprecated. You
 	 *             should use the qualified property
 	 *             {@code cbi.jarsigner.retryTimer} instead. The
-	 *             {@code deprecatedRetryTimer} parameter has been introduced to
+	 *             {@code ¤deprecatedRetryTimer} parameter has been introduced to
 	 *             support this deprecated user property for backward
 	 *             compatibility only.
 	 */

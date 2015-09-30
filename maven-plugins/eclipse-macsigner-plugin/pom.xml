@@ -49,6 +49,10 @@
       <groupId>com.google.auto.value</groupId>
       <artifactId>auto-value</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.maven.plugin-tools</groupId>
+      <artifactId>maven-plugin-annotations</artifactId>
+    </dependency>
 
     <!-- Dependency scope: test -->
     <dependency>

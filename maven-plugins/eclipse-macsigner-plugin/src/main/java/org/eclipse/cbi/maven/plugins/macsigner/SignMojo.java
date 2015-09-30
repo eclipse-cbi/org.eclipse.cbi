@@ -41,6 +41,8 @@ import org.eclipse.cbi.maven.http.apache.ApacheHttpClient;
  */
 public class SignMojo extends AbstractMojo {
 
+	private static final String ECLIPSE_APP = "Eclipse.app";
+
 	private static final String DOT_APP = ".app";
 
 	/**
@@ -190,7 +192,7 @@ public class SignMojo extends AbstractMojo {
 		final Set<PathMatcher> pathMatchers = new LinkedHashSet<>();
 
 		if (fileNames == null || fileNames.isEmpty()) {
-			pathMatchers.add(fs.getPathMatcher("glob:**" + fs.getSeparator() + "Eclipse.app"));
+			pathMatchers.add(fs.getPathMatcher("glob:**" + fs.getSeparator() + ECLIPSE_APP));
 		} else {
 			for (String filename : fileNames) {
 				if (!filename.endsWith(DOT_APP)) {

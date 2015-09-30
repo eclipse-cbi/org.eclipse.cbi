@@ -11,7 +11,6 @@
  *******************************************************************************/
 package org.eclipse.cbi.maven.plugins.winsigner;
 
-import java.io.File;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -24,147 +23,172 @@ import java.util.concurrent.TimeUnit;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.eclipse.cbi.maven.ExceptionHandler;
 import org.eclipse.cbi.maven.MavenLogger;
 import org.eclipse.cbi.maven.http.HttpClient;
 import org.eclipse.cbi.maven.http.RetryHttpClient;
 import org.eclipse.cbi.maven.http.apache.ApacheHttpClient;
 
+import com.google.common.collect.ObjectArrays;
+import com.google.common.collect.Sets;
+
 /**
- * Signs project main and attached artifact using
- * <a href="http://wiki.eclipse.org/IT_Infrastructure_Doc#Sign_my_plugins.2FZIP_files.3F">Eclipse winsigner webservice</a>.
- *
- * @goal sign
- * @phase package
- * @requiresProject
- * @description runs the eclipse signing process
+ * Signs executables found in the project build directory using the
+ * Eclipse Windows executable signer webservice.
  */
+@Mojo(name = "sign", defaultPhase = LifecyclePhase.PACKAGE)
 public class SignMojo extends AbstractMojo {
-	
+
+	/**
+	 * Default eclipsec executable name
+	 */
 	private static final String ECLIPSEC_EXE = "eclipsec.exe";
 
+	/**
+	 * Default eclipse executable name
+	 */
 	private static final String ECLIPSE_EXE = "eclipse.exe";
 	
 	/**
-     * The signing service URL for signing Windows binaries
-     *
-     * <p>The signing service should return a signed exe file.</p>
-     *
-     * <p>The Official Eclipse signer service URL as described in the
-     * <a href="http://wiki.eclipse.org/IT_Infrastructure_Doc#Sign_my_plugins.2FZIP_files.3F">
-     * wiki</a>.</p>
-     *
-     * <p><b>Configuration via Maven commandline</b></p>
-     * <pre>-Dcbi.winsigner.signerUrl=http://localhost/winsign.php</pre>
-     *
-     * <p><b>Configuration via pom.xml</b></p>
-     * <pre>{@code
-     * <configuration>
-     *   <signerUrl>http://localhost/winsign</signerUrl>
-     * </configuration>
-     * }</pre>
-     *
-     * @parameter property="cbi.winsigner.signerUrl" default-value="http://build.eclipse.org:31338/winsign.php" )
-     * @required
-     * @since 1.0.4
-     */
-    private String signerUrl;
+	 * The signing service URL for signing Windows binaries. The signing service
+	 * should return a signed exe file.
+	 * 
+	 * @since 1.0.4
+	 */
+	@Parameter(required = true, property = "cbi.winsigner.signerUrl", defaultValue = "http://build.eclipse.org:31338/winsign.php")
+	private String signerUrl;
 
-    /**
-     * Maven build directory
-     *
-     * @parameter property="project.build.directory"
-     * @readonly
-     * @since 1.0.4
-     * @deprecated not used anymore. Use {@code java.io.tmpdir} property instead. 
-     */
-    @SuppressWarnings("unused")
+	/**
+	 * The list of <b>absolute</b> paths of executables to be signed. If
+	 * configured, only these executables will be signed and the parameters
+	 * {@code baseSearchDir} and {@code fileNames} will be ignored.
+	 * 
+	 * @deprecated The user property {@code signFiles} is deprecated. You should
+	 *             use the qualified property {@code cbi.winsigner.signFiles}
+	 *             instead. The {@code deprecatedSignFiles} parameter has been
+	 *             introduced to support this deprecated user property for
+	 *             backward compatibility only.
+	 * @since 1.0.4 (for the user property, since 1.1.3 for the parameter)
+	 */
 	@Deprecated
-    private File workdir;
+	@Parameter(property = "signFiles")
+	private String[] ¤deprecatedSignFiles;
+	
+	/**
+	 * The list of <b>absolute</b> paths of executables to be signed. If
+	 * configured, only these executables will be signed and the parameters
+	 * {@code baseSearchDir} and {@code fileNames} will be ignored.
+	 * 
+	 * @since 1.0.4 (for the parameter, since 1.1.3 for the qualified user
+	 *        property).
+	 */
+	@Parameter(property = "cbi.winsigner.signFiles")
+	private String[] signFiles;
 
-    /**
-     * A list of full executable paths to be signed
-     *
-     * <p>If configured only these executables will be signed.</p>
-     * <p><b><i>
-     *    NOTE: If this is configured "baseSearchDir" and "fileNames"
-     *    do NOT need to be configured.
-     * </i></b></p>
-     *
-     * <p><b>Configuration via pom.xml</b></p>
-     * <pre>{@code
-     * <configuration>
-     *   <signFiles>
-     *     <signFile>}${project.build.directory}/products/org.eclipse.sdk.ide/win32/win32/x86/eclipse/eclipse.exe{@code</signFile>
-     *     <signFile>}${project.build.directory}/products/org.eclipse.sdk.ide/win32/win32/x86/eclipse/eclipsec.exe{@code</signFile>
-     *     <signFile>}${project.build.directory}/products/org.eclipse.sdk.ide/win32/win32/x86_64/eclipse/eclipse.exe{@code</signFile>
-     *     <signFile>}${project.build.directory}/products/org.eclipse.sdk.ide/win32/win32/x86_64/eclipse/eclipsec.exe{@code</signFile>
-     *   </signFiles>
-     * </configuration>
-     * }</pre>
-     *
-     * @parameter property="signFiles"
-     * @since 1.0.4
-     */
-    private String[] signFiles;
+	/**
+	 * The base directory to search for executables to sign. The executable name
+	 * to search for can be configured with parameter {@code fileNames}. This
+	 * parameter is ignored if {@link #signFiles} is set.
+	 * 
+	 * @deprecated The user property {@code baseSearchDir} is deprecated. You
+	 *             should use the qualified property
+	 *             {@code cbi.winsigner.baseSearchDir} instead. The
+	 *             {@code ¤deprecatedBaseSearchDir} parameter has been
+	 *             introduced to support this deprecated user property for
+	 *             backward compatibility only.
+	 * @since 1.0.4 (for the user property, since 1.1.3 for the parameter)
+	 */
+	@Deprecated
+	@Parameter(property = "baseSearchDir")
+	private String ¤deprecatedBaseSearchDir;
 
-    /**
-     * The base directory to search for executables to sign
-     *
-     * <p>If NOT configured baseSearchDir is ${project.build.directory}/products/</p>
-     *
-     * @parameter property="baseSearchDir" default-value="${project.build.directory}/products/"
-     * @since 1.0.4
-     */
-    private String baseSearchDir;
+	/**
+	 * The base directory to search for executables to sign. The executable name
+	 * to search for can be configured with parameter {@code fileNames}. This
+	 * parameter is ignored if {@link #signFiles} is set.
+	 *
+	 * @since 1.0.4 (for the parameter, since 1.1.3 for the qualified user
+	 *        property).
+	 */
+	@Parameter(property = "cbi.winsigner.baseSearchDir", defaultValue = "${project.build.directory}/products/")
+	private String baseSearchDir;
+	
+	/**
+	 * List of file names to sign. These file names will be searched in
+	 * {@code baseSearchDir}. This parameter is ignored if {@link #signFiles} is
+	 * set.
+	 * <p>
+	 * Default value is <code>{eclipse.exe, eclipsec.exe}</code>.
+	 * 
+	 * @deprecated The user property {@code fileNames} is deprecated. You should
+	 *             use the qualified property {@code cbi.winsigner.fileNames}
+	 *             instead. The {@code ¤deprecatedFileNames} parameter has been
+	 *             introduced to support this deprecated user property for
+	 *             backward compatibility only.
+	 * @since 1.0.4 (for the user property, since 1.1.3 for the parameter).
+	 */
+	@Deprecated
+	@Parameter(property = "fileNames")
+	private Set<String> ¤deprecatedFileNames;
+	
+	/**
+	 * List of file names to sign. These file names will be searched in
+	 * {@code baseSearchDir}. This parameter is ignored if {@link #signFiles} is
+	 * set.
+	 *<p>
+	 * Default value is <code>{eclipse.exe, eclipsec.exe}</code>.
+	 * 
+	 * @since 1.0.4 (for the parameter, since 1.1.3 for the qualified user
+	 *        property).
+	 */
+	@Parameter(property = "cbi.winsigner.fileNames")
+	private Set<String> fileNames;
 
-    /**
-     * List of file names to sign
-     *
-     * <p>If NOT configured 'eclipse.exe' and 'eclipsec.exe' are signed.</p>
-     *
-     * @parameter property="fileNames"
-     * @since 1.0.4
-     */
-    private Set<String> fileNames;
+	/**
+	 * Whether the build should be stopped if the signing process fails.
+	 * 
+	 * @deprecated The user property {@code continueOnFail} is deprecated. You
+	 *             should use the qualified property
+	 *             {@code cbi.winsigner.continueOnFail} instead. The
+	 *             {@code ¤deprecatedContinueOnFail} parameter has been
+	 *             introduced to support this deprecated user property for
+	 *             backward compatibility only.
+	 * @since 1.0.5 (for the user property, since 1.1.3 for the parameter).
+	 */
+	@Deprecated
+	@Parameter(property = "continueOnFail", defaultValue = "false")
+	private boolean ¤deprecatedContinueOnFail;
 
-    /**
-     * Continue the build even if signing fails
-     *
-     * <p><b>Configuration via Maven commandline</b></p>
-     * <pre>-DcontinueOnFail=true</pre>
-     *
-     * <p><b>Configuration via pom.xml</b></p>
-     * <pre>{@code
-     * <configuration>
-     *   <continueOnFail>true</continueOnFail>
-     * </configuration>
-     * }</pre>
-     *
-     * @parameter property="continueOnFail" default-value="false"
-     * @since 1.0.5
-     */
-    private boolean continueOnFail;
+	/**
+	 * Whether the build should be stopped if the signing process fails.
+	 *
+	 * @since 1.0.5 (for the parameter, since 1.1.3 for the qualified user
+	 *        property).
+	 */
+	@Parameter(property = "cbi.winsigner.continueOnFail", defaultValue = "false")
+	private boolean continueOnFail;
 
-    /**
-     * Number of times to retry signing if server fails to sign
-     *
-     * @parameter property="retryLimit" default-value="3"
-     * @since 1.1.0
-     */
-    private int retryLimit;
+	/**
+	 * Number of times to retry signing if server fails to sign
+	 *
+	 * @parameter property="retryLimit" default-value="3"
+	 * @since 1.1.0
+	 */
+	private int retryLimit;
 
-    /**
-     * Number of seconds to wait before retrying to sign
-     *
-     * @parameter property="retryTimer" default-value="30"
-     * @since 1.1.0
-     */
-    private int retryTimer;
+	/**
+	 * Number of seconds to wait before retrying to sign
+	 *
+	 * @parameter property="retryTimer" default-value="10"
+	 * @since 1.1.0
+	 */
+	private int retryTimer;
 
-
-    @Override
-    public void execute() throws MojoExecutionException {
+	@Override
+	public void execute() throws MojoExecutionException {
 		HttpClient httpClient = RetryHttpClient.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())))
     			.maxRetries(retryLimit)
     			.waitBeforeRetry(retryTimer, TimeUnit.SECONDS)
@@ -173,23 +197,35 @@ public class SignMojo extends AbstractMojo {
 		WindowsExeSigner exeSigner = WindowsExeSigner.builder()
 				.serverUri(URI.create(signerUrl))
 				.httpClient(httpClient)
-				.exceptionHandler(new ExceptionHandler(getLog(), continueOnFail))
+				.exceptionHandler(new ExceptionHandler(getLog(), continueOnFail()))
 				.log(getLog())
 				.build();
     	
-    	if (signFiles != null && signFiles.length != 0) {
+    	if (signFiles() != null && signFiles().length != 0) {
     		//exe paths are configured
     		Set<Path> exePaths = new LinkedHashSet<>();
-        	for (String path : signFiles) {
+        	for (String path : signFiles()) {
         		exePaths.add(FileSystems.getDefault().getPath(path));
         	}
         	exeSigner.signExecutables(exePaths);
     	} else { 
     		//perform search
-    		Set<PathMatcher> pathMatchers = getPathMatchers(FileSystems.getDefault(), fileNames, getLog());
+    		Set<PathMatcher> pathMatchers = getPathMatchers(FileSystems.getDefault(), fileNames(), getLog());
     		exeSigner.signExecutables(FileSystems.getDefault().getPath(baseSearchDir), pathMatchers);
     	}
     }
+
+	private Set<String> fileNames() {
+		return Sets.union(fileNames, ¤deprecatedFileNames);
+	}
+
+	private String[] signFiles() {
+		return ObjectArrays.concat(signFiles, ¤deprecatedSignFiles, String.class);
+	}
+
+	private boolean continueOnFail() {
+		return continueOnFail || ¤deprecatedContinueOnFail;
+	}
 
     static Set<PathMatcher> getPathMatchers(FileSystem fs, Set<String> fileNames, Log log) {
 		final Set<PathMatcher> pathMatchers = new LinkedHashSet<>();

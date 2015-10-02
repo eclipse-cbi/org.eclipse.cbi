@@ -241,6 +241,7 @@ public abstract class EmbeddedServer {
 
 		ServletContextHandler contextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		contextHandler.setContextPath(CONTEXT_PATH);
+		contextHandler.setErrorHandler(new EmbeddedErrorHandler());
 		ServletHolder servletHolder = new ServletHolder(servlet());
 		servletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(tempFolder().toString(), -1L, -1L, FILE_SIZE_THRESHOLD));
 		final String fullPathSpec;
@@ -253,15 +254,19 @@ public abstract class EmbeddedServer {
 		contextHandler.addServlet(createHearbeatServlet(), "/heartbeat");
 		contextHandler.addServlet(createVersionServlet(), "/version");
 
-		HandlerCollection handlers = new HandlerCollection();
 		RequestLogHandler requestLogHandler = new RequestLogHandler();
-		handlers.setHandlers(new Handler[]{contextHandler,new DefaultHandler(),requestLogHandler});
 		NCSARequestLog requestLog = new NCSARequestLog(accessLogFile().toString());
 		requestLog.setRetainDays(90);
 		requestLog.setAppend(true);
 		requestLog.setExtended(false);
 		requestLogHandler.setRequestLog(requestLog);
 
+		HandlerCollection handlers = new HandlerCollection();
+		handlers.setHandlers(new Handler[] {
+				contextHandler,
+				new DefaultHandler(),
+				requestLogHandler
+		});
 		server.setHandler(handlers);
 
 		server.start();

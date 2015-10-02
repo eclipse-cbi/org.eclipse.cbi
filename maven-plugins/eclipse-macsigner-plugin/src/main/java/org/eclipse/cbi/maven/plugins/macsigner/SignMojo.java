@@ -24,9 +24,11 @@ import java.util.concurrent.TimeUnit;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
-import org.eclipse.cbi.maven.common.FileProcessor;
-import org.eclipse.cbi.maven.common.ApacheHttpClientFileProcessor;
+import org.eclipse.cbi.maven.common.ExceptionHandler;
 import org.eclipse.cbi.maven.common.MavenLogger;
+import org.eclipse.cbi.maven.common.http.HttpClient;
+import org.eclipse.cbi.maven.common.http.RetryHttpClient;
+import org.eclipse.cbi.maven.common.http.apache.ApacheHttpClient;
 
 /**
  * Signs project main and attached artifact using
@@ -40,8 +42,6 @@ import org.eclipse.cbi.maven.common.MavenLogger;
 public class SignMojo extends AbstractMojo {
 
 	private static final String DOT_APP = ".app";
-
-	private static final String PART_NAME = "file";
 
 	/**
      * The signing service URL for signing Mac binaries
@@ -161,12 +161,16 @@ public class SignMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-    	final FileProcessor signer = new ApacheHttpClientFileProcessor(URI.create(signerUrl), PART_NAME, new MavenLogger(getLog()));
-    	OSXAppSigner.Builder appSignerBuilder = OSXAppSigner.builder(signer).logOn(getLog()).maxRetry(retryLimit).waitBeforeRetry(retryTimer, TimeUnit.SECONDS);
-    	if (continueOnFail) {
-    		appSignerBuilder.continueOnFail();
-    	}
-    	OSXAppSigner osxAppSigner = appSignerBuilder.build();
+    	HttpClient httpClient = RetryHttpClient.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())))
+    			.maxRetries(retryLimit)
+    			.waitBeforeRetry(retryTimer, TimeUnit.SECONDS)
+    			.build();
+    	OSXAppSigner osxAppSigner = OSXAppSigner.builder()
+    		.serverUri(URI.create(signerUrl))
+    		.httpClient(httpClient)
+    		.exceptionHandler(new ExceptionHandler(getLog(), continueOnFail))
+    		.log(getLog())
+    		.build();
 
         if (signFiles != null && !signFiles.isEmpty()) {
         	//app paths are configured

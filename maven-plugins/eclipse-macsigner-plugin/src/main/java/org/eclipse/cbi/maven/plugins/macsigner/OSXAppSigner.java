@@ -11,11 +11,13 @@
 package org.eclipse.cbi.maven.plugins.macsigner;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
 import java.util.Objects;
@@ -28,15 +30,21 @@ import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.eclipse.cbi.common.util.Paths;
 import org.eclipse.cbi.common.util.Zips;
 import org.eclipse.cbi.maven.common.ExceptionHandler;
-import org.eclipse.cbi.maven.common.FileProcessor;
+import org.eclipse.cbi.maven.common.MavenLogger;
 import org.eclipse.cbi.maven.common.MojoExecutionIOExceptionWrapper;
+import org.eclipse.cbi.maven.common.http.AbstractCompletionListener;
+import org.eclipse.cbi.maven.common.http.HttpClient;
+import org.eclipse.cbi.maven.common.http.HttpRequest;
+import org.eclipse.cbi.maven.common.http.HttpResult;
 
+import com.google.auto.value.AutoValue;
 import com.google.common.base.Joiner;
 
 /**
  * A signer of OS X applications.
  */
-public class OSXAppSigner {
+@AutoValue
+public abstract class OSXAppSigner {
 
 	/**
 	 * The zip file extension.
@@ -48,28 +56,22 @@ public class OSXAppSigner {
 	 */
 	private static final String DOT_APP_GLOB_PATTERN = "glob:**.app";
 
-	private final FileProcessor signer;
-	private final ExceptionHandler exceptionHandler;
+	private static final String PART_NAME = "file";
+	
+	abstract ExceptionHandler exceptionHandler();
 
-	private final Log log;
+	abstract Log log();
+	
+	abstract HttpClient httpClient();
+	
+	abstract URI serverUri();
 
-	private final int maxRetry;
-
-	private final int retryInterval;
-
-	private final TimeUnit retryIntervalUnit;
-
-	private OSXAppSigner(FileProcessor signer, boolean continueOnFail, Log log, int maxRetry, int retryInterval, TimeUnit retryIntervalUnit) {
-		this.signer = signer;
-		this.log = log;
-		this.maxRetry = maxRetry;
-		this.retryInterval = retryInterval;
-		this.retryIntervalUnit = retryIntervalUnit;
-		this.exceptionHandler = new ExceptionHandler(log, continueOnFail);
+	public static Builder builder() {
+		return new AutoValue_OSXAppSigner.Builder();
 	}
-
-	public static Builder builder(FileProcessor signer) {
-		return new Builder(signer);
+	
+	OSXAppSigner() {
+		
 	}
 
 	/**
@@ -87,11 +89,11 @@ public class OSXAppSigner {
 		for (Path signFile : signFiles) {
 			final PathMatcher appPattern = signFile.getFileSystem().getPathMatcher(DOT_APP_GLOB_PATTERN);
 			if (Files.isDirectory(signFile) && appPattern.matches(signFile)) {
-		    	if (signApplication(signer, signFile)) {
+		    	if (signApplication(signFile)) {
 		    		ret++;
 		    	}
 		    } else {
-		    	exceptionHandler.handleError("Path '" + signFile.toString() + "' does not exist or is not a valid OS X application"
+		    	exceptionHandler().handleError("Path '" + signFile.toString() + "' does not exist or is not a valid OS X application"
 		    			+ " It must be a folder ending with '.app' extension. It won't be signed.");
 		    }
 		}
@@ -120,7 +122,7 @@ public class OSXAppSigner {
 		} catch (MojoExecutionIOExceptionWrapper e) {
 			throw e.getCause();
 		} catch (IOException e) {
-			exceptionHandler.handleError("Error occured while signing OS X application (" + Joiner.on(", ").join(pathMatchers) + ").", e);
+			exceptionHandler().handleError("Error occured while signing OS X application (" + Joiner.on(", ").join(pathMatchers) + ").", e);
 		}
 
 		return ret;
@@ -132,7 +134,7 @@ public class OSXAppSigner {
      * @param appFolder
      * @throws MojoExecutionException
      */
-    public boolean signApplication(FileProcessor signer, Path appFolder) throws MojoExecutionException {
+    public boolean signApplication(Path appFolder) throws MojoExecutionException {
     	boolean ret = false;
     	Path zippedApp = null;
 
@@ -140,16 +142,16 @@ public class OSXAppSigner {
             zippedApp = Files.createTempFile(Paths.getParent(appFolder), appFolder.getFileName().toString() + "_", DOT_ZIP);
             Zips.packZip(appFolder, zippedApp, true);
 
-            log.info("[" + new Date() + "] Signing OS X application '" + appFolder + "'...");
-            if (!signer.process(zippedApp, maxRetry, retryInterval, retryIntervalUnit)) {
-                exceptionHandler.handleError("Signing of OS X application '" + appFolder + "' failed. Activate debug (-X, --debug) to see why.");
+            log().info("[" + new Date() + "] Signing OS X application '" + appFolder + "'...");
+            if (!processOnSigningServer(zippedApp)) {
+                exceptionHandler().handleError("Signing of OS X application '" + appFolder + "' failed. Activate debug (-X, --debug) to see why.");
             } else {
             	ret = true;
             }
 
             Zips.unpackZip(zippedApp, Paths.getParent(appFolder));
         } catch (IOException e) {
-        	exceptionHandler.handleError("Signing of OS X application '" + appFolder + "' failed.", e);
+        	exceptionHandler().handleError("Signing of OS X application '" + appFolder + "' failed.", e);
         	ret = false;
         } finally {
         	if (zippedApp != null) {
@@ -159,6 +161,17 @@ public class OSXAppSigner {
 
     	return ret;
     }
+    
+    private boolean processOnSigningServer(final Path file) throws IOException {
+		final HttpRequest request = HttpRequest.on(serverUri()).withParam(PART_NAME, file).build();
+		boolean success = httpClient().send(request, new AbstractCompletionListener(file.getParent(), file.getFileName().toString(), this.getClass().getSimpleName(), new MavenLogger(log())) {
+			@Override
+			public void onSuccess(HttpResult result) throws IOException {
+				result.copyContent(file, StandardCopyOption.REPLACE_EXISTING);
+			}
+		});
+		return success;
+	}
 
 	private final class OSXApplicationSignerVisitor extends SimpleFileVisitor<Path> {
 
@@ -188,7 +201,7 @@ public class OSXAppSigner {
 
 		private FileVisitResult signApp(Path dir) throws MojoExecutionIOExceptionWrapper {
 			try {
-				if (signApplication(signer, dir)) {
+				if (signApplication(dir)) {
 					signedAppCount++;
 				}
 			} catch (MojoExecutionException e) {
@@ -207,80 +220,29 @@ public class OSXAppSigner {
 	 * <li>{@link #waitBeforeRetry(int, TimeUnit)}: 0 {@link TimeUnit#SECONDS seconds}</li>
 	 * <ul>
 	 */
-	public static class Builder {
+	@AutoValue.Builder
+	public static abstract class Builder {
 
-		private final FileProcessor signer;
-
-		private boolean continueOnFail = false;
-
-		private Log log = new SystemStreamLog();
-
-		private int maxRetry = 0;
-
-		private int waitTimer = 0;
-
-		private TimeUnit waitTimerUnit = TimeUnit.SECONDS;
-
-		Builder(FileProcessor signer) {
-			this.signer = Objects.requireNonNull(signer);
+		Builder() {
+			
 		}
-
-		/**
-		 * Configure the {@link OSXAppSigner} to <strong>not</strong> throw
-		 * {@link MojoExecutionException} if it can't sign the Jar. Instead, it
-		 * will only log a warning.
-		 *
-		 * @return this builder for chained calls.
-		 */
-		public Builder continueOnFail() {
-			this.continueOnFail = true;
-			return this;
-		}
-
+		
 		/**
 		 * The {@link Log} onto which the feedback should be printed.
 		 * @param log
 		 * @return this builder for chained calls.
 		 */
-		public Builder logOn(Log log) {
-			this.log = log;
-			return this;
-		}
+		public abstract Builder log(Log log);
+		public abstract Builder serverUri(URI uri);
+		public abstract Builder httpClient(HttpClient httpClient);
+		public abstract Builder exceptionHandler(ExceptionHandler handler);
 
 		/**
-		 * The maximum number of retry that will be passed to the {@link FileProcessor}.
-		 * @param maxRetry
-		 * @return this builder for chained calls.
-		 */
-		public Builder maxRetry(int maxRetry) {
-			if (maxRetry < 0) {
-				throw new IllegalArgumentException("'maxRetry' must be positive or snull");
-			}
-			this.maxRetry = maxRetry;
-			return this;
-		}
-
-		/**
-		 * The time to wait between each try (passed to the {@link FileProcessor}).
-		 * @param waitTimer
-		 * @param timeUnit
-		 * @return this builder for chained calls.
-		 */
-		public Builder waitBeforeRetry(int waitTimer, TimeUnit timeUnit) {
-			this.waitTimer = waitTimer;
-			this.waitTimerUnit = timeUnit;
-			return this;
-		}
-
-		/**
-		 * Creates and returns a new JarSigner configured with the options
+		 * Creates and returns a new OSXAppSigner configured with the options
 		 * specified to this builder.
 		 *
 		 * @return a new {@link OSXAppSigner}.
 		 */
-		public OSXAppSigner build() {
-			return new OSXAppSigner(this.signer, this.continueOnFail,
-					this.log, this.maxRetry, this.waitTimer, this.waitTimerUnit);
-		}
+		public abstract OSXAppSigner build();
 	}
 }

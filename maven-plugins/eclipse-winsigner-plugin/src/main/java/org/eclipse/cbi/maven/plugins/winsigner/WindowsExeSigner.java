@@ -11,11 +11,13 @@
 package org.eclipse.cbi.maven.plugins.winsigner;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
 import java.util.Objects;
@@ -26,29 +28,33 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.eclipse.cbi.maven.common.ExceptionHandler;
-import org.eclipse.cbi.maven.common.FileProcessor;
+import org.eclipse.cbi.maven.common.MavenLogger;
 import org.eclipse.cbi.maven.common.MojoExecutionIOExceptionWrapper;
+import org.eclipse.cbi.maven.common.http.AbstractCompletionListener;
+import org.eclipse.cbi.maven.common.http.HttpClient;
+import org.eclipse.cbi.maven.common.http.HttpRequest;
+import org.eclipse.cbi.maven.common.http.HttpResult;
 
+import com.google.auto.value.AutoValue;
 import com.google.common.base.Joiner;
 
-public class WindowsExeSigner {
+@AutoValue
+public abstract class WindowsExeSigner {
 
-	private final FileProcessor signer;
-	private final int maxRetry;
-	private final int retryInterval;
-	private final TimeUnit retryIntervalUnit;
-	private final Log log;
-	private final ExceptionHandler exceptionHandler;
-
-	private WindowsExeSigner(FileProcessor signer, boolean continueOnFail, Log log, int maxRetry, int retryInterval, TimeUnit retryIntervalUnit) {
-		this.signer = signer;
-		this.log = log;
-		this.maxRetry = maxRetry;
-		this.retryInterval = retryInterval;
-		this.retryIntervalUnit = retryIntervalUnit;
-		this.exceptionHandler = new ExceptionHandler(log, continueOnFail);
+	/**
+	 * The name of the part as it will be send to the signing server.
+	 */
+	private static final String PART_NAME = "file";
+	
+	abstract HttpClient httpClient();
+	abstract Log log();
+	abstract ExceptionHandler exceptionHandler();
+	abstract URI serverUri();
+	
+	WindowsExeSigner() {
+		
 	}
-
+	
 	public int signExecutables(Set<Path> exesToSign) throws MojoExecutionException {
 		Objects.requireNonNull(exesToSign);
 		int ret = 0;
@@ -72,7 +78,7 @@ public class WindowsExeSigner {
 		} catch (MojoExecutionIOExceptionWrapper e) {
 			throw e.getCause();
 		} catch (IOException e) {
-			exceptionHandler.handleError("Error occured while signing Windows binary (" + Joiner.on(", ").join(pathMatchers) + ")", e);
+			exceptionHandler().handleError("Error occured while signing Windows binary (" + Joiner.on(", ").join(pathMatchers) + ")", e);
 		}
 		return ret;
 	}
@@ -86,29 +92,40 @@ public class WindowsExeSigner {
     public boolean signExecutable(Path file) throws MojoExecutionException {
     	Objects.requireNonNull(file);
     	if (!Files.isRegularFile(file)) {
-    		exceptionHandler.handleError("Path '" + file.toString() + "' does not exist or is not a file. It won't be signed.");
+    		exceptionHandler().handleError("Path '" + file.toString() + "' does not exist or is not a file. It won't be signed.");
     		return false;
     	} else if (!Files.isWritable(file)) {
-    		exceptionHandler.handleError("Path '" + file.toString() + "' is not writable. It won't be signed.");
+    		exceptionHandler().handleError("Path '" + file.toString() + "' is not writable. It won't be signed.");
     		return false;
     	}
 
     	boolean ret = false;
         try {
-        	log.info("[" + new Date() + "] Signing Windows executable '" + file + "'...");
-            if (!signer.process(file, maxRetry, retryInterval, retryIntervalUnit)) {
-            	exceptionHandler.handleError("Signing of Windows executable '" + file + "' failed. Activate debug (-X, --debug) to see why.");
+        	log().info("[" + new Date() + "] Signing Windows executable '" + file + "'...");
+            if (!processOnSigningServer(file)) {
+            	exceptionHandler().handleError("Signing of Windows executable '" + file + "' failed. Activate debug (-X, --debug) to see why.");
             } else {
             	ret = true;
             }
         } catch (IOException e) {
-        	exceptionHandler.handleError("Signing of Windows executable '" + file + "' failed.", e);
+        	exceptionHandler().handleError("Signing of Windows executable '" + file + "' failed.", e);
         }
         return ret;
     }
+    
+    private boolean processOnSigningServer(final Path file) throws IOException {
+		final HttpRequest request = HttpRequest.on(serverUri()).withParam(PART_NAME, file).build();
+		boolean success = httpClient().send(request, new AbstractCompletionListener(file.getParent(), file.getFileName().toString(), this.getClass().getSimpleName(), new MavenLogger(log())) {
+			@Override
+			public void onSuccess(HttpResult result) throws IOException {
+				result.copyContent(file, StandardCopyOption.REPLACE_EXISTING);
+			}
+		});
+		return success;
+	}
 
-    public static Builder builder(FileProcessor signer) {
-    	return new Builder(signer);
+    public static Builder builder() {
+    	return new AutoValue_WindowsExeSigner.Builder();
     }
 
 	private final class WindowsBinarySignerVisitor extends SimpleFileVisitor<Path> {
@@ -151,24 +168,12 @@ public class WindowsExeSigner {
 	 * <li>{@link #waitBeforeRetry(int, TimeUnit)}: 0 {@link TimeUnit#SECONDS seconds}</li>
 	 * <ul>
 	 */
-	public static class Builder {
+	@AutoValue.Builder
+	public static abstract class Builder {
 
-		private final FileProcessor signer;
-
-		private boolean continueOnFail = false;
-
-		private Log log = new SystemStreamLog();
-
-		private int maxRetry = 0;
-
-		private int waitTimer = 0;
-
-		private TimeUnit waitTimerUnit = TimeUnit.SECONDS;
-
-		Builder(FileProcessor signer) {
-			this.signer = Objects.requireNonNull(signer);
+		Builder() {
 		}
-
+		
 		/**
 		 * Configure the {@link WindowsExeSigner} to <strong>not</strong> throw
 		 * {@link MojoExecutionException} if it can't sign the Jar. Instead, it
@@ -176,55 +181,24 @@ public class WindowsExeSigner {
 		 *
 		 * @return this builder for chained calls.
 		 */
-		public Builder continueOnFail() {
-			this.continueOnFail = true;
-			return this;
-		}
+		public abstract Builder exceptionHandler(ExceptionHandler exceptionHandler);
 
 		/**
 		 * The {@link Log} onto which the feedback should be printed.
 		 * @param log
 		 * @return this builder for chained calls.
 		 */
-		public Builder logOn(Log log) {
-			this.log = log;
-			return this;
-		}
+		public abstract Builder log(Log log);
+
+		public abstract Builder serverUri(URI uri);
+		public abstract Builder httpClient(HttpClient httpClient);
 
 		/**
-		 * The maximum number of retry that will be passed to the {@link FileProcessor}.
-		 * @param maxRetry
-		 * @return this builder for chained calls.
-		 */
-		public Builder maxRetry(int maxRetry) {
-			if (maxRetry < 0) {
-				throw new IllegalArgumentException("'maxRetry' must be positive or snull");
-			}
-			this.maxRetry = maxRetry;
-			return this;
-		}
-
-		/**
-		 * The time to wait between each try (passed to the {@link FileProcessor}).
-		 * @param waitTimer
-		 * @param timeUnit
-		 * @return this builder for chained calls.
-		 */
-		public Builder waitBeforeRetry(int waitTimer, TimeUnit timeUnit) {
-			this.waitTimer = waitTimer;
-			this.waitTimerUnit = timeUnit;
-			return this;
-		}
-
-		/**
-		 * Creates and returns a new JarSigner configured with the options
+		 * Creates and returns a new WindowsExeSigner configured with the options
 		 * specified to this builder.
 		 *
 		 * @return a new {@link WindowsExeSigner}.
 		 */
-		public WindowsExeSigner build() {
-			return new WindowsExeSigner(this.signer, this.continueOnFail,
-					this.log, this.maxRetry, this.waitTimer, this.waitTimerUnit);
-		}
+		public abstract WindowsExeSigner build();
 	}
 }

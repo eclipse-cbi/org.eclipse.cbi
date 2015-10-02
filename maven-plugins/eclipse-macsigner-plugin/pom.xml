@@ -41,6 +41,10 @@
       <groupId>org.eclipse.cbi</groupId>
       <artifactId>cbi-maven-plugin-common</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.google.auto.value</groupId>
+      <artifactId>auto-value</artifactId>
+    </dependency>
 
     <!-- Dependency scope: test -->
     <dependency>

@@ -3,6 +3,7 @@ package org.eclipse.cbi.maven.plugins.macsigner;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,9 +15,9 @@ import java.util.Set;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
-import org.eclipse.cbi.maven.common.test.util.DummyProcessor;
-import org.eclipse.cbi.maven.common.test.util.ErrorProcessor;
-import org.eclipse.cbi.maven.common.test.util.FailingProcessor;
+import org.eclipse.cbi.maven.common.ExceptionHandler;
+import org.eclipse.cbi.maven.common.http.HttpClient;
+import org.eclipse.cbi.maven.common.test.util.HttpClients;
 import org.eclipse.cbi.maven.common.test.util.NullMavenLog;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -49,7 +50,7 @@ public class OSXAppSignerTest {
 
 	@Test(expected=NullPointerException.class)
 	public void testSigningNullFiles() throws MojoExecutionException {
-		OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+		OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 		assertEquals(0, osxAppSigner.signApplications(null));
 	}
 
@@ -57,7 +58,7 @@ public class OSXAppSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningEmptyFiles(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			Path fileToSign = SampleFilesGenerators.writeFile(fs.getPath("testFile.app"), "");
 			assertEquals(0, osxAppSigner.signApplications(newSet(fileToSign)));
 		}
@@ -67,7 +68,7 @@ public class OSXAppSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningNonExistingFiles(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			osxAppSigner.signApplications(newSet(fs.getPath("testFile.txt")));
 		}
 	}
@@ -76,7 +77,7 @@ public class OSXAppSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningNonExistingAppFolder(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			osxAppSigner.signApplications(newSet(fs.getPath("testApp.app")));
 		}
 	}
@@ -85,7 +86,7 @@ public class OSXAppSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningTxtFile(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			Path fileToSign = SampleFilesGenerators.writeFile(fs.getPath("testFile.txt"), "content of the file");
 			osxAppSigner.signApplications(newSet(fileToSign));
 		}
@@ -95,7 +96,7 @@ public class OSXAppSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningAppFile(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			Path fileToSign = SampleFilesGenerators.writeFile(fs.getPath("testFile.app"), "content of the file");
 			osxAppSigner.signApplications(newSet(fileToSign));
 		}
@@ -104,7 +105,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigningEmptyAppFolder(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			Path folderToSign = Files.createDirectories(fs.getPath("test", "testApp.app"));
 			assertEquals(1, osxAppSigner.signApplications(newSet(folderToSign)));
 		}
@@ -113,7 +114,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigningAppFolder(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			Path app = Files.createDirectories(fs.getPath("test", "testApp.app"));
 			Path file = SampleFilesGenerators.writeFile(app.resolve("testFile.txt"), "content of the file");
 			assertEquals(1, osxAppSigner.signApplications(newSet(app)));
@@ -124,7 +125,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigningAppFolder2(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			Path app = Files.createDirectories(fs.getPath("test", "testApp.app"));
 			Path file1 = SampleFilesGenerators.writeFile(app.resolve("testFile.txt"), "content of the file");
 			Path file2 = SampleFilesGenerators.writeFile(app.resolve("Contents").resolve("testFile2.txt"), "content of the file 2");
@@ -137,7 +138,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigningNestedAppFolder(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			Path app = Files.createDirectories(fs.getPath("test", "testApp.app"));
 			Files.createDirectories(app.resolve("anotherApp.app"));
 			assertEquals(1, osxAppSigner.signApplications(newSet(app)));
@@ -147,7 +148,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigning2AppFolder(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			Path app1 = Files.createDirectories(fs.getPath("test", "testApp1.app"));
 			Path app2 = Files.createDirectories(fs.getPath("test", "testApp2.app"));
 			assertEquals(2, osxAppSigner.signApplications(newSet(app1, app2)));
@@ -158,7 +159,7 @@ public class OSXAppSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigning2AppFolderAndAFile(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			Path app1 = Files.createDirectories(fs.getPath("test", "testApp1.app"));
 			Path app2 = Files.createDirectories(fs.getPath("test", "testApp2.app"));
 			Path file = SampleFilesGenerators.writeFile(fs.getPath("testFile.txt"), "content of the file");
@@ -169,7 +170,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigning2AppFolderAndAFileButContinueOnFail(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).continueOnFail().build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, true);
 			Path app1 = Files.createDirectories(fs.getPath("test", "testApp1.app"));
 			Path app2 = Files.createDirectories(fs.getPath("test", "testApp2.app"));
 			Path file = SampleFilesGenerators.writeFile(fs.getPath("testFile.txt"), "content of the file");
@@ -181,7 +182,7 @@ public class OSXAppSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningWithNotSigningSigner(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new FailingProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.FAILING, false);
 			Path app1 = Files.createDirectories(fs.getPath("test", "testApp1.app"));
 			osxAppSigner.signApplications(newSet(app1));
 		}
@@ -191,7 +192,7 @@ public class OSXAppSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningWithNotSigningSigner2(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new FailingProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.FAILING, false);
 			Path app1 = Files.createDirectories(fs.getPath("test", "testApp1.app"));
 			Path app2 = Files.createDirectories(fs.getPath("test", "testApp2.app"));
 			osxAppSigner.signApplications(newSet(app1, app2));
@@ -201,7 +202,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigningWithNotSigningSignerButContinueOnFail(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new FailingProcessor()).logOn(log).continueOnFail().build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.FAILING, true);
 			Path app1 = Files.createDirectories(fs.getPath("test", "testApp1.app"));
 			osxAppSigner.signApplications(newSet(app1));
 		}
@@ -210,7 +211,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigningWithNotSigningSignerButContinueOnFail2(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new FailingProcessor()).logOn(log).continueOnFail().build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.FAILING, true);
 			Path app1 = Files.createDirectories(fs.getPath("test", "testApp1.app"));
 			Path app2 = Files.createDirectories(fs.getPath("test", "testApp2.app"));
 			osxAppSigner.signApplications(newSet(app1, app2));
@@ -221,7 +222,7 @@ public class OSXAppSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningWithErrorSigner(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new ErrorProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.ERROR, false);
 			Path app1 = Files.createDirectories(fs.getPath("test", "testApp1.app"));
 			osxAppSigner.signApplications(newSet(app1));
 		}
@@ -231,7 +232,7 @@ public class OSXAppSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningWithErrorSigner2(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new ErrorProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.ERROR, false);
 			Path app1 = Files.createDirectories(fs.getPath("test", "testApp1.app"));
 			Path app2 = Files.createDirectories(fs.getPath("test", "testApp2.app"));
 			osxAppSigner.signApplications(newSet(app1, app2));
@@ -241,7 +242,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigningWithErrorSignerButContinuerOnFail(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new ErrorProcessor()).logOn(log).continueOnFail().build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.ERROR, true);
 			Path app1 = Files.createDirectories(fs.getPath("test", "testApp1.app"));
 			osxAppSigner.signApplications(newSet(app1));
 		}
@@ -250,7 +251,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigningWithErrorSignerButContinuerOnFail2(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new ErrorProcessor()).logOn(log).continueOnFail().build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.ERROR, true);
 			Path app1 = Files.createDirectories(fs.getPath("test", "testApp1.app"));
 			Path app2 = Files.createDirectories(fs.getPath("test", "testApp2.app"));
 			osxAppSigner.signApplications(newSet(app1, app2));
@@ -261,7 +262,7 @@ public class OSXAppSignerTest {
 	@Test(expected=NullPointerException.class)
 	public void testSigningNullDirectory(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			osxAppSigner.signApplications(null, new LinkedHashSet<PathMatcher>());
 		}
 	}
@@ -270,7 +271,7 @@ public class OSXAppSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningWithLookupInNonExistingFolder(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			osxAppSigner.signApplications(fs.getPath("test"), new LinkedHashSet<PathMatcher>());
 		}
 	}
@@ -278,7 +279,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigningWithLookup(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			assertEquals(0, osxAppSigner.signApplications(Files.createDirectories(fs.getPath("test")), new LinkedHashSet<PathMatcher>()));
 		}
 	}
@@ -287,7 +288,7 @@ public class OSXAppSignerTest {
 	@Test(expected=NullPointerException.class)
 	public void testSigningWithLookupWithNullPatterns(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			assertEquals(0, osxAppSigner.signApplications(Files.createDirectories(fs.getPath("test")), null));
 		}
 	}
@@ -295,7 +296,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigningWithLookupWithEmptyPatterns(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			assertEquals(0, osxAppSigner.signApplications(baseDir, new LinkedHashSet<PathMatcher>()));
 		}
@@ -304,7 +305,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigningWithLookupWithDefaultMojoMatchers(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			assertEquals(2, osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, new LinkedHashSet<String>(), log)));
 		}
@@ -313,7 +314,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigningWithLookupWithMojoMatchers(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			assertEquals(3, osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, newSet("app1.app", "app5.app", "app3.app"), log)));
 		}
@@ -322,7 +323,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigningWithLookupWithAdvancedMojoMatchers(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			assertEquals(6, osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, newSet("app*.app"), log)));
 		}
@@ -331,7 +332,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigningWithLookupWithAdvancedMojoMatchers2(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			assertEquals(0, osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, newSet("subFolder2/*.app"), log)));
 		}
@@ -340,7 +341,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigningWithLookupWithAdvancedMojoMatchers4(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new DummyProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			assertEquals(4, osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, newSet("subSub/*.app"), log)));
 		}
@@ -350,7 +351,7 @@ public class OSXAppSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningWithLookupWithNonSigningSigner(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new FailingProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.FAILING, false);
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, newSet("app1.app", "app5.app", "app3.app"), log));
 		}
@@ -359,7 +360,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigningWithLookupWithNonSigningSignerButContinueOnFail(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new FailingProcessor()).logOn(log).continueOnFail().build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.FAILING, true);
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			assertEquals(0, osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, newSet("app1.app", "app5.app", "app3.app"), log)));
 		}
@@ -369,7 +370,7 @@ public class OSXAppSignerTest {
 	@Test(expected=MojoExecutionException.class)
 	public void testSigningWithLookupWithErrorSigner(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new ErrorProcessor()).logOn(log).build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.ERROR, false);
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, newSet("app1.app", "app5.app", "app3.app"), log));
 		}
@@ -378,7 +379,7 @@ public class OSXAppSignerTest {
 	@Theory
 	public void testSigningWithLookupWithErrorSignerButContinueOnFail(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = OSXAppSigner.builder(new ErrorProcessor()).logOn(log).continueOnFail().build();
+			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.ERROR, true);
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
 			assertEquals(0, osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, newSet("app1.app", "app5.app", "app3.app"), log)));
 		}
@@ -397,6 +398,16 @@ public class OSXAppSignerTest {
 		return baseDir;
 	}
 
+	private OSXAppSigner createAppSigner(HttpClient client, boolean continueOnFail) {
+		OSXAppSigner osxAppSigner = OSXAppSigner.builder()
+				.serverUri(URI.create("http://localhost"))
+				.httpClient(client)
+				.exceptionHandler(new ExceptionHandler(log, continueOnFail))
+				.log(log)
+				.build();
+		return osxAppSigner;
+	}
+	
 	private static <T> Set<T> newSet(@SuppressWarnings("unchecked") T... app) {
 		return new LinkedHashSet<>(Arrays.asList(app));
 	}

@@ -25,9 +25,10 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.eclipse.cbi.maven.common.FileProcessor;
-import org.eclipse.cbi.maven.common.ApacheHttpClientFileProcessor;
+import org.eclipse.cbi.maven.common.ExceptionHandler;
 import org.eclipse.cbi.maven.common.MavenLogger;
+import org.eclipse.cbi.maven.common.http.RetryHttpClient;
+import org.eclipse.cbi.maven.common.http.apache.ApacheHttpClient;
 
 /**
  * Signs project main and attached artifact using <a href=
@@ -38,11 +39,6 @@ import org.eclipse.cbi.maven.common.MavenLogger;
  */
 @Mojo(name = "sign", defaultPhase = LifecyclePhase.PACKAGE)
 public class SignMojo extends AbstractMojo {
-
-	/**
-	 * The name of the part as it will be send to the signing server.
-	 */
-	private static final String PART_NAME = "file";
 
 	/**
 	 * The default number of seconds the process will wait if
@@ -217,33 +213,25 @@ public class SignMojo extends AbstractMojo {
 	 * @return the {@link JarSigner} according to the injected Mojo parameter.
 	 */
 	private JarSigner createJarSigner() {
-		URI signerURI = URI.create(signerUrl);
-		final FileProcessor signer = new ApacheHttpClientFileProcessor(signerURI, PART_NAME, new MavenLogger(getLog()));
-		JarSigner.Builder jarSignerBuilder = JarSigner.builder(signer);
-		jarSignerBuilder.logOn(getLog());
-
+		RetryHttpClient.Builder httpClientBuilder = RetryHttpClient.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())));
 		if (deprecatedRetryLimit != DEFAULT_RETRY_LIMIT && retryLimit == DEFAULT_RETRY_LIMIT) {
-			jarSignerBuilder.maxRetry(deprecatedRetryLimit);
+			httpClientBuilder.maxRetries(deprecatedRetryLimit);
 		} else {
-			jarSignerBuilder.maxRetry(retryLimit);
+			httpClientBuilder.maxRetries(retryLimit);
 		}
 
 		if (deprecatedRetryTimer != DEFAULT_RETRY_TIMER && retryTimer == DEFAULT_RETRY_TIMER) {
-			jarSignerBuilder.waitBeforeRetry(deprecatedRetryTimer, TimeUnit.SECONDS);
+			httpClientBuilder.waitBeforeRetry(deprecatedRetryTimer, TimeUnit.SECONDS);
 		} else {
-			jarSignerBuilder.waitBeforeRetry(retryTimer, TimeUnit.SECONDS);
+			httpClientBuilder.waitBeforeRetry(retryTimer, TimeUnit.SECONDS);
 		}
 
-		if (deprecatedContinueOnFail || continueOnFail) {
-			jarSignerBuilder.continueOnFail();
-		}
-
-		if (excludeInnerJars) {
-			jarSignerBuilder.maxDepth(0);
-		} else {
-			jarSignerBuilder.maxDepth(1);
-		}
-
-		return jarSignerBuilder.build();
+		return JarSigner.builder()
+				.serverUri(URI.create(signerUrl))
+				.httpClient(httpClientBuilder.build())
+				.maxDepth(excludeInnerJars ? 0 : 1)
+				.exceptionHandler(new ExceptionHandler(getLog(), (deprecatedContinueOnFail || continueOnFail)))
+				.log(getLog())
+				.build();
 	}
 }

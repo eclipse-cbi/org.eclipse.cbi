@@ -11,13 +11,14 @@
 package org.eclipse.cbi.maven.plugins.jarsigner;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
@@ -29,13 +30,20 @@ import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.eclipse.cbi.common.util.Paths;
 import org.eclipse.cbi.common.util.Zips;
 import org.eclipse.cbi.maven.common.ExceptionHandler;
-import org.eclipse.cbi.maven.common.FileProcessor;
+import org.eclipse.cbi.maven.common.MavenLogger;
 import org.eclipse.cbi.maven.common.MojoExecutionIOExceptionWrapper;
+import org.eclipse.cbi.maven.common.http.AbstractCompletionListener;
+import org.eclipse.cbi.maven.common.http.HttpClient;
+import org.eclipse.cbi.maven.common.http.HttpRequest;
+import org.eclipse.cbi.maven.common.http.HttpResult;
+
+import com.google.auto.value.AutoValue;
 
 /**
  * Utility class that signs a Jar and the nested Jar.
  */
-public class JarSigner {
+@AutoValue
+public abstract class JarSigner {
 
 	/**
 	 * {@code eclispe.inf} property to exclude this Jar from signing.
@@ -56,61 +64,32 @@ public class JarSigner {
 	 * Jar file extension.
 	 */
 	private static final String DOT_JAR_GLOB_PATTERN = "glob:**.jar";
+	
+	/**
+	 * The name of the part as it will be send to the signing server.
+	 */
+	private static final String PART_NAME = "file";
 
 	/**
 	 * The log on which feedback will be provided.
 	 */
-	private final Log log;
-
-	/**
-	 * The signer to which the Jar will be send for signing.
-	 */
-	private final FileProcessor signer;
-
-	/**
-	 * The retry limit that will be passed to the {@link FileProcessor#trySign(Path, int, int, TimeUnit)}.
-	 */
-	private final int retryLimit;
-
-	/**
-	 * The retry timer that will be passed to the {@link FileProcessor#trySign(Path, int, int, TimeUnit)}.
-	 */
-	private final int retryTimer;
-
-	/**
-	 * The retry timer time unit that will be passed to the {@link FileProcessor#trySign(Path, int, int, TimeUnit)}.
-	 */
-	private final TimeUnit retryTimerUnit;
+	abstract Log log();
 
 	/**
 	 * Whether the nested Jars should be signed (when >= 1). Signs all nested Jars recursively
 	 * when {@link Integer#MAX_VALUE}. Set to 0 if you want to avoid signing nested Jars.
 	 */
-	private final int maxDepth;
+	abstract int maxDepth();
 
-	private final ExceptionHandler exceptionHandler;
+	abstract ExceptionHandler exceptionHandler();
+	
+	abstract HttpClient httpClient();
+	
+	abstract URI serverUri();
 
-	/**
-	 * Default constructor.
-	 *
-	 * @param signer
-	 * @param maxdepth
-	 * @param continueOnFail Whether exceptions should be thrown when the signing process of this Jar or one of its nested Jar (if {@code maxDepth} is >= 1) fails.
-	 * @param log
-	 * @param retryLimit
-	 * @param retryTimer
-	 * @param retryTimerUnit
-	 */
-	private JarSigner(FileProcessor signer, int maxdepth, boolean continueOnFail, Log log, int retryLimit, int retryTimer, TimeUnit retryTimerUnit) {
-		this.signer = signer;
-		this.maxDepth = maxdepth;
-		this.log = log;
-		this.retryLimit = retryLimit;
-		this.retryTimer = retryTimer;
-		this.retryTimerUnit = retryTimerUnit;
-		this.exceptionHandler = new ExceptionHandler(log, continueOnFail);
+	JarSigner() {
 	}
-
+	
 	/**
 	 * Sign the given Jar file.
 	 *
@@ -138,12 +117,12 @@ public class JarSigner {
 		try {
 			if (shouldBeSigned(file, currentDepth)) {
 				if (currentDepth == 0) {
-					log.info("[" + new Date() + "] Signing JAR '" + file + "'...");
+					log().info("[" + new Date() + "] Signing JAR '" + file + "'...");
 				}
 				ret = signJarRecursively(file, currentDepth);
 			}
 		} catch (IOException e) {
-			exceptionHandler.handleError("Signing of file '" + file + "' failed.", e);
+			exceptionHandler().handleError("Signing of file '" + file + "' failed.", e);
 		}
 		return ret;
 	}
@@ -166,15 +145,15 @@ public class JarSigner {
 		final boolean ret;
 
 		if (file == null || !Files.isRegularFile(file) || !Files.isReadable(file)) {
-			log.debug("Could not read file '" + file + "', it will not be signed");
+			log().debug("Could not read file '" + file + "', it will not be signed");
 			ret = false;
 		} else if (!file.getFileSystem().getPathMatcher(DOT_JAR_GLOB_PATTERN).matches(file)) {
 			if (currentDepth == 0) {
-				log.debug("Extension of file '" + file + "' is not 'jar', it will not be signed");
+				log().debug("Extension of file '" + file + "' is not 'jar', it will not be signed");
 			}
 			ret = false;
 		} else if (isDisabledInEclipseInf(file)) {
-			log.info("Signing of file '" + file + "' is disabled in '" + META_INF_ECLIPSE_INF + "', it will not be signed.");
+			log().info("Signing of file '" + file + "' is disabled in '" + META_INF_ECLIPSE_INF + "', it will not be signed.");
 			ret = false;
 		} else {
 			ret = true;
@@ -225,20 +204,31 @@ public class JarSigner {
 	 * @throws IOException
 	 * @throws MojoExecutionException
 	 */
-	private int signJarRecursively(Path file, int currentDepth) throws IOException, MojoExecutionException {
+	private int signJarRecursively(final Path file, int currentDepth) throws IOException, MojoExecutionException {
 		int nestedJarsSigned = 0;
-		if (currentDepth >= maxDepth) {
-			log.info("Signing of nested jars of '" + file + "' is disabled.");
+		if (currentDepth >= maxDepth()) {
+			log().info("Signing of nested jars of '" + file + "' is disabled.");
 		} else {
 			nestedJarsSigned = signNestedJars(file, currentDepth);
 		}
 
-		if (!signer.process(file, retryLimit, retryTimer, retryTimerUnit)) {
-			exceptionHandler.handleError("Signing of jar '" + file + "' failed. Activate debug (-X, --debug) to see why.");
+		if (!processOnSigningServer(file)) {
+			exceptionHandler().handleError("Signing of jar '" + file + "' failed. Activate debug (-X, --debug) to see why.");
 			return nestedJarsSigned;
 		} else {
 			return nestedJarsSigned  + 1;
 		}
+	}
+
+	private boolean processOnSigningServer(final Path file) throws IOException {
+		final HttpRequest request = HttpRequest.on(serverUri()).withParam(PART_NAME, file).build();
+		boolean success = httpClient().send(request, new AbstractCompletionListener(file.getParent(), file.getFileName().toString(), this.getClass().getSimpleName(), new MavenLogger(log())) {
+			@Override
+			public void onSuccess(HttpResult result) throws IOException {
+				result.copyContent(file, StandardCopyOption.REPLACE_EXISTING);
+			}
+		});
+		return success;
 	}
 
 	/**
@@ -270,7 +260,7 @@ public class JarSigner {
 		} catch (MojoExecutionIOExceptionWrapper e) {
 			throw e.getCause();
 		} catch (IOException e) {
-			exceptionHandler.handleError("Signing of nested jar '" + file + "' failed.", e);
+			exceptionHandler().handleError("Signing of nested jar '" + file + "' failed.", e);
 		} finally {
 			if (jarUnpackFolder != null) {
 				Paths.deleteQuietly(jarUnpackFolder);
@@ -317,100 +307,45 @@ public class JarSigner {
 	 *            the signer to delegate to.
 	 * @return the builder of {@link JarSigner}.
 	 */
-	public static JarSigner.Builder builder(FileProcessor signer) {
-		return new Builder(signer);
+	public static JarSigner.Builder builder() {
+		return new AutoValue_JarSigner.Builder();
 	}
 
 	/**
 	 * A builder of {@link JarSigner}. Default value for options are:
 	 * <ul>
-	 * <li>{@link #continueOnFail()}: false</li>
 	 * <li>{@link #logOn(Log)}: {@link SystemStreamLog}</li>
 	 * <li>{@link #maxDepth(int)}: 0</li>
 	 * <li>{@link #maxRetry(int)}: 0</li>
 	 * <li>{@link #waitBeforeRetry(int, TimeUnit)}: 0 {@link TimeUnit#SECONDS seconds}</li>
 	 * <ul>
 	 */
-	public static class Builder {
+	@AutoValue.Builder
+	public static abstract class Builder {
 
-		private final FileProcessor signer;
-
-		private boolean continueOnFail = false;
-
-		private Log log = new SystemStreamLog();
-
-		private int maxRetry = 0;
-
-		private int waitTimer = 0;
-
-		private TimeUnit waitTimerUnit = TimeUnit.SECONDS;
-
-		private int maxDepth = 0;
-
-		Builder(FileProcessor signer) {
-			this.signer = Objects.requireNonNull(signer);
+		Builder() {
 		}
-
-		/**
-		 * Configure the {@link JarSigner} to <strong>not</strong> throw
-		 * {@link MojoExecutionException} if it can't sign the Jar. Instead, it
-		 * will only log a warning.
-		 *
-		 * @return this builder for chained calls.
-		 */
-		public Builder continueOnFail() {
-			this.continueOnFail = true;
-			return this;
-		}
-
+		
 		/**
 		 * The {@link Log} onto which the feedback should be printed.
 		 * @param log
 		 * @return this builder for chained calls.
 		 */
-		public Builder logOn(Log log) {
-			this.log = log;
-			return this;
-		}
-
+		public abstract Builder log(Log log);
+		
 		/**
 		 * The maximum depth of nested Jars that should be signed. If 0 is passed, only the given Jar will signed.
 		 * @param maxDepth
 		 * @return this builder for chained calls.
 		 */
-		public Builder maxDepth(int maxDepth) {
-			if (maxDepth < 0) {
-				throw new IllegalArgumentException("'maxDepth' must be positive or snull");
-			}
-			this.maxDepth = maxDepth;
-			return this;
-		}
+		public abstract Builder maxDepth(int maxDepth);
+		
+		public abstract Builder serverUri(URI uri);
+		public abstract Builder httpClient(HttpClient httpClient);
+		public abstract Builder exceptionHandler(ExceptionHandler handler);
 
-		/**
-		 * The maximum number of retry that will be passed to the {@link FileProcessor}.
-		 * @param maxRetry
-		 * @return this builder for chained calls.
-		 */
-		public Builder maxRetry(int maxRetry) {
-			if (maxRetry < 0) {
-				throw new IllegalArgumentException("'maxRetry' must be positive or snull");
-			}
-			this.maxRetry = maxRetry;
-			return this;
-		}
-
-		/**
-		 * The time to wait between each try (passed to the {@link FileProcessor}).
-		 * @param waitTimer
-		 * @param timeUnit
-		 * @return this builder for chained calls.
-		 */
-		public Builder waitBeforeRetry(int waitTimer, TimeUnit timeUnit) {
-			this.waitTimer = waitTimer;
-			this.waitTimerUnit = timeUnit;
-			return this;
-		}
-
+		abstract JarSigner autoBuild();
+		
 		/**
 		 * Creates and returns a new JarSigner configured with the options
 		 * specified to this builder.
@@ -418,8 +353,11 @@ public class JarSigner {
 		 * @return a new JarSigner.
 		 */
 		public JarSigner build() {
-			return new JarSigner(this.signer, this.maxDepth, this.continueOnFail,
-					this.log, this.maxRetry, this.waitTimer, this.waitTimerUnit);
+			JarSigner ret = autoBuild();
+			if (ret.maxDepth() < 0) {
+				throw new IllegalArgumentException("'maxDepth' must be positive or zero");
+			}
+			return ret;
 		}
 	}
 }

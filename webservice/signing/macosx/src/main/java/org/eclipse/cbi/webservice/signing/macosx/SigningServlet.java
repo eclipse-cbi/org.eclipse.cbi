@@ -51,13 +51,10 @@ public abstract class SigningServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse response) throws ServletException, IOException {
 		final ResponseFacade responseFacade = ResponseFacade.builder()
 				.servletResponse(response)
-				.session(req.getSession())
 				.build();
 		
 		try(RequestFacade requestFacade = RequestFacade.builder(tempFolder()).request(req).build()) {
 			doSign(requestFacade, responseFacade);
-		} catch (Exception e) {
-			responseFacade.internalServerError(e);
 		}
     }
 
@@ -71,7 +68,7 @@ public abstract class SigningServlet extends HttpServlet {
 				Codesigner.cleanTemporaryResource(zipWithSignedApps);
 			}
 		} else {
-			answeringMachine.replyPlain(HttpServletResponse.SC_BAD_REQUEST, "POST request must contain a part named '" + FILE_PART_NAME + "'");
+			answeringMachine.replyError(HttpServletResponse.SC_BAD_REQUEST, "POST request must contain a part named '" + FILE_PART_NAME + "'");
 		}
 	}
 
@@ -80,7 +77,7 @@ public abstract class SigningServlet extends HttpServlet {
 		if (codesigner().signZippedApplications(zipWithUnsignedApps, zipWithSignedApps) > 0) {
 			answeringMachine.replyWithFile(ZIP_CONTENT_TYPE, requestFacade.getSubmittedFileName(FILE_PART_NAME).get(), zipWithSignedApps);
 		} else {
-			answeringMachine.replyPlain(HttpServletResponse.SC_BAD_REQUEST, "No '.app' folder can be found in the provided zip file");
+			answeringMachine.replyError(HttpServletResponse.SC_BAD_REQUEST, "No '.app' folder can be found in the provided zip file");
 		}
 	}
 	

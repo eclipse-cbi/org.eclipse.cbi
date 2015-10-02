@@ -62,10 +62,7 @@ public abstract class DMGPackagerServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		final ResponseFacade responseFacade = ResponseFacade.builder()
 				.servletResponse(resp)
-				.session(req.getSession())
 				.build();
-		
-//		.dmgPackagerBuilder(DMGPackager.builder(executor).timeout(conf.getTimeout()))
 		
 		Path targetImageFile = null;
 		try(RequestFacade requestFacade = RequestFacade.builder(tempFolder()).request(req).build();
@@ -87,8 +84,6 @@ public abstract class DMGPackagerServlet extends HttpServlet {
 			targetImageFile = dmgPackager().packageImageFile(source, source.normalize().getParent().resolve(source.getFileName().toString() + DOT_DMG), options);
 			String filename = requestFacade.getSubmittedFileName(DMGPackagerServletRequestParser.SOURCE_PART_NAME).toString().replace(DOT_TAR_GZ, DOT_DMG);
 			responseFacade.replyWithFile(APPLE_DISKIMAGE_MEDIA_TYPE, filename, targetImageFile);
-		} catch (Exception e) {
-			responseFacade.internalServerError(e);
 		} finally {
 			deleteTemporaryResource(targetImageFile);
 		}

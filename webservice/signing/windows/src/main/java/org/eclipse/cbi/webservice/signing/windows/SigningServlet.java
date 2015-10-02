@@ -42,12 +42,10 @@ public abstract class SigningServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		ResponseFacade responseFacade = ResponseFacade.builder()
 				.servletResponse(resp)
-				.session(req.getSession()).build();
+				.build();
 		
 		try (RequestFacade requestFacade = RequestFacade.builder(tempFolder()).request(req).build()) {
 			doSign(requestFacade, responseFacade);
-		} catch (Exception e) {
-			responseFacade.internalServerError(e);
 		}
 	}
 
@@ -59,10 +57,10 @@ public abstract class SigningServlet extends HttpServlet {
 				Path signedFile = osslCodesigner().sign(unsignedExe);
 				responseFacade.replyWithFile(PORTABLE_EXECUTABLE_MEDIA_TYPE, submittedFileName, signedFile);
 			} else {
-				responseFacade.replyPlain(HttpServletResponse.SC_BAD_REQUEST, "Submitted '" + FILE_PART_NAME + "' '" + submittedFileName + "' must ends with '.exe' ");
+				responseFacade.replyError(HttpServletResponse.SC_BAD_REQUEST, "Submitted '" + FILE_PART_NAME + "' '" + submittedFileName + "' must ends with '.exe' ");
 			}
 		} else {
-			responseFacade.replyPlain(HttpServletResponse.SC_BAD_REQUEST, "POST request must contain a part named '" + FILE_PART_NAME + "'");
+			responseFacade.replyError(HttpServletResponse.SC_BAD_REQUEST, "POST request must contain a part named '" + FILE_PART_NAME + "'");
 		}
 	}
 	

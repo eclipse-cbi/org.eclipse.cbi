@@ -45,12 +45,10 @@ public abstract class SigningServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		final ResponseFacade responseFacade = ResponseFacade.builder()
 				.servletResponse(resp)
-				.session(req.getSession()).build();
+				.build();
 		
 		try(RequestFacade requestFacade = RequestFacade.builder(tempFolder()).request(req).build()) {
 			doSign(requestFacade, responseFacade);
-		} catch (Exception e) {
-			responseFacade.internalServerError(e);
 		}
 	}
 
@@ -63,10 +61,10 @@ public abstract class SigningServlet extends HttpServlet {
 				Path signedJar = jarSigner().signJar(unsignedJar, digestAlgorithm, getResigningStrategy(requestFacade, digestAlgorithm));
 				responseFacade.replyWithFile(JAR_CONTENT_TYPE, submittedFileName, signedJar);
 			} else {
-				responseFacade.replyPlain(HttpServletResponse.SC_BAD_REQUEST, "Submitted '" + FILE_PART_NAME + "' '" + submittedFileName + "' must ends with '.jar' ");
+				responseFacade.replyError(HttpServletResponse.SC_BAD_REQUEST, "Submitted '" + FILE_PART_NAME + "' '" + submittedFileName + "' must ends with '.jar' ");
 			}
 		} else {
-			responseFacade.replyPlain(HttpServletResponse.SC_BAD_REQUEST, "POST request must contain a part named '" + FILE_PART_NAME + "'");
+			responseFacade.replyError(HttpServletResponse.SC_BAD_REQUEST, "POST request must contain a part named '" + FILE_PART_NAME + "'");
 		}
 	}
 

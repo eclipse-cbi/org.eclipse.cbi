@@ -259,7 +259,6 @@ public abstract class JarSigner {
 		try (JarInputStream jis = new JarInputStream(Files.newInputStream(jar))) {
 			JarEntry nextJarEntry = jis.getNextJarEntry();
 			while (nextJarEntry != null && !alreadySigned) {
-				nextJarEntry = jis.getNextJarEntry();
 				Attributes attributes = nextJarEntry.getAttributes();
 				if (attributes != null) {
 					alreadySigned = attributes.keySet().stream().anyMatch(k -> k.toString().endsWith("-Digest"));

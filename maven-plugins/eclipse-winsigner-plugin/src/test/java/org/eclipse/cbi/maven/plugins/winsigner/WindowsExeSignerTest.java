@@ -16,10 +16,10 @@ import java.util.Set;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
-import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
 import org.eclipse.cbi.maven.common.ExceptionHandler;
 import org.eclipse.cbi.maven.common.test.util.HttpClients;
+import org.eclipse.cbi.maven.common.test.util.NullMavenLog;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.theories.DataPoints;
@@ -46,7 +46,7 @@ public class WindowsExeSignerTest {
 
 	@BeforeClass
 	public static void beforeClass() {
-		log = new SystemStreamLog();
+		log = new NullMavenLog();
 	}
 
 	@Test(expected=NullPointerException.class)

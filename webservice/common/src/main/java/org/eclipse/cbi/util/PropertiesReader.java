@@ -21,8 +21,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 
-import autovalue.shaded.com.google.common.common.collect.ImmutableMap;
-import autovalue.shaded.com.google.common.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 
 /**
  * Class with utilities method for {@link Properties} objects.

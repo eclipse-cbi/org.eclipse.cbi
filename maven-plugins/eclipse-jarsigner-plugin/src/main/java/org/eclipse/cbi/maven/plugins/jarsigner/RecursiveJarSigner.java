@@ -29,10 +29,6 @@ public abstract class RecursiveJarSigner extends FilteredJarSigner {
 
 	abstract JarSigner delegate();
 	
-	/**
-	 * Whether the nested Jars should be signed (when >= 1). Signs all nested Jars recursively
-	 * when {@link Integer#MAX_VALUE}. Set to 0 if you want to avoid signing nested Jars.
-	 */
 	abstract int maxDepth();
 	
 	/**
@@ -141,6 +137,10 @@ public abstract class RecursiveJarSigner extends FilteredJarSigner {
 	
 	@AutoValue.Builder
 	public static abstract class Builder {
+		/**
+		 * Whether the nested Jars should be signed (when >= 1). Signs all nested Jars recursively
+		 * when {@link Integer#MAX_VALUE}. Set to 0 if you want to avoid signing nested Jars.
+		 */
 		public abstract Builder maxDepth(int max);
 		public abstract Builder filter(Filter filter);
 		public abstract Builder delegate(JarSigner jarSigner);

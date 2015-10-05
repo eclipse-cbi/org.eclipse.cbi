@@ -187,7 +187,7 @@ public class SignMojo extends AbstractMojo {
 	/**
 	 * @since 1.2.0
 	 */
-	@Parameter(defaultValue = "RESIGN")
+	@Parameter(property = "cbi.jarsigner.resigningStrategy", defaultValue = "RESIGN")
 	private Strategy resigningStrategy;
 	
 	/**
@@ -196,19 +196,23 @@ public class SignMojo extends AbstractMojo {
 	@Override
 	public void execute() throws MojoExecutionException {
 		if (skip) {
-			getLog().info("Skipping Jar signing");
+			getLog().info("Skip jar signing");
 			return;
 		}
 
-		final JarSigner jarSigner = createJarSigner();
-
-		final Artifact mainArtifact = project.getArtifact();
-		if (mainArtifact != null) {
-			signArtifact(jarSigner, mainArtifact);
-		}
-
-		for (Artifact artifact : project.getAttachedArtifacts()) {
-			signArtifact(jarSigner, artifact);
+		if (project.getArtifact() == null && project.getAttachedArtifacts().isEmpty()) {
+			getLog().info("No jars to sign");
+		} else {
+			final JarSigner jarSigner = createJarSigner();
+	
+			final Artifact mainArtifact = project.getArtifact();
+			if (mainArtifact != null) {
+				signArtifact(jarSigner, mainArtifact);
+			}
+	
+			for (Artifact artifact : project.getAttachedArtifacts()) {
+				signArtifact(jarSigner, artifact);
+			}
 		}
 	}
 
@@ -235,7 +239,9 @@ public class SignMojo extends AbstractMojo {
 	 * @return the {@link JarSigner} according to the injected Mojo parameter.
 	 */
 	private JarSigner createJarSigner() {
-		RetryHttpClient.Builder httpClientBuilder = RetryHttpClient.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())));
+		RetryHttpClient.Builder httpClientBuilder = RetryHttpClient
+				.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())))
+				.log(new MavenLogger(getLog()));
 		if (deprecatedRetryLimit != DEFAULT_RETRY_LIMIT && retryLimit == DEFAULT_RETRY_LIMIT) {
 			httpClientBuilder.maxRetries(deprecatedRetryLimit);
 		} else {

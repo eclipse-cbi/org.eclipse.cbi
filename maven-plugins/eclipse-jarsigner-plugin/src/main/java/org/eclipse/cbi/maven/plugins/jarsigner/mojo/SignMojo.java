@@ -191,6 +191,12 @@ public class SignMojo extends AbstractMojo {
 	private Strategy resigningStrategy;
 	
 	/**
+	 * @since 1.2.0
+	 */
+	@Parameter(property = "cbi.jarsigner.digestAlgorithm", defaultValue = "DEFAULT")
+	private MessageDigestAlgorithm digestAlgorithm;
+	
+	/**
 	 * {@inheritDoc}
 	 */
 	@Override
@@ -221,7 +227,7 @@ public class SignMojo extends AbstractMojo {
 		if (artifactFile != null) {
 			try {
 				Options options = Options.builder()
-						.digestAlgorithm(MessageDigestAlgorithm.DEFAULT)
+						.digestAlgorithm(digestAlgorithm)
 						.build();
 				jarSigner.sign(artifactFile.toPath(), options);
 			} catch (IOException e) {
@@ -253,7 +259,7 @@ public class SignMojo extends AbstractMojo {
 		} else {
 			httpClientBuilder.waitBeforeRetry(retryTimer, TimeUnit.SECONDS);
 		}
-		
+
 		return RecursiveJarSigner.builder()
 			.filter(new EclipseJarSignerFilter(getLog()))
 			.log(getLog())

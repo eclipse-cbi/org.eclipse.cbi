@@ -14,7 +14,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 
-import org.eclipse.cbi.util.PropertiesReader;
+import org.eclipse.cbi.webservice.util.PropertiesReader;
 
 public class OSSLSigncodeProperties {
 

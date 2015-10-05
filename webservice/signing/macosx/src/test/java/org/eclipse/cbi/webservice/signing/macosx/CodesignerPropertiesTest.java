@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
-import org.eclipse.cbi.util.PropertiesReader;
+import org.eclipse.cbi.webservice.util.PropertiesReader;
 import org.junit.Test;
 
 import com.google.common.jimfs.Configuration;

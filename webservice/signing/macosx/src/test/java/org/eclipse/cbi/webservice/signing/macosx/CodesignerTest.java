@@ -21,7 +21,7 @@ import javax.servlet.ServletException;
 
 import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
 import org.eclipse.cbi.common.util.Zips;
-import org.eclipse.cbi.util.ProcessExecutor;
+import org.eclipse.cbi.webservice.util.ProcessExecutor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;

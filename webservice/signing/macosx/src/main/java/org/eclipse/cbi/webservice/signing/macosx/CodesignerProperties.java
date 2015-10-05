@@ -14,7 +14,7 @@ import java.nio.file.Path;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.cbi.util.PropertiesReader;
+import org.eclipse.cbi.webservice.util.PropertiesReader;
 
 /**
  * A reader of {@link Properties} of {@link SigningServer}. It provides

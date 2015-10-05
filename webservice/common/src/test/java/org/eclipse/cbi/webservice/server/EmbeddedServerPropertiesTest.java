@@ -19,8 +19,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
-import org.eclipse.cbi.util.PropertiesReader;
 import org.eclipse.cbi.webservice.server.EmbeddedServerProperties;
+import org.eclipse.cbi.webservice.util.PropertiesReader;
 import org.junit.Test;
 
 import com.google.common.jimfs.Configuration;

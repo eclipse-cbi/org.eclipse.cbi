@@ -8,7 +8,7 @@
  * Contributors:
  *   Mikaël Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.util;
+package org.eclipse.cbi.webservice.util;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;

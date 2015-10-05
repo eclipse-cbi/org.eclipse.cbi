@@ -15,7 +15,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.cbi.util.PropertiesReader;
+import org.eclipse.cbi.webservice.util.PropertiesReader;
 
 /**
  * Properties reader of {@link JarSigner}.

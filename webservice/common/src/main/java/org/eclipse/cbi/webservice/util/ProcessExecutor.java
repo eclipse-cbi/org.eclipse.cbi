@@ -8,7 +8,7 @@
  * Contributors:
  *   Mikaël Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.util;
+package org.eclipse.cbi.webservice.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;

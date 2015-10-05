@@ -15,7 +15,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.cbi.util.ProcessExecutor;
+import org.eclipse.cbi.webservice.util.ProcessExecutor;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Joiner;

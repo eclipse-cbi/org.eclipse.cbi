@@ -15,7 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
-import org.eclipse.cbi.util.PropertiesReader;
+import org.eclipse.cbi.webservice.util.PropertiesReader;
 
 /**
  * A reader of {@link Properties} of {@link EmbeddedServer}. It provides

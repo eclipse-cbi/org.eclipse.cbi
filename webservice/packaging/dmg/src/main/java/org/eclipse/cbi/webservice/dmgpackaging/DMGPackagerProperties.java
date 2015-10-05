@@ -12,7 +12,7 @@ package org.eclipse.cbi.webservice.dmgpackaging;
 
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.cbi.util.PropertiesReader;
+import org.eclipse.cbi.webservice.util.PropertiesReader;
 
 public class DMGPackagerProperties {
 

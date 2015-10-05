@@ -18,7 +18,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.cbi.common.util.Paths;
-import org.eclipse.cbi.util.ProcessExecutor;
+import org.eclipse.cbi.webservice.util.ProcessExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

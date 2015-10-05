@@ -27,7 +27,7 @@ import java.util.zip.ZipInputStream;
 
 import org.eclipse.cbi.common.util.Paths;
 import org.eclipse.cbi.common.util.Zips;
-import org.eclipse.cbi.util.ProcessExecutor;
+import org.eclipse.cbi.webservice.util.ProcessExecutor;
 import org.eclipse.cbi.webservice.util.function.WrappedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

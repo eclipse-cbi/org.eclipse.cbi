@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
-import org.eclipse.cbi.util.ProcessExecutor;
+import org.eclipse.cbi.webservice.util.ProcessExecutor;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;

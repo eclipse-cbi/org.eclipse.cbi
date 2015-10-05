@@ -17,8 +17,8 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.PropertyConfigurator;
-import org.eclipse.cbi.util.ProcessExecutor;
 import org.eclipse.cbi.webservice.server.EmbeddedServerConfiguration;
+import org.eclipse.cbi.webservice.util.ProcessExecutor;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;

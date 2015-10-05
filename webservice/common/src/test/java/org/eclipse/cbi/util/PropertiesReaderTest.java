@@ -17,6 +17,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
 import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
+import org.eclipse.cbi.webservice.util.PropertiesReader;
 import org.junit.Test;
 
 import com.google.common.jimfs.Jimfs;

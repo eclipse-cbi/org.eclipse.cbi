@@ -17,11 +17,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.cbi.util.ProcessExecutor;
-import org.eclipse.cbi.util.PropertiesReader;
 import org.eclipse.cbi.webservice.server.EmbeddedServer;
 import org.eclipse.cbi.webservice.server.EmbeddedServerConfiguration;
 import org.eclipse.cbi.webservice.server.EmbeddedServerProperties;
+import org.eclipse.cbi.webservice.util.ProcessExecutor;
+import org.eclipse.cbi.webservice.util.PropertiesReader;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;

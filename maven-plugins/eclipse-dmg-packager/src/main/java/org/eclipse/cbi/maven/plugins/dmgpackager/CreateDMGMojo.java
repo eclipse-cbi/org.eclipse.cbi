@@ -12,25 +12,21 @@ package org.eclipse.cbi.maven.plugins.dmgpackager;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URI;
+import java.nio.file.StandardCopyOption;
+import java.util.concurrent.TimeUnit;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.NoHttpResponseException;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.entity.mime.content.StringBody;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.codehaus.plexus.util.FileUtils;
-import org.codehaus.plexus.util.IOUtil;
-import org.codehaus.plexus.util.io.RawInputStreamFacade;
+import org.eclipse.cbi.maven.common.MavenLogger;
+import org.eclipse.cbi.maven.common.http.AbstractCompletionListener;
+import org.eclipse.cbi.maven.common.http.HttpClient;
+import org.eclipse.cbi.maven.common.http.HttpRequest;
+import org.eclipse.cbi.maven.common.http.HttpRequest.Builder;
+import org.eclipse.cbi.maven.common.http.HttpResult;
+import org.eclipse.cbi.maven.common.http.RetryHttpClient;
+import org.eclipse.cbi.maven.common.http.apache.ApacheHttpClient;
 
 /**
  * Create a DMG file from the file specified as argument. This plug-in requires
@@ -173,46 +169,31 @@ public class CreateDMGMojo extends AbstractMojo {
 	}
 
 	private void callDMGService() throws IOException, MojoExecutionException {
-		try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
-			HttpPost post = new HttpPost(dmgCreatorServiceURL);
-	
-			MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-			builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
-	
-			builder.addPart("source", new FileBody(source));
-			post.setEntity(builder.build());
-			builder.addPart("volumeName", new StringBody(volumeName, ContentType.TEXT_PLAIN));
-			builder.addPart("volumeIcon", new FileBody(volumeIcon));
-			builder.addPart("icon", new StringBody(icon, ContentType.TEXT_PLAIN));
-			builder.addPart("iconSize", new StringBody(iconSize, ContentType.TEXT_PLAIN));
-			builder.addPart("windowPosition", new StringBody(windowPosition, ContentType.TEXT_PLAIN));
-			builder.addPart("windowSize", new StringBody(windowSize, ContentType.TEXT_PLAIN));
-			builder.addPart("appDropLink", new StringBody(dropLinkPosition, ContentType.TEXT_PLAIN));
-			if (eulaFile != null) {
-				builder.addPart("eula", new FileBody(eulaFile));
-			}
-			if (backgroundImage != null) {
-				builder.addPart("backgroundImage", new FileBody(backgroundImage));
-			}
-	
-			try (CloseableHttpResponse response = client.execute(post)) {
-				int statusCode = response.getStatusLine().getStatusCode();
-		
-				HttpEntity resEntity = response.getEntity();
-		
-				if (statusCode >= 200 && statusCode <= 299 && resEntity != null) {
-					try (InputStream is = resEntity.getContent()) {
-						FileUtils.copyStreamToFile(new RawInputStreamFacade(is), new File(target, dmgFilename));
-					}
-				} else if (statusCode >= 500 && statusCode <= 599) {
-					try (InputStream is = resEntity.getContent()) {
-						String message = IOUtil.toString(is, "UTF-8");
-						throw new NoHttpResponseException("Server failed with " + message);
-					}
-				} else {
-					throw new MojoExecutionException("DMG creator replied " + response.getStatusLine());
-				}
-			}
+		HttpClient httpClient = RetryHttpClient.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())))
+				.maxRetries(3)
+				.waitBeforeRetry(30, TimeUnit.SECONDS)
+				.build();
+		Builder requestBuilder = HttpRequest.on(URI.create(dmgCreatorServiceURL))
+			.withParam("source", source.toPath())
+			.withParam("volumeName", volumeName)
+			.withParam("volumeIcon", volumeIcon.toPath())
+			.withParam("icon", icon)
+			.withParam("iconSize", iconSize)
+			.withParam("windowPosition", windowPosition)
+			.withParam("windowSize", windowSize)
+			.withParam("appDropLink", dropLinkPosition);
+			
+		if (eulaFile != null) {
+			requestBuilder.withParam("eula", eulaFile.toPath());
 		}
+		if (backgroundImage != null) {
+			requestBuilder.withParam("backgroundImage", backgroundImage.toPath());
+		}
+		httpClient.send(requestBuilder.build(), new AbstractCompletionListener(source.toPath().getParent(), source.toPath().getFileName().toString(), CreateDMGMojo.class.getSimpleName(), new MavenLogger(getLog())) {
+			@Override
+			public void onSuccess(HttpResult result) throws IOException {
+				result.copyContent(target.toPath().resolve(dmgFilename), StandardCopyOption.REPLACE_EXISTING);
+			}
+		});
 	}
 }

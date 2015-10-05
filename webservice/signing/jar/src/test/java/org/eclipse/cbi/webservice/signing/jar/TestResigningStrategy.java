@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
+import org.eclipse.cbi.common.security.MessageDigestAlgorithm;
 import org.eclipse.cbi.webservice.util.ProcessExecutor;
 import org.junit.Test;
 

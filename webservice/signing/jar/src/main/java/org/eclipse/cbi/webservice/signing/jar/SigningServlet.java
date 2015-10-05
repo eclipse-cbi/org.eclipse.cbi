@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.cbi.common.security.MessageDigestAlgorithm;
 import org.eclipse.cbi.webservice.servlet.RequestFacade;
 import org.eclipse.cbi.webservice.servlet.ResponseFacade;
 

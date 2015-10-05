@@ -23,6 +23,7 @@ import java.util.jar.JarInputStream;
 
 import javax.annotation.Nullable;
 
+import org.eclipse.cbi.common.security.MessageDigestAlgorithm;
 import org.eclipse.cbi.webservice.util.ProcessExecutor;
 
 import com.google.auto.value.AutoValue;

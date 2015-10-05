@@ -8,14 +8,16 @@
  * Contributors:
  *   Mikaël Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.webservice.signing.jar;
+package org.eclipse.cbi.common.security;
 
 import java.security.MessageDigest;
 import java.util.EnumSet;
-import java.util.Optional;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
+import com.google.common.collect.Iterables;
 
 /**
  * A enumeration of {@link MessageDigest} algorithm available in Java 8 as
@@ -45,10 +47,13 @@ public enum MessageDigestAlgorithm {
 		return this.standardName;
 	}
 
-	public static MessageDigestAlgorithm fromStandardName(String digestAlg) {
+	public static MessageDigestAlgorithm fromStandardName(final String digestAlg) {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(digestAlg));
-		Optional<MessageDigestAlgorithm> ret = EnumSet.allOf(MessageDigestAlgorithm.class).stream().filter(d -> digestAlg.equals(d.standardName))
-				.findFirst();
+		Optional<MessageDigestAlgorithm> ret = Iterables.tryFind(EnumSet.allOf(MessageDigestAlgorithm.class), new Predicate<MessageDigestAlgorithm>() {
+			public boolean apply(MessageDigestAlgorithm d) {
+				return digestAlg.equals(d.standardName);
+			}
+		});
 		if (!ret.isPresent()) {
 			throw new IllegalArgumentException("Unknow digest algorithm '" + digestAlg + "'");
 		} else {

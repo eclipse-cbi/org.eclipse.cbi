@@ -258,7 +258,6 @@ public abstract class JarSigner {
 		}
 
 		command.add("-tsa", timestampingAuthority().toString())
-			.add("-verbose")
 			.add("-keystore", keystore().toString())
 			.add("-storepass", keystorePassword())
 			.add(jar.toString())

@@ -15,12 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import org.eclipse.jetty.http.HttpHeader;
-import org.eclipse.jetty.http.MimeTypes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.net.HttpHeaders;

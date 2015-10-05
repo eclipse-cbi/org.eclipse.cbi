@@ -8,7 +8,7 @@
  * Contributors:
  *   Mikael Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.maven.common.http.apache;
+package org.eclipse.cbi.maven.http.apache;
 
 import java.io.IOException;
 import java.io.OutputStream;

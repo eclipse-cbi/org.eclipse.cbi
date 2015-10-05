@@ -2,9 +2,9 @@ package org.eclipse.cbi.maven.common.test.util;
 
 import java.io.IOException;
 
-import org.eclipse.cbi.maven.common.http.CompletionListener;
-import org.eclipse.cbi.maven.common.http.HttpClient;
-import org.eclipse.cbi.maven.common.http.HttpRequest;
+import org.eclipse.cbi.maven.http.CompletionListener;
+import org.eclipse.cbi.maven.http.HttpClient;
+import org.eclipse.cbi.maven.http.HttpRequest;
 
 public enum HttpClients implements HttpClient {
 

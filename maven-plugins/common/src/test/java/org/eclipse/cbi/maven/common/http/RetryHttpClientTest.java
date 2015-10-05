@@ -8,6 +8,11 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.cbi.maven.common.test.util.HttpClients;
 import org.eclipse.cbi.maven.common.test.util.NullLog;
+import org.eclipse.cbi.maven.http.CompletionListener;
+import org.eclipse.cbi.maven.http.HttpClient;
+import org.eclipse.cbi.maven.http.HttpRequest;
+import org.eclipse.cbi.maven.http.HttpResult;
+import org.eclipse.cbi.maven.http.RetryHttpClient;
 import org.junit.Assert;
 import org.junit.Test;
 

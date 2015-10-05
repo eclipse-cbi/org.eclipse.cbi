@@ -19,14 +19,14 @@ import java.util.concurrent.TimeUnit;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.eclipse.cbi.maven.common.MavenLogger;
-import org.eclipse.cbi.maven.common.http.AbstractCompletionListener;
-import org.eclipse.cbi.maven.common.http.HttpClient;
-import org.eclipse.cbi.maven.common.http.HttpRequest;
-import org.eclipse.cbi.maven.common.http.HttpRequest.Builder;
-import org.eclipse.cbi.maven.common.http.HttpResult;
-import org.eclipse.cbi.maven.common.http.RetryHttpClient;
-import org.eclipse.cbi.maven.common.http.apache.ApacheHttpClient;
+import org.eclipse.cbi.maven.MavenLogger;
+import org.eclipse.cbi.maven.http.AbstractCompletionListener;
+import org.eclipse.cbi.maven.http.HttpClient;
+import org.eclipse.cbi.maven.http.HttpRequest;
+import org.eclipse.cbi.maven.http.HttpResult;
+import org.eclipse.cbi.maven.http.RetryHttpClient;
+import org.eclipse.cbi.maven.http.HttpRequest.Builder;
+import org.eclipse.cbi.maven.http.apache.ApacheHttpClient;
 
 /**
  * Create a DMG file from the file specified as argument. This plug-in requires

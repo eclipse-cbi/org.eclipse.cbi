@@ -8,7 +8,7 @@
  * Contributors:
  *   Mikael Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.maven.common;
+package org.eclipse.cbi.maven;
 
 import java.io.IOException;
 

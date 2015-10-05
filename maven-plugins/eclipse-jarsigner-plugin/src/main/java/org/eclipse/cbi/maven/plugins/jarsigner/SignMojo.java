@@ -25,10 +25,10 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.eclipse.cbi.maven.common.ExceptionHandler;
-import org.eclipse.cbi.maven.common.MavenLogger;
-import org.eclipse.cbi.maven.common.http.RetryHttpClient;
-import org.eclipse.cbi.maven.common.http.apache.ApacheHttpClient;
+import org.eclipse.cbi.maven.ExceptionHandler;
+import org.eclipse.cbi.maven.MavenLogger;
+import org.eclipse.cbi.maven.http.RetryHttpClient;
+import org.eclipse.cbi.maven.http.apache.ApacheHttpClient;
 
 /**
  * Signs project main and attached artifact using <a href=

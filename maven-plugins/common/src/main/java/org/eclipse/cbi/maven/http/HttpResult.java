@@ -8,13 +8,25 @@
  * Contributors:
  *   Mikael Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.maven.common.http;
+package org.eclipse.cbi.maven.http;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.nio.file.CopyOption;
+import java.nio.file.Path;
 
-public interface CompletionListener {
+public interface HttpResult {
 	
-	void onSuccess(HttpResult result) throws IOException;
+	int statusCode();
 	
-	void onError(HttpResult error) throws IOException;
+	String reason();
+	
+	long copyContent(Path target, CopyOption... options) throws IOException;
+	
+	long copyContent(OutputStream output) throws IOException;
+
+	long contentLength();
+
+	Charset contentCharset();
 }

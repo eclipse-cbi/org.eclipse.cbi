@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015 Eclipse Foundation and others.
+ * Copyright (c) 2014, 2015 Eclipse Foundation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,12 +8,13 @@
  * Contributors:
  *   Mikael Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.maven.common.http;
+package org.eclipse.cbi.maven.http;
 
 import java.io.IOException;
 
-public interface HttpClient {
-
-	boolean send(HttpRequest request, CompletionListener completionListener) throws IOException;
-
+public interface CompletionListener {
+	
+	void onSuccess(HttpResult result) throws IOException;
+	
+	void onError(HttpResult error) throws IOException;
 }

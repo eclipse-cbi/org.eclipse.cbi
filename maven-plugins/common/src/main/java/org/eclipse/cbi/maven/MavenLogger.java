@@ -8,10 +8,10 @@
  * Contributors:
  *   Mikael Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.maven.common;
+package org.eclipse.cbi.maven;
 
 import org.apache.maven.plugin.logging.Log;
-import org.eclipse.cbi.maven.common.Logger;
+import org.eclipse.cbi.maven.Logger;
 
 public class MavenLogger implements Logger {
 

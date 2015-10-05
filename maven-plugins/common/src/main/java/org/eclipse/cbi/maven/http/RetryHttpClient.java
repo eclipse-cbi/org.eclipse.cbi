@@ -8,12 +8,12 @@
  * Contributors:
  *   Mikael Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.maven.common.http;
+package org.eclipse.cbi.maven.http;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.cbi.maven.common.Logger;
+import org.eclipse.cbi.maven.Logger;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Throwables;

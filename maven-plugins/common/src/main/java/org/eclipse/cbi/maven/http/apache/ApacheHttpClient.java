@@ -8,7 +8,7 @@
  * Contributors:
  *   Mikael Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.maven.common.http.apache;
+package org.eclipse.cbi.maven.http.apache;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -26,10 +26,10 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.eclipse.cbi.maven.common.Logger;
-import org.eclipse.cbi.maven.common.http.CompletionListener;
-import org.eclipse.cbi.maven.common.http.HttpClient;
-import org.eclipse.cbi.maven.common.http.HttpRequest;
+import org.eclipse.cbi.maven.Logger;
+import org.eclipse.cbi.maven.http.CompletionListener;
+import org.eclipse.cbi.maven.http.HttpClient;
+import org.eclipse.cbi.maven.http.HttpRequest;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;

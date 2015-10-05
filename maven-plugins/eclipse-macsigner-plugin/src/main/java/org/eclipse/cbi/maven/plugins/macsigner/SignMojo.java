@@ -24,11 +24,11 @@ import java.util.concurrent.TimeUnit;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
-import org.eclipse.cbi.maven.common.ExceptionHandler;
-import org.eclipse.cbi.maven.common.MavenLogger;
-import org.eclipse.cbi.maven.common.http.HttpClient;
-import org.eclipse.cbi.maven.common.http.RetryHttpClient;
-import org.eclipse.cbi.maven.common.http.apache.ApacheHttpClient;
+import org.eclipse.cbi.maven.ExceptionHandler;
+import org.eclipse.cbi.maven.MavenLogger;
+import org.eclipse.cbi.maven.http.HttpClient;
+import org.eclipse.cbi.maven.http.RetryHttpClient;
+import org.eclipse.cbi.maven.http.apache.ApacheHttpClient;
 
 /**
  * Signs project main and attached artifact using

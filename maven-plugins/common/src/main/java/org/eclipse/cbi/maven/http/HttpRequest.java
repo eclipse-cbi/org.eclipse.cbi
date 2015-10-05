@@ -8,7 +8,7 @@
  * Contributors:
  *   Mikael Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.maven.common.http;
+package org.eclipse.cbi.maven.http;
 
 import java.net.URI;
 import java.nio.file.Files;

@@ -6,6 +6,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.eclipse.cbi.maven.http.HttpRequest;
 import org.junit.Assert;
 import org.junit.Test;
 

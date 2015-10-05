@@ -8,7 +8,7 @@
  * Contributors:
  *   Mikael Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.maven.common.http.apache;
+package org.eclipse.cbi.maven.http.apache;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -22,7 +22,7 @@ import java.nio.file.Path;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ContentType;
-import org.eclipse.cbi.maven.common.http.HttpResult;
+import org.eclipse.cbi.maven.http.HttpResult;
 
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;

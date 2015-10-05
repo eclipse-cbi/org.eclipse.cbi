@@ -1,6 +1,6 @@
 package org.eclipse.cbi.maven.common.test.util;
 
-import org.eclipse.cbi.maven.common.Logger;
+import org.eclipse.cbi.maven.Logger;
 
 public class NullLog implements Logger {
 

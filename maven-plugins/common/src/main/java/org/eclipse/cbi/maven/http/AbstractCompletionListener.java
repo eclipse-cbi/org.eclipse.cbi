@@ -8,7 +8,7 @@
  * Contributors:
  *   Mikaël Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.maven.common.http;
+package org.eclipse.cbi.maven.http;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -20,7 +20,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Date;
 import java.util.Objects;
 
-import org.eclipse.cbi.maven.common.Logger;
+import org.eclipse.cbi.maven.Logger;
 
 import com.google.common.base.Preconditions;
 

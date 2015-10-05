@@ -14,12 +14,8 @@ import static com.google.common.base.Preconditions.checkState;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.Attributes;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
 
 import javax.annotation.Nullable;
 
@@ -27,7 +23,6 @@ import org.eclipse.cbi.common.security.MessageDigestAlgorithm;
 import org.eclipse.cbi.webservice.util.ProcessExecutor;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -225,52 +220,6 @@ public abstract class JarSigner {
 	 *             if the execution of the command did not end properly.
 	 */
 	public Path signJar(Path jar, MessageDigestAlgorithm digestAlg) throws IOException {
-		return signJar(jar, digestAlg, ResigningStrategy.resign(this, MessageDigestAlgorithm.DEFAULT));
-	}
-	
-	/**
-	 * Sign the given jar file with the configured jarsigner command. If the jar
-	 * is already signed, use the given {@link ResigningStrategy} to resign it.
-	 * 
-	 * @param jar
-	 *            the jar to be sign
-	 * @param digestAlg
-	 *            the message digest algorithm to use when digesting the entries
-	 *            of a JAR file. If <code>null</code>, jarsigner will use its
-	 *            default digest algorithm.
-	 * @param resigningStrategy
-	 *            the strategy to be used if the given jar is already signed.
-	 * @return the path to the signed jar file (the same as the one given in
-	 *         parameter).
-	 * @throws IOException
-	 *             if the execution of the command did not end properly.
-	 */
-	public Path signJar(Path jar, MessageDigestAlgorithm digestAlg, ResigningStrategy resigningStrategy) throws IOException {
-		final boolean alreadySigned = isAlreadySigned(jar);
-		
-		if (alreadySigned) {
-			return resigningStrategy.resignJar(jar);
-		} else {
-			return doSign(jar, digestAlg);
-		}
-	}
-
-	@VisibleForTesting static boolean isAlreadySigned(Path jar) throws IOException {
-		boolean alreadySigned = false;
-		try (JarInputStream jis = new JarInputStream(Files.newInputStream(jar))) {
-			JarEntry nextJarEntry = jis.getNextJarEntry();
-			while (nextJarEntry != null && !alreadySigned) {
-				Attributes attributes = nextJarEntry.getAttributes();
-				if (attributes != null) {
-					alreadySigned = attributes.keySet().stream().anyMatch(k -> k.toString().endsWith("-Digest"));
-				}
-				nextJarEntry = jis.getNextJarEntry();
-			}
-		}
-		return alreadySigned;
-	}
-	
-	Path doSign(Path jar, MessageDigestAlgorithm digestAlg) throws IOException {
 		final StringBuilder output = new StringBuilder();
 		int jarSignerExitValue = processExecutor().exec(createCommand(jar, digestAlg), output , timeout(), TimeUnit.SECONDS);
 		if (jarSignerExitValue != 0) {

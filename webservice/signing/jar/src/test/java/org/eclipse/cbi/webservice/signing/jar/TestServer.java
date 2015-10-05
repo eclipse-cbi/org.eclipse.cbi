@@ -42,7 +42,7 @@ public class TestServer {
 		}
 		
 		System.out.println("Starting test signing server at http://localhost:" + options.getServerPort() + options.getServicePathSpec());
-		System.out.println("Dummy certificates, temporary files and logs will be stored in folder: " + options.getDirectory());
+		System.out.println("Dummy certificates, temporary files and logs are stored in folder: " + options.getDirectory());
 		System.out.println("Jarsigner executable is: " + options.getJarSigner());
 		new SigningServer().startServer(options, options);
 	}

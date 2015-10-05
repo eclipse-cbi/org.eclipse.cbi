@@ -10,9 +10,10 @@
  *   Thanh Ha (Eclipse Foundation) - Add support for signing inner jars
  *   Mikael Barbero - Use of "try with resource"
  *******************************************************************************/
-package org.eclipse.cbi.maven.plugins.jarsigner;
+package org.eclipse.cbi.maven.plugins.jarsigner.mojo;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
@@ -25,10 +26,18 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.cbi.common.security.MessageDigestAlgorithm;
 import org.eclipse.cbi.maven.ExceptionHandler;
 import org.eclipse.cbi.maven.MavenLogger;
 import org.eclipse.cbi.maven.http.RetryHttpClient;
 import org.eclipse.cbi.maven.http.apache.ApacheHttpClient;
+import org.eclipse.cbi.maven.plugins.jarsigner.EclipseJarSignerFilter;
+import org.eclipse.cbi.maven.plugins.jarsigner.JarResigner;
+import org.eclipse.cbi.maven.plugins.jarsigner.JarResigner.Strategy;
+import org.eclipse.cbi.maven.plugins.jarsigner.JarSigner;
+import org.eclipse.cbi.maven.plugins.jarsigner.JarSigner.Options;
+import org.eclipse.cbi.maven.plugins.jarsigner.RecursiveJarSigner;
+import org.eclipse.cbi.maven.plugins.jarsigner.RemoteJarSigner;
 
 /**
  * Signs project main and attached artifact using <a href=
@@ -176,6 +185,12 @@ public class SignMojo extends AbstractMojo {
 			"eclipse-test-plugin", "eclipse-feature");
 
 	/**
+	 * @since 1.2.0
+	 */
+	@Parameter(defaultValue = "RESIGN")
+	private Strategy resigningStrategy;
+	
+	/**
 	 * {@inheritDoc}
 	 */
 	@Override
@@ -200,7 +215,14 @@ public class SignMojo extends AbstractMojo {
 	private void signArtifact(final JarSigner jarSigner, final Artifact artifact) throws MojoExecutionException {
 		File artifactFile = artifact.getFile();
 		if (artifactFile != null) {
-			jarSigner.signJar(artifactFile.toPath());
+			try {
+				Options options = Options.builder()
+						.digestAlgorithm(MessageDigestAlgorithm.DEFAULT)
+						.build();
+				jarSigner.sign(artifactFile.toPath(), options);
+			} catch (IOException e) {
+				new ExceptionHandler(getLog(), continueOnFail).handleError("Unable to sign jar '" + artifactFile.toString() + "'", e);
+			}
 		} else {
 			getLog().warn("Can't find associated file with artifact '" + artifact.toString() + "'");
 		}
@@ -225,13 +247,17 @@ public class SignMojo extends AbstractMojo {
 		} else {
 			httpClientBuilder.waitBeforeRetry(retryTimer, TimeUnit.SECONDS);
 		}
-
-		return JarSigner.builder()
-				.serverUri(URI.create(signerUrl))
+		
+		return RecursiveJarSigner.builder()
+			.filter(new EclipseJarSignerFilter(getLog()))
+			.log(getLog())
+			.maxDepth(excludeInnerJars ? 0 : 1)
+			.delegate(JarResigner.create(resigningStrategy, 
+				RemoteJarSigner.builder()
 				.httpClient(httpClientBuilder.build())
-				.maxDepth(excludeInnerJars ? 0 : 1)
-				.exceptionHandler(new ExceptionHandler(getLog(), (deprecatedContinueOnFail || continueOnFail)))
+				.serverUri(URI.create(signerUrl))
 				.log(getLog())
-				.build();
+				.build()))
+			.build();
 	}
 }

@@ -55,7 +55,6 @@
 
   <properties>
     <minimum-maven-version>3.1.1</minimum-maven-version>
-    <apache-httpclient-version>4.3.3</apache-httpclient-version>
     <!-- This is the version on which webservices/* and maven-plugins/* depends 
       on, NOT the version of cbi-common module in the source tree. If an update 
       of this version is required, do it in cbi-common/pom.xml -->
@@ -321,21 +320,6 @@
         <groupId>com.google.code.findbugs</groupId>
         <artifactId>jsr305</artifactId>
         <version>3.0.0</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-plugin-api</artifactId>
-        <version>${minimum-maven-version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpclient</artifactId>
-        <version>${apache-httpclient-version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpmime</artifactId>
-        <version>${apache-httpclient-version}</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.cbi</groupId>

@@ -1,0 +1,38 @@
+<settings>
+  <localRepository>LOCAL_IT_REPO</localRepository>
+  <interactiveMode>false</interactiveMode>
+  <profiles>
+    <profile>
+      <id>integration-test</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <repositories>
+        <repository>
+          <id>it-local</id>
+          <name>Local repository for integration testing</name>
+          <url>file://LOCAL_IT_REPO</url>
+          <releases>
+            <enabled>false</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>it-plugins-local</id>
+          <name>Local plugin repository for integration testing</name>
+          <url>file://LOCAL_IT_REPO</url>
+          <releases>
+            <enabled>false</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+</settings>

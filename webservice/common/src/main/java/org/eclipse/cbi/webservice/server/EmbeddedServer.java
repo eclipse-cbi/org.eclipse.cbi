@@ -35,6 +35,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.net.HttpHeaders;
 
 /**
  * Base class to create a simple (one servlet) embedded Jetty server.
@@ -286,6 +287,8 @@ public abstract class EmbeddedServer {
 				
 				resp.setStatus(HttpServletResponse.SC_OK);
 				resp.setContentType("text/plain");
+				resp.addHeader(HttpHeaders.CACHE_CONTROL, "max-age=0,must-revalidate,no-cache,no-store");
+				resp.addHeader(HttpHeaders.PRAGMA, "no-cache");
 				resp.getWriter().println(version);
 			}
 		});
@@ -298,9 +301,16 @@ public abstract class EmbeddedServer {
 
 			@Override
 			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				doHead(req, resp);
+				resp.getWriter().println("Server is online");
+			}
+			
+			@Override
+			protected void doHead(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 				resp.setStatus(HttpServletResponse.SC_OK);
 				resp.setContentType("text/plain");
-				resp.getWriter().println("Server is online");
+				resp.addHeader(HttpHeaders.CACHE_CONTROL, "max-age=0,must-revalidate,no-cache,no-store");
+				resp.addHeader(HttpHeaders.PRAGMA, "no-cache");
 			}
 		});
 		return hearbeatServlet;

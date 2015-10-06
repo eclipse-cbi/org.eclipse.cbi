@@ -67,7 +67,9 @@ cat >pom.xml <<EOL
 </project>
 EOL
 
-mvn -B -ff -U clean package
+mvn -B -ff -U \
+  -s "${TARGET_FOLDER}/../settings.xml" \
+  clean package
 
 kill ${SERVER_PID}
 

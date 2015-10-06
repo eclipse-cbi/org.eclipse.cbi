@@ -105,7 +105,7 @@ public class EmbeddedErrorHandler extends ErrorHandler {
 		writer.write(Integer.toString(code));
 		writer.write("\nProblem accessing '");
 		writer.write(uri);
-		writer.write("'. Reason:\n");
+		writer.write("'\nReason: ");
 		writer.write(message);
 	}
 
@@ -113,7 +113,7 @@ public class EmbeddedErrorHandler extends ErrorHandler {
 	protected void writeErrorPageStacks(HttpServletRequest request, Writer writer) throws IOException {
 		Throwable th = (Throwable) request.getAttribute("javax.servlet.error.exception");
 		while (th != null) {
-			writer.write("Caused by:");
+			writer.write("\n\nCaused by: ");
 			StringWriter sw = new StringWriter();
 			PrintWriter pw = new PrintWriter(sw);
 			th.printStackTrace(pw);

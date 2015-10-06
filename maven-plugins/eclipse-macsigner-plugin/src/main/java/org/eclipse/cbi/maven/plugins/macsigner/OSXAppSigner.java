@@ -164,7 +164,7 @@ public abstract class OSXAppSigner {
     
     private boolean processOnSigningServer(final Path file) throws IOException {
 		final HttpRequest request = HttpRequest.on(serverUri()).withParam(PART_NAME, file).build();
-		boolean success = httpClient().send(request, new AbstractCompletionListener(file.getParent(), file.getFileName().toString(), this.getClass().getSimpleName(), new MavenLogger(log())) {
+		boolean success = httpClient().send(request, new AbstractCompletionListener(file.getParent(), file.getFileName().toString(), OSXAppSigner.class.getSimpleName(), new MavenLogger(log())) {
 			@Override
 			public void onSuccess(HttpResult result) throws IOException {
 				result.copyContent(file, StandardCopyOption.REPLACE_EXISTING);

@@ -50,7 +50,7 @@ public abstract class RemoteJarSigner extends FilteredJarSigner {
 				.withParam("digestalg", options.digestAlgorithm().standardName())
 				.build();
 		
-		OverwriteJarOnSuccess completionListener = new OverwriteJarOnSuccess(jar.getParent(), jar.getFileName().toString(), this.getClass().getSimpleName(), new MavenLogger(log()), jar);
+		OverwriteJarOnSuccess completionListener = new OverwriteJarOnSuccess(jar.getParent(), jar.getFileName().toString(), RemoteJarSigner.class.getSimpleName(), new MavenLogger(log()), jar);
 		log().info("Signing jar: " + jar.toString());
 		if (httpClient().send(request, completionListener)) {
 			ret = 1;

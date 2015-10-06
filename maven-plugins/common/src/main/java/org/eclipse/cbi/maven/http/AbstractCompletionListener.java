@@ -81,9 +81,9 @@ public abstract class AbstractCompletionListener implements CompletionListener {
 		String line = reader.readLine();
 		for (int i = 0; i < maxLine && line != null; i++, line = reader.readLine()) {
 			sb.append(line);
+			sb.append(System.lineSeparator());
 		}
 
-		sb.append(System.lineSeparator());
 		if (line != null) {
 			sb.append("...<troncated output>... For complete output, see '" + errorMessagePath.toAbsolutePath().toString() + "'");
 		} else {

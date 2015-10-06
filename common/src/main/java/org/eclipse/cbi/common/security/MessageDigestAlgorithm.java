@@ -12,11 +12,13 @@ package org.eclipse.cbi.common.security;
 
 import java.security.MessageDigest;
 import java.util.EnumSet;
+import java.util.Set;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 
 /**
@@ -26,13 +28,15 @@ import com.google.common.collect.Iterables;
  * standard names for algorithms</a>".
  */
 public enum MessageDigestAlgorithm {
-	DEFAULT("JVM-Default-Message-Digest-Algorithm"), MD2("MD2"), MD5("MD5"), SHA_1("SHA-1"), SHA_224(
+	DEFAULT("JVM-Default-Message-Digest-Algorithm"), MD2("MD2"), MD5("MD5"), SHA_1("SHA-1", "SHA1"), SHA_224(
 			"SHA-224"), SHA_256("SHA-256"), SHA_384("SHA-384"), SHA_512("SHA-512");
 
 	private final String standardName;
+	private final Set<String> aliases;
 
-	private MessageDigestAlgorithm(String standardName) {
+	private MessageDigestAlgorithm(String standardName, String... alias) {
 		this.standardName = standardName;
+		this.aliases = ImmutableSet.copyOf(alias);
 	}
 
 	/**
@@ -47,15 +51,15 @@ public enum MessageDigestAlgorithm {
 		return this.standardName;
 	}
 
-	public static MessageDigestAlgorithm fromStandardName(final String digestAlg) {
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(digestAlg));
+	public static MessageDigestAlgorithm fromStandardName(final String digestAlgorithmName) {
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(digestAlgorithmName));
 		Optional<MessageDigestAlgorithm> ret = Iterables.tryFind(EnumSet.allOf(MessageDigestAlgorithm.class), new Predicate<MessageDigestAlgorithm>() {
 			public boolean apply(MessageDigestAlgorithm d) {
-				return digestAlg.equals(d.standardName);
+				return digestAlgorithmName.equals(d.standardName) || d.aliases.contains(digestAlgorithmName);
 			}
 		});
 		if (!ret.isPresent()) {
-			throw new IllegalArgumentException("Unknow digest algorithm '" + digestAlg + "'");
+			throw new IllegalArgumentException("Unknow digest algorithm '" + digestAlgorithmName + "'");
 		} else {
 			return ret.get();
 		}

@@ -24,6 +24,7 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.OptionHandlerFilter;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -225,70 +226,85 @@ public class TestServer {
 
 		@Override
 		public String getHttpProxyHost() {
+			return getProxyHostFromEnv("http");
+		}
+		
+		private String getProxyHostFromEnv(String protocol) {
 			final String ret;
-			String prop = System.getProperty("http.proxyHost");
+			final String prop = System.getProperty(protocol + ".proxyHost");
 			if (Strings.isNullOrEmpty(prop)) {
-				String env = System.getenv("http.proxyHost");
-				if (Strings.isNullOrEmpty(env)) {
+				URI env = getEnvProxy(protocol);
+				if (env == null) {
 					ret = "";
 				} else {
-					ret = env;
+					StringBuilder sb = new StringBuilder();
+					if (env.getScheme() == null) {
+						sb.append(protocol).append("://");
+					}
+					sb.append(env.getHost());
+					ret = sb.toString();
 				}
 			} else {
 				ret = prop;
 			}
+			return ret;
+		}
+		
+		private int getProxyPortFromEnv(String protocol) {
+			final int ret;
+			final String prop = System.getProperty(protocol + ".proxyPort");
+			if (Strings.isNullOrEmpty(prop)) {
+				URI env = getEnvProxy(protocol);
+				if (env == null) {
+					ret = -1;
+				} else {
+					ret = env.getPort();
+				}
+			} else {
+				ret = Integer.valueOf(prop);
+			}
+			return ret;
+		}
+		
+		private static URI getEnvProxy(String scheme) {
+			Preconditions.checkArgument(!Strings.isNullOrEmpty(scheme));
+			final URI ret;
+			String envVariableName = scheme.toLowerCase() + "_proxy";
+			String env = System.getenv(envVariableName);
+			if (Strings.isNullOrEmpty(env)) {
+				envVariableName = scheme.toUpperCase() + "_PROXY";
+				env = System.getenv(envVariableName);
+				if (Strings.isNullOrEmpty(env) && !scheme.equals("all")) {
+					ret = getEnvProxy("all");
+				} else {
+					ret = URI.create(env);
+					if (ret.getScheme() != null && !scheme.equalsIgnoreCase(ret.getScheme())) {
+						System.err.println("Scheme specified in environment variable '" + envVariableName + "' is not equals to '" + scheme + "'");
+					}
+				}
+			} else {
+				ret = URI.create(env);
+				if (ret.getScheme() != null && !scheme.equalsIgnoreCase(ret.getScheme())) {
+					System.err.println("Scheme specified in environment variable '" + envVariableName + "' is not equals to '" + scheme + "'");
+				}
+			}
+			
 			return ret;
 		}
 
 		@Override
 		public String getHttpsProxyHost() {
-			final String ret;
-			String prop = System.getProperty("https.proxyHost");
-			if (Strings.isNullOrEmpty(prop)) {
-				String env = System.getenv("https.proxyHost");
-				if (Strings.isNullOrEmpty(env)) {
-					ret = "";
-				} else {
-					ret = env;
-				}
-			} else {
-				ret = prop;
-			}
-			return ret;
+			return getProxyHostFromEnv("https");
 		}
 
 		@Override
 		public int getHttpProxyPort() {
-			final int ret;
-			String prop = System.getProperty("http.proxyPort");
-			if (Strings.isNullOrEmpty(prop)) {
-				String env = System.getenv("http.proxyPort");
-				if (Strings.isNullOrEmpty(env)) {
-					ret = 0;
-				} else {
-					ret = Integer.decode(env).intValue();
-				}
-			} else {
-				ret = Integer.decode(prop).intValue();
-			}
-			return ret;
+			return getProxyPortFromEnv("http");
 		}
 
 		@Override
 		public int getHttpsProxyPort() {
-			final int ret;
-			String prop = System.getProperty("https.proxyPort");
-			if (Strings.isNullOrEmpty(prop)) {
-				String env = System.getenv("https.proxyPort");
-				if (Strings.isNullOrEmpty(env)) {
-					ret = 0;
-				} else {
-					ret = Integer.decode(env).intValue();
-				}
-			} else {
-				ret = Integer.decode(prop).intValue();
-			}
-			return ret;
+			return getProxyPortFromEnv("https");
 		}
 
 		@Override

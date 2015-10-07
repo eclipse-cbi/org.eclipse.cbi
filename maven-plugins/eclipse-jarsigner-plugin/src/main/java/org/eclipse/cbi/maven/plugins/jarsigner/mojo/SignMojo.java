@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -260,8 +261,8 @@ public class SignMojo extends AbstractMojo {
 			try (InputStream input = new BufferedInputStream(jar.getInputStream(entry))) {
 				ByteArrayOutputStream to = new ByteArrayOutputStream();
 				ByteStreams.copy(input, to);
-				getLog().debug(new String(to.toByteArray()));
-			} 
+				getLog().debug(new String(to.toByteArray(), StandardCharsets.ISO_8859_1));
+			}
 		} catch (IOException e) {
 			getLog().debug("Error while checking the jar signature", e);
 		}

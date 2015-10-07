@@ -238,9 +238,9 @@ public class SignMojo extends AbstractMojo {
 				Options options = Options.builder()
 						.digestAlgorithm(digestAlgorithm)
 						.build();
-				jarSigner.sign(artifactFile.toPath(), options);
+				int signedArtifacts = jarSigner.sign(artifactFile.toPath(), options);
 				
-				if (getLog().isDebugEnabled()) {
+				if (signedArtifacts > 0 && getLog().isDebugEnabled()) {
 					checkArtifactSignature(artifactFile);
 				}
 				

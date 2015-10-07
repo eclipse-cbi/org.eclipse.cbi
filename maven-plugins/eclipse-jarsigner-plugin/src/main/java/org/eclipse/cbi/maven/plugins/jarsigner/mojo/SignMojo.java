@@ -269,7 +269,7 @@ public class SignMojo extends AbstractMojo {
 				.httpClient(httpClientBuilder.build())
 				.serverUri(URI.create(signerUrl))
 				.log(getLog())
-				.build()))
+				.build(), getLog()))
 			.build();
 	}
 }

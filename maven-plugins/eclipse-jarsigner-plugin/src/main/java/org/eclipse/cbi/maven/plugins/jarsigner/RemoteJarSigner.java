@@ -44,14 +44,17 @@ public abstract class RemoteJarSigner extends FilteredJarSigner {
 	
 	@Override
 	public int doSignJar(final Path jar, Options options) throws IOException {
+		log().info("Signing jar: " + jar.toString());
+		log().debug("Jar signing options: " + options.toString());
 		int ret = 0;
+		
 		final HttpRequest request = HttpRequest.on(serverUri())
 				.withParam(PART_NAME, jar)
 				.withParam("digestalg", options.digestAlgorithm().standardName())
 				.build();
+		log().debug("Jar signing request: " + request.toString());
 		
 		OverwriteJarOnSuccess completionListener = new OverwriteJarOnSuccess(jar.getParent(), jar.getFileName().toString(), RemoteJarSigner.class.getSimpleName(), new MavenLogger(log()), jar);
-		log().info("Signing jar: " + jar.toString());
 		if (httpClient().send(request, completionListener)) {
 			ret = 1;
 		}

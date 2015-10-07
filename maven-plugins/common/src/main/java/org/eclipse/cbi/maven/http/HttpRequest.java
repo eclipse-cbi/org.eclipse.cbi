@@ -16,6 +16,8 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
@@ -41,6 +43,21 @@ public final class HttpRequest {
 	
 	public URI serverUri() {
 		return serverUri;
+	}
+	
+	@Override
+	public String toString() {
+		final StringBuilder parameters = new StringBuilder();
+		parameters.append(Joiner.on(", ").withKeyValueSeparator("=@").join(pathParameters()));
+		if (!pathParameters().isEmpty() && !stringParameters().isEmpty()) {
+			parameters.append(", ");
+		}
+		parameters.append(Joiner.on(", ").withKeyValueSeparator("=").join(stringParameters()));
+		
+		return MoreObjects.toStringHelper(this)
+			.add("serverUri", serverUri())
+			.add("request-parameters", parameters.toString())
+			.toString();
 	}
 	
 	public static Builder on(URI serverUri) {

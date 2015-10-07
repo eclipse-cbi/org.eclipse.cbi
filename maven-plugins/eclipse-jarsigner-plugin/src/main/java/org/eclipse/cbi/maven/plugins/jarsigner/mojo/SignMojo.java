@@ -12,12 +12,17 @@
  *******************************************************************************/
 package org.eclipse.cbi.maven.plugins.jarsigner.mojo;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
@@ -36,6 +41,9 @@ import org.eclipse.cbi.maven.plugins.jarsigner.JarResigner;
 import org.eclipse.cbi.maven.plugins.jarsigner.JarResigner.Strategy;
 import org.eclipse.cbi.maven.plugins.jarsigner.JarSigner;
 import org.eclipse.cbi.maven.plugins.jarsigner.JarSigner.Options;
+
+import com.google.common.io.ByteStreams;
+
 import org.eclipse.cbi.maven.plugins.jarsigner.RecursiveJarSigner;
 import org.eclipse.cbi.maven.plugins.jarsigner.RemoteJarSigner;
 
@@ -230,11 +238,32 @@ public class SignMojo extends AbstractMojo {
 						.digestAlgorithm(digestAlgorithm)
 						.build();
 				jarSigner.sign(artifactFile.toPath(), options);
+				
+				if (getLog().isDebugEnabled()) {
+					checkArtifactSignature(artifactFile);
+				}
+				
 			} catch (IOException e) {
 				new ExceptionHandler(getLog(), continueOnFail).handleError("Unable to sign jar '" + artifactFile.toString() + "'", e);
 			}
 		} else {
 			getLog().warn("Can't find associated file with artifact '" + artifact.toString() + "'");
+		}
+	}
+
+	private void checkArtifactSignature(File artifactFile) {
+		try (JarFile jar = new JarFile(artifactFile)) {
+			JarEntry entry = jar.getJarEntry("META-INF/MANIFEST.MF"); //$NON-NLS-1$
+			if (entry == null)
+				getLog().debug("No manifest in Jar file");
+		
+			try (InputStream input = new BufferedInputStream(jar.getInputStream(entry))) {
+				ByteArrayOutputStream to = new ByteArrayOutputStream();
+				ByteStreams.copy(input, to);
+				getLog().debug(new String(to.toByteArray()));
+			} 
+		} catch (IOException e) {
+			getLog().debug("Error while checking the jar signature", e);
 		}
 	}
 

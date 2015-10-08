@@ -164,6 +164,7 @@ public class SignMojo extends AbstractMojo {
     	HttpClient httpClient = RetryHttpClient.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())))
     			.maxRetries(retryLimit)
     			.waitBeforeRetry(retryTimer, TimeUnit.SECONDS)
+    			.log(new MavenLogger(getLog()))
     			.build();
     	OSXAppSigner osxAppSigner = OSXAppSigner.builder()
     		.serverUri(URI.create(signerUrl))

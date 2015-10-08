@@ -101,11 +101,24 @@ public class Zips {
 	 */
 	public static int unpackJar(Path source, Path outputDir) throws IOException {
 		checkPathExists(source, "'source' path must exists");
-		try (JarInputStream jis = new JarInputStream(newBufferedInputStream(source), false)) {
+		try (ZipInputStream jis = new ZipInputStream(newBufferedInputStream(source))) {
 			return unpack(jis, outputDir);  
 		}
 	}
 	
+	/**
+	 * Unpack the given {@link JarInputStream} to the {@code outputDir}.
+	 * <p>
+	 * <strong>Warning: </strong> The unpacked manifest may not be equals to the
+	 * packed one because of the handling of entries in a HashMap. The order of
+	 * entries is then undeterministic. You should only unpack Jar with
+	 * {@link #unpack(ZipInputStream, Path)}.
+	 * 
+	 * @param jis
+	 * @param outputDir
+	 * @return
+	 * @throws IOException
+	 */
 	public static int unpack(JarInputStream jis, Path outputDir) throws IOException {
 		final Set<Path> excludedPath;
 		if (jis.getManifest() != null) {

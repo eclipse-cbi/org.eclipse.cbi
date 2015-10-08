@@ -3,10 +3,15 @@ package org.eclipse.cbi.maven.plugins.jarsigner;
 import static org.eclipse.cbi.maven.plugins.jarsigner.RemoteJarSignerTest.dummyOptions;
 import static org.junit.Assert.assertEquals;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -15,11 +20,13 @@ import org.eclipse.cbi.common.util.Paths;
 import org.eclipse.cbi.common.util.Zips;
 import org.eclipse.cbi.maven.common.test.util.NullMavenLog;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
 
+import com.google.common.io.ByteStreams;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 
@@ -103,6 +110,36 @@ public class RecursiveJarSignerTest {
 			Path jarToSign = createJarWithNestedJars(fs.getPath("path").resolve("to").resolve("jarToSign.jar"), 3);
 			assertEquals(13, jarSigner.sign(jarToSign, dummyOptions()));
 		}
+	}
+	
+	@Test
+	public void testRecursiveNonSigning() throws IOException, MojoExecutionException {
+		try (FileSystem fs= Jimfs.newFileSystem(Configuration.unix())) {
+			Path p2CoreJar = fs.getPath("path", "to", "p2.core.jar");
+			Files.createDirectories(p2CoreJar.getParent());
+			JarResignerTest.copyResource("/org.eclipse.equinox.p2.core.feature.jar", p2CoreJar);
+			JarSigner jarSigner = createJarSigner(Integer.MAX_VALUE);
+
+			assertEquals(1, jarSigner.sign(p2CoreJar, dummyOptions()));
+
+			String manifestBefore = readManifest(RemoteJarSignerTest.class.getResourceAsStream("/org.eclipse.equinox.p2.core.feature.jar"));
+			String manifestAfter = readManifest(Files.newInputStream(p2CoreJar));
+			assertEquals(manifestBefore, manifestAfter);
+		}
+	}
+
+	private String readManifest(InputStream originalIS) throws IOException {
+		String manifestBefore = null;
+		try (ZipInputStream zis = new ZipInputStream(originalIS)) {
+			for (ZipEntry ze = zis.getNextEntry(); ze != null; ze = zis.getNextEntry()) {
+				if ("META-INF/MANIFEST.MF".equals(ze.getName())) {
+					ByteArrayOutputStream os = new ByteArrayOutputStream();
+					ByteStreams.copy(zis, os);
+					manifestBefore = new String(os.toByteArray(), StandardCharsets.ISO_8859_1);
+				}
+			}
+		}
+		return manifestBefore;
 	}
 	
 	private JarSigner createJarSigner(int maxDepth) {

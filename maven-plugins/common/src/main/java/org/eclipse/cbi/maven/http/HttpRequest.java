@@ -14,10 +14,11 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.MoreObjects.ToStringHelper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
@@ -47,17 +48,17 @@ public final class HttpRequest {
 	
 	@Override
 	public String toString() {
-		final StringBuilder parameters = new StringBuilder();
-		parameters.append(Joiner.on(", ").withKeyValueSeparator("=@").join(pathParameters()));
-		if (!pathParameters().isEmpty() && !stringParameters().isEmpty()) {
-			parameters.append(", ");
-		}
-		parameters.append(Joiner.on(", ").withKeyValueSeparator("=").join(stringParameters()));
+		final ToStringHelper toStringHelper = MoreObjects.toStringHelper(this)
+				.add("serverUri", serverUri());
 		
-		return MoreObjects.toStringHelper(this)
-			.add("serverUri", serverUri())
-			.add("request-parameters", parameters.toString())
-			.toString();
+		for (Map.Entry<String, Path> e : pathParameters().entrySet()) {
+			toStringHelper.add(e.getKey(), "@" + e.getValue().toString());
+		}
+		for (Entry<String, String> e : stringParameters().entrySet()) {
+			toStringHelper.add(e.getKey(), e.getValue());
+		}
+		
+		return toStringHelper.toString();
 	}
 	
 	public static Builder on(URI serverUri) {

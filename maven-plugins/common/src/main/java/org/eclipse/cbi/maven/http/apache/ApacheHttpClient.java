@@ -89,7 +89,6 @@ public class ApacheHttpClient implements HttpClient {
 	@VisibleForTesting static HttpUriRequest toApacheRequest(HttpRequest request) {
 		MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 		builder.setStrictMode();
-		builder.setCharset(Charsets.UTF_8);
 		
 		for(Map.Entry<String, String> param : request.stringParameters().entrySet()) {
 			builder.addTextBody(param.getKey(), param.getValue());

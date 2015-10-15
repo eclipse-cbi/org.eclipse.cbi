@@ -234,6 +234,7 @@ public class SignMojo extends AbstractMojo {
 	private void signArtifact(final JarSigner jarSigner, final Artifact artifact) throws MojoExecutionException {
 		File artifactFile = artifact.getFile();
 		if (artifactFile != null) {
+			ExceptionHandler exceptionHandler = new ExceptionHandler(getLog(), deprecatedContinueOnFail || continueOnFail);
 			try {
 				Options options = Options.builder()
 						.digestAlgorithm(digestAlgorithm)
@@ -244,11 +245,14 @@ public class SignMojo extends AbstractMojo {
 					checkArtifactSignature(artifactFile);
 				}
 				
+				if (signedArtifacts == 0) {
+					exceptionHandler.handleError("Signing of jar file '" + artifactFile.toString() + "' failed");
+				}
 			} catch (IOException e) {
-				new ExceptionHandler(getLog(), continueOnFail).handleError("Unable to sign jar '" + artifactFile.toString() + "'", e);
+				exceptionHandler.handleError("Unable to sign jar '" + artifactFile.toString() + "'", e);
 			}
 		} else {
-			getLog().warn("Can't find associated file with artifact '" + artifact.toString() + "'");
+			getLog().warn("Can't find file associated with artifact '" + artifact.toString() + "'");
 		}
 	}
 

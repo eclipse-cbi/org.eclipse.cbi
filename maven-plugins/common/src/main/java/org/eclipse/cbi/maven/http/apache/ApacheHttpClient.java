@@ -23,6 +23,7 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -88,7 +89,7 @@ public class ApacheHttpClient implements HttpClient {
 	
 	@VisibleForTesting static HttpUriRequest toApacheRequest(HttpRequest request) {
 		MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-		builder.setStrictMode();
+		builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
 		builder.setCharset(Charsets.UTF_8);
 		
 		for(Map.Entry<String, String> param : request.stringParameters().entrySet()) {

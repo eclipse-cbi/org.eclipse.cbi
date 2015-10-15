@@ -22,7 +22,7 @@
   </parent>
 
   <properties>
-      <apache-httpclient-version>4.4.1</apache-httpclient-version>
+      <apache-httpclient-version>4.3.3</apache-httpclient-version>
   </properties>
 
   <modules>

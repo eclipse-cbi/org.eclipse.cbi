@@ -15,6 +15,13 @@
     <version>1.2.0-SNAPSHOT</version>
   </parent>
 
+  <scm>
+    <connection>scm:git:https://git.eclipse.org/r/cbi/org.eclipse.cbi</connection>
+    <developerConnection>scm:git:ssh://git.eclipse.org:29418/cbi/org.eclipse.cbi</developerConnection>
+    <tag>master</tag>
+    <url>http://git.eclipse.org/c/cbi/org.eclipse.cbi.git/</url>
+  </scm>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.maven</groupId>

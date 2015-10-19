@@ -21,6 +21,11 @@
     <version>1.0.0</version>
   </parent>
 
+  <name>Eclipse CBI Maven Plugins</name>
+  <description>Eclipse CBI Maven plugins are created to enable the Eclipse community to use various services 
+  at Eclipse including the signing infrastructure.</description>
+  <url>http://wiki.eclipse.org/CBI</url>
+
   <scm>
     <connection>scm:git:https://git.eclipse.org/r/cbi/org.eclipse.cbi</connection>
     <developerConnection>scm:git:ssh://git.eclipse.org:29418/cbi/org.eclipse.cbi</developerConnection>

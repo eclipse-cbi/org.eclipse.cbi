@@ -48,7 +48,8 @@
 
   <scm>
     <connection>scm:git:https://git.eclipse.org/r/cbi/org.eclipse.cbi</connection>
-    <developerConnection>scm:git:ssh://git.eclipse.org:29418/cbi/org.eclipse.cbi</developerConnection>
+    <!-- The release in done on Hudson, and it can only right the git repo with file uri -->
+    <developerConnection>scm:git:/gitroot/cbi/org.eclipse.cbi.git</developerConnection>
     <tag>master</tag>
     <url>http://git.eclipse.org/c/cbi/org.eclipse.cbi.git/</url>
   </scm>

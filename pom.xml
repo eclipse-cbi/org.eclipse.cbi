@@ -170,12 +170,12 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.18.1</version>
+          <version>2.19</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>2.3</version>
+          <version>2.4.1</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -205,7 +205,7 @@
             version. -->
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
-          <version>1.4</version>
+          <version>1.4.1</version>
           <executions>
             <execution>
               <id>enforce-maven</id>
@@ -224,7 +224,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>2.16</version>
+          <version>2.17</version>
           <dependencies>
             <dependency>
               <groupId>org.eclipse.cbi</groupId>
@@ -262,7 +262,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>findbugs-maven-plugin</artifactId>
-          <version>3.0.1</version>
+          <version>3.0.2</version>
           <configuration>
             <threshold>High</threshold>
           </configuration>
@@ -277,7 +277,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-plugin-plugin</artifactId>
-          <version>3.3</version>
+          <version>3.4</version>
           <configuration>
             <requirements>
               <maven>${minimum-maven-version}</maven>
@@ -287,12 +287,12 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-project-info-reports-plugin</artifactId>
-          <version>2.7</version>
+          <version>2.8.1</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-release-plugin</artifactId>
-          <version>2.5.2</version>
+          <version>2.5.3</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -303,7 +303,7 @@
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-compress</artifactId>
-        <version>1.9</version>
+        <version>1.10</version>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
@@ -319,7 +319,7 @@
       <dependency> <!-- Nullable annotations -->
         <groupId>com.google.code.findbugs</groupId>
         <artifactId>jsr305</artifactId>
-        <version>3.0.0</version>
+        <version>3.0.1</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.cbi</groupId>
@@ -344,12 +344,6 @@
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
         <version>1.10.19</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-server</artifactId>
-        <version>9.2.10.v20150310</version>
         <scope>test</scope>
       </dependency>
     </dependencies>

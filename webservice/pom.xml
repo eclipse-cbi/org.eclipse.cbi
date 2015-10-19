@@ -21,7 +21,7 @@
   </modules>
 
   <properties>
-    <jetty-version>9.2.10.v20150310</jetty-version>
+    <jetty-version>9.3.5.v20151012</jetty-version>
     <log4j-version>2.3</log4j-version>
   </properties>
 

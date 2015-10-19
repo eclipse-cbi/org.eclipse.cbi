@@ -22,7 +22,7 @@
   </parent>
 
   <properties>
-      <apache-httpclient-version>4.4.1</apache-httpclient-version>
+      <apache-httpclient-version>4.5.1</apache-httpclient-version>
   </properties>
 
   <modules>
@@ -76,7 +76,7 @@
       <dependency>
         <groupId>org.eclipse.tycho</groupId>
         <artifactId>tycho-core</artifactId>
-        <version>0.23.0</version>
+        <version>0.23.1</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven</groupId>
@@ -114,6 +114,12 @@
         <version>${project.version}</version>
         <scope>test</scope>
         <type>test-jar</type>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-server</artifactId>
+        <version>9.2.10.v20150310</version>
+        <scope>test</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>

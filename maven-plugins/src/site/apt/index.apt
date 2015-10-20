@@ -1,0 +1,4 @@
+Eclipse CBI Maven plugins
+
+ The Eclipse Common Build Infrastructure (CBI) is an initiative combining technologies and practices for building Eclipse Software. The
+ Eclipse CBI Maven plugins are created to enable the Eclipse community to use various services at Eclipse including the signing infrastructure.

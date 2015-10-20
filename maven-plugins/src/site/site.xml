@@ -16,11 +16,13 @@
     <href>https://eclipse.org</href>
   </bannerLeft>
   <body>
-    <menu name="CBI Plugins" inherit="top">
-      <item name="Project Info" href="project-info.html"/>
-      <item name="Eclipse Jar Signing Plugin" href="eclipse-jarsigner-plugin/plugin-info.html" />
-      <item name="Eclipse Mac Signing Plugin" href="eclipse-macsigner-plugin/plugin-info.html" />
-      <item name="Eclipse Windows Signing Plugin" href="eclipse-winsigner-plugin/plugin-info.html" />
+    <menu name="CBI Maven Plugins" inherit="top">
+      <item name="Introduction" href="index.html" />
+      <item name="Jar Signer" href="eclipse-jarsigner-plugin/plugin-info.html" />
+      <item name="Windows Exe Signer" href="eclipse-winsigner-plugin/plugin-info.html" />
+      <item name="OS X App Signer" href="eclipse-macsigner-plugin/plugin-info.html" />
+      <item name="OS X DMG Packager" href="eclipse-dmg-packager/plugin-info.html" />
+      <item name="Utilities" href="eclipse-cbi-plugin/plugin-info.html" />
     </menu>
   </body>
   <skin>

@@ -46,6 +46,7 @@ public abstract class DMGPackagerServletRequestParser implements Closeable {
 	private static final String DOT_APP_GLOB_PATTERN = "glob:**.app";
 	static final String SOURCE_PART_NAME = "source";
 	private static final String DOT_TAR_GZ = ".tar.gz";
+	private static final String DOT_ZIP = ".zip";
 	private static final String TEMP_FILE_PREFIX = DMGPackagerServletRequestParser.class.getSimpleName() + "-";
 	
 	private final Set<Path> tempPaths;
@@ -75,7 +76,14 @@ public abstract class DMGPackagerServletRequestParser implements Closeable {
 			if (requestFacade().getSubmittedFileName(SOURCE_PART_NAME).get().endsWith(DOT_TAR_GZ)) {
 				Optional<Path> sourcePath = requestFacade().getPartPath(SOURCE_PART_NAME, TEMP_FILE_PREFIX);
 				if (sourcePath.isPresent()) {
-					return extractApp(sourcePath.get());
+					return extractAppFromTarGz(sourcePath.get());
+				} else {
+					throw new RequestParserException("An error occured while retrieving the content of the part named '" + SOURCE_PART_NAME + "'");
+				}
+			} else if (requestFacade().getSubmittedFileName(SOURCE_PART_NAME).get().endsWith(DOT_ZIP)) {
+				Optional<Path> sourcePath = requestFacade().getPartPath(SOURCE_PART_NAME, TEMP_FILE_PREFIX);
+				if (sourcePath.isPresent()) {
+					return extractAppFromZip(sourcePath.get());
 				} else {
 					throw new RequestParserException("An error occured while retrieving the content of the part named '" + SOURCE_PART_NAME + "'");
 				}
@@ -87,9 +95,15 @@ public abstract class DMGPackagerServletRequestParser implements Closeable {
 		}
 	}
 	
-	private Path extractApp(Path sourcePath) throws IOException, ServletException, RequestParserException {
+	private Path extractAppFromTarGz(Path sourcePath) throws IOException, ServletException, RequestParserException {
 		Path untarFolder = createTempDirectory(tempFolder(), TEMP_FILE_PREFIX);
 		untar(sourcePath, untarFolder);
+		return findFirstAppInFolder(untarFolder);
+	}
+	
+	private Path extractAppFromZip(Path sourcePath) throws IOException, ServletException, RequestParserException {
+		Path untarFolder = createTempDirectory(tempFolder(), TEMP_FILE_PREFIX);
+		unzip(sourcePath, untarFolder);
 		return findFirstAppInFolder(untarFolder);
 	}
 	
@@ -113,6 +127,13 @@ public abstract class DMGPackagerServletRequestParser implements Closeable {
 		int unpackedEntries = Zips.unpackTarGz(sourcePath, extractFolder);
 		if (unpackedEntries <= 0) {
 			throw new RequestParserException("The provided '" + SOURCE_PART_NAME + "' part is not a valid '.tar.gz' file.");
+		}
+	}
+	
+	private void unzip(Path sourcePath, Path extractFolder) throws RequestParserException, IOException {
+		int unpackedEntries = Zips.unpackZip(sourcePath, extractFolder);
+		if (unpackedEntries <= 0) {
+			throw new RequestParserException("The provided '" + SOURCE_PART_NAME + "' part is not a valid '.zip' file.");
 		}
 	}
 

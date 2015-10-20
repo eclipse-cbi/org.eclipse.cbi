@@ -85,14 +85,14 @@ public class SignMojo extends AbstractMojo {
 	 *
 	 * @deprecated The user property {@code signFiles} is deprecated. You should
 	 *             use the qualified property {@code cbi.macsigner.signFiles}
-	 *             instead. The {@code ¤deprecatedSignFiles} parameter has been
+	 *             instead. The {@code deprecatedSignFiles} parameter has been
 	 *             introduced to support this deprecated user property for
 	 *             backward compatibility only.
 	 * @since 1.0.4 (for the user property, since 1.1.3 for the parameter).
 	 */
 	@Deprecated
 	@Parameter(property = "signFiles")
-    private Set<String> ¤deprecatedSignFiles;
+    private Set<String> deprecatedSignFiles;
 	
     /**
      * The base directory to search for applications to sign. 
@@ -108,14 +108,14 @@ public class SignMojo extends AbstractMojo {
      *
 	 * @deprecated The user property {@code baseSearchDir} is deprecated. You should
 	 *             use the qualified property {@code cbi.macsigner.baseSearchDir}
-	 *             instead. The {@code ¤deprecatedBaseSearchDir} parameter has been
+	 *             instead. The {@code deprecatedBaseSearchDir} parameter has been
 	 *             introduced to support this deprecated user property for
 	 *             backward compatibility only.
      * @since 1.0.4 (for the user property, since 1.1.3 for the parameter).
      */
 	@Deprecated
 	@Parameter(property = "baseSearchDir", defaultValue = "${project.build.directory}/products/")
-    private String ¤deprecatedBaseSearchDir;
+    private String deprecatedBaseSearchDir;
 
     /**
      * A list of {@code *.app} application folder to sign.
@@ -135,14 +135,14 @@ public class SignMojo extends AbstractMojo {
 	 *
 	 * @deprecated The user property {@code fileNames} is deprecated. You should
 	 *             use the qualified property {@code cbi.macsigner.fileNames}
-	 *             instead. The {@code ¤deprecatedFileNames} parameter has been
+	 *             instead. The {@code deprecatedFileNames} parameter has been
 	 *             introduced to support this deprecated user property for
 	 *             backward compatibility only.
 	 * @since 1.0.4 (for the user property, since 1.1.3 for the parameter).
 	 */
 	@Deprecated
 	@Parameter(property = "fileNames")
-    private Set<String> ¤deprecatedFileNames;
+    private Set<String> deprecatedFileNames;
 
     /**
      * Whether the build should be stopped if the signing process fails.
@@ -159,14 +159,14 @@ public class SignMojo extends AbstractMojo {
 	 * @deprecated The user property {@code continueOnFail} is deprecated. You
 	 *             should use the qualified property
 	 *             {@code cbi.macsigner.continueOnFail} instead. The
-	 *             {@code ¤deprecatedContinueOnFail} parameter has been
+	 *             {@code deprecatedContinueOnFail} parameter has been
 	 *             introduced to support this deprecated user property for
 	 *             backward compatibility only.
 	 * @since 1.0.5 (for the user property, since 1.1.3 for the parameter).
 	 */
 	@Deprecated
 	@Parameter(property = "continueOnFail", defaultValue = "false")
-	private boolean ¤deprecatedContinueOnFail;
+	private boolean deprecatedContinueOnFail;
     
     /**
 	 * Number of times to retry signing if server fails to sign
@@ -183,13 +183,13 @@ public class SignMojo extends AbstractMojo {
 	 * @deprecated The user property {@code retryLimit} is deprecated. You
 	 *             should use the qualified property
 	 *             {@code cbi.macsigner.retryLimit} instead. The
-	 *             {@code ¤deprecatedRetryLimit} parameter has been introduced
+	 *             {@code deprecatedRetryLimit} parameter has been introduced
 	 *             to support this deprecated user property for backward
 	 *             compatibility only.
 	 * @since 1.1.0 (for the user property, since 1.1.3 for the parameter).
 	 */
 	@Parameter(property = "retryLimit", defaultValue = "3")
-	private int ¤deprecatedRetryLimit;
+	private int deprecatedRetryLimit;
 
 
 	/**
@@ -207,13 +207,13 @@ public class SignMojo extends AbstractMojo {
 	 * @deprecated The user property {@code retryTimer} is deprecated. You
 	 *             should use the qualified property
 	 *             {@code cbi.macsigner.retryTimer} instead. The
-	 *             {@code ¤deprecatedRetryTimer} parameter has been introduced
+	 *             {@code deprecatedRetryTimer} parameter has been introduced
 	 *             to support this deprecated user property for backward
 	 *             compatibility only.
 	 * @since 1.1.0 (for the user property, since 1.1.3 for the parameter).
 	 */
 	@Parameter(property = "retryTimer", defaultValue = "10")
-	private int ¤deprecatedRetryTimer;
+	private int deprecatedRetryTimer;
 
     @Override
     public void execute() throws MojoExecutionException {
@@ -243,19 +243,19 @@ public class SignMojo extends AbstractMojo {
     }
 
     private Set<String> fileNames() {
-		return Sets.union(fileNames, ¤deprecatedFileNames);
+		return Sets.union(fileNames, deprecatedFileNames);
 	}
     
     private String baseSearchDir() {
-		return baseSearchDir != null ? baseSearchDir : ¤deprecatedBaseSearchDir;
+		return baseSearchDir != null ? baseSearchDir : deprecatedBaseSearchDir;
 	}
     
 	private Set<String> signFiles() {
-		return Sets.union(signFiles, ¤deprecatedSignFiles);
+		return Sets.union(signFiles, deprecatedSignFiles);
 	}
 
     private boolean continueOnFail() {
-		return continueOnFail || ¤deprecatedContinueOnFail;
+		return continueOnFail || deprecatedContinueOnFail;
 	}
 
 	static Set<PathMatcher> getPathMatchers(FileSystem fs, Set<String> fileNames, Log log) {
@@ -276,16 +276,16 @@ public class SignMojo extends AbstractMojo {
 	}
 	
 	private int retryLimit() {
-		if (¤deprecatedRetryLimit != DEFAULT_RETRY_LIMIT && retryLimit == DEFAULT_RETRY_LIMIT) {
-			return ¤deprecatedRetryLimit;
+		if (deprecatedRetryLimit != DEFAULT_RETRY_LIMIT && retryLimit == DEFAULT_RETRY_LIMIT) {
+			return deprecatedRetryLimit;
 		} else {
 			return retryLimit;
 		}
 	}
 
 	private int retryTimer() {
-		if (¤deprecatedRetryTimer != DEFAULT_RETRY_TIMER && retryTimer == DEFAULT_RETRY_TIMER) {
-			return ¤deprecatedRetryTimer;
+		if (deprecatedRetryTimer != DEFAULT_RETRY_TIMER && retryTimer == DEFAULT_RETRY_TIMER) {
+			return deprecatedRetryTimer;
 		} else {
 			return retryTimer;
 		}

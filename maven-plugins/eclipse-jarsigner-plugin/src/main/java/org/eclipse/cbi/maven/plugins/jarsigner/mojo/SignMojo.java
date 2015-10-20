@@ -87,13 +87,13 @@ public class SignMojo extends AbstractMojo {
 	 * @deprecated The user property {@code continueOnFail} is deprecated. You
 	 *             should use the qualified property
 	 *             {@code cbi.jarsigner.continueOnFail} instead. The
-	 *             {@code ¤deprecatedContinueOnFail} parameter has been
+	 *             {@code deprecatedContinueOnFail} parameter has been
 	 *             introduced to support this deprecated user property for
 	 *             backward compatibility only.
 	 */
 	@Deprecated
 	@Parameter(property = "continueOnFail", defaultValue = "false")
-	private boolean ¤deprecatedContinueOnFail;
+	private boolean deprecatedContinueOnFail;
 
 	/**
 	 * Whether the build should be stopped if the signing process fails.
@@ -111,13 +111,13 @@ public class SignMojo extends AbstractMojo {
 	 * @deprecated The user property {@code retryLimit} is deprecated. You
 	 *             should use the qualified property
 	 *             {@code cbi.jarsigner.retryLimit} instead. The
-	 *             {@code ¤deprecatedRetryLimit} parameter has been introduced to
+	 *             {@code deprecatedRetryLimit} parameter has been introduced to
 	 *             support this deprecated user property for backward
 	 *             compatibility only.
 	 */
 	@Deprecated
 	@Parameter(property = "retryLimit", defaultValue = DEFAULT_RETRY_LIMIT_STRING)
-	private int ¤deprecatedRetryLimit;
+	private int deprecatedRetryLimit;
 
 	/**
 	 * Number of times to retry signing if the server fails to sign.
@@ -135,13 +135,13 @@ public class SignMojo extends AbstractMojo {
 	 * @deprecated The user property {@code retryTimer} is deprecated. You
 	 *             should use the qualified property
 	 *             {@code cbi.jarsigner.retryTimer} instead. The
-	 *             {@code ¤deprecatedRetryTimer} parameter has been introduced to
+	 *             {@code deprecatedRetryTimer} parameter has been introduced to
 	 *             support this deprecated user property for backward
 	 *             compatibility only.
 	 */
 	@Deprecated
 	@Parameter(property = "retryTimer", defaultValue = DEFAULT_RETRY_TIMER_STRING)
-	private int ¤deprecatedRetryTimer;
+	private int deprecatedRetryTimer;
 
 	/**
 	 * Number of seconds to wait before retrying to sign.
@@ -169,7 +169,7 @@ public class SignMojo extends AbstractMojo {
 	 */
 	@Deprecated
 	@Parameter
-	private List<String> ¤supportedProjectTypes = Arrays.asList("jar", "war", "bundle", "maven-plugin",
+	private List<String> supportedProjectTypes = Arrays.asList("jar", "war", "bundle", "maven-plugin",
 			"eclipse-plugin", "eclipse-test-plugin", "eclipse-feature");
 
 	/**
@@ -267,20 +267,20 @@ public class SignMojo extends AbstractMojo {
 	}
 
 	private boolean continueOnFail() {
-		return ¤deprecatedContinueOnFail || continueOnFail;
+		return deprecatedContinueOnFail || continueOnFail;
 	}
 
 	private int retryLimit() {
-		if (¤deprecatedRetryLimit != DEFAULT_RETRY_LIMIT && retryLimit == DEFAULT_RETRY_LIMIT) {
-			return ¤deprecatedRetryLimit;
+		if (deprecatedRetryLimit != DEFAULT_RETRY_LIMIT && retryLimit == DEFAULT_RETRY_LIMIT) {
+			return deprecatedRetryLimit;
 		} else {
 			return retryLimit;
 		}
 	}
 
 	private int retryTimer() {
-		if (¤deprecatedRetryTimer != DEFAULT_RETRY_TIMER && retryTimer == DEFAULT_RETRY_TIMER) {
-			return ¤deprecatedRetryTimer;
+		if (deprecatedRetryTimer != DEFAULT_RETRY_TIMER && retryTimer == DEFAULT_RETRY_TIMER) {
+			return deprecatedRetryTimer;
 		} else {
 			return retryTimer;
 		}

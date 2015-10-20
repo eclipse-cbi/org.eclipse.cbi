@@ -84,7 +84,7 @@ public class SignMojo extends AbstractMojo {
 	 */
 	@Deprecated
 	@Parameter(property = "signFiles")
-	private String[] ¤deprecatedSignFiles;
+	private String[] deprecatedSignFiles;
 	
 	/**
 	 * The list of <b>absolute</b> paths of executables to be signed. If
@@ -105,14 +105,14 @@ public class SignMojo extends AbstractMojo {
 	 * @deprecated The user property {@code baseSearchDir} is deprecated. You
 	 *             should use the qualified property
 	 *             {@code cbi.winsigner.baseSearchDir} instead. The
-	 *             {@code ¤deprecatedBaseSearchDir} parameter has been
+	 *             {@code deprecatedBaseSearchDir} parameter has been
 	 *             introduced to support this deprecated user property for
 	 *             backward compatibility only.
 	 * @since 1.0.4 (for the user property, since 1.1.3 for the parameter)
 	 */
 	@Deprecated
 	@Parameter(property = "baseSearchDir")
-	private String ¤deprecatedBaseSearchDir;
+	private String deprecatedBaseSearchDir;
 
 	/**
 	 * The base directory to search for executables to sign. The executable name
@@ -134,14 +134,14 @@ public class SignMojo extends AbstractMojo {
 	 * 
 	 * @deprecated The user property {@code fileNames} is deprecated. You should
 	 *             use the qualified property {@code cbi.winsigner.fileNames}
-	 *             instead. The {@code ¤deprecatedFileNames} parameter has been
+	 *             instead. The {@code deprecatedFileNames} parameter has been
 	 *             introduced to support this deprecated user property for
 	 *             backward compatibility only.
 	 * @since 1.0.4 (for the user property, since 1.1.3 for the parameter).
 	 */
 	@Deprecated
 	@Parameter(property = "fileNames")
-	private Set<String> ¤deprecatedFileNames;
+	private Set<String> deprecatedFileNames;
 	
 	/**
 	 * List of file names to sign. These file names will be searched in
@@ -162,14 +162,14 @@ public class SignMojo extends AbstractMojo {
 	 * @deprecated The user property {@code continueOnFail} is deprecated. You
 	 *             should use the qualified property
 	 *             {@code cbi.winsigner.continueOnFail} instead. The
-	 *             {@code ¤deprecatedContinueOnFail} parameter has been
+	 *             {@code deprecatedContinueOnFail} parameter has been
 	 *             introduced to support this deprecated user property for
 	 *             backward compatibility only.
 	 * @since 1.0.5 (for the user property, since 1.1.3 for the parameter).
 	 */
 	@Deprecated
 	@Parameter(property = "continueOnFail", defaultValue = "false")
-	private boolean ¤deprecatedContinueOnFail;
+	private boolean deprecatedContinueOnFail;
 
 	/**
 	 * Whether the build should be stopped if the signing process fails.
@@ -195,13 +195,13 @@ public class SignMojo extends AbstractMojo {
 	 * @deprecated The user property {@code retryLimit} is deprecated. You
 	 *             should use the qualified property
 	 *             {@code cbi.winsigner.retryLimit} instead. The
-	 *             {@code ¤deprecatedRetryLimit} parameter has been introduced
+	 *             {@code deprecatedRetryLimit} parameter has been introduced
 	 *             to support this deprecated user property for backward
 	 *             compatibility only.
 	 * @since 1.1.0 (for the user property, since 1.1.3 for the parameter).
 	 */
 	@Parameter(property = "retryLimit", defaultValue = DEFAULT_RETRY_LIMIT_STRING)
-	private int ¤deprecatedRetryLimit;
+	private int deprecatedRetryLimit;
 
 
 	/**
@@ -219,13 +219,13 @@ public class SignMojo extends AbstractMojo {
 	 * @deprecated The user property {@code retryTimer} is deprecated. You
 	 *             should use the qualified property
 	 *             {@code cbi.winsigner.retryTimer} instead. The
-	 *             {@code ¤deprecatedRetryTimer} parameter has been introduced
+	 *             {@code deprecatedRetryTimer} parameter has been introduced
 	 *             to support this deprecated user property for backward
 	 *             compatibility only.
 	 * @since 1.1.0 (for the user property, since 1.1.3 for the parameter).
 	 */
 	@Parameter(property = "retryTimer", defaultValue = "10")
-	private int ¤deprecatedRetryTimer;
+	private int deprecatedRetryTimer;
 
 	@Override
 	public void execute() throws MojoExecutionException {
@@ -256,35 +256,35 @@ public class SignMojo extends AbstractMojo {
     }
 
 	private String baseSearchDir() {
-		return baseSearchDir != null ? baseSearchDir : ¤deprecatedBaseSearchDir;
+		return baseSearchDir != null ? baseSearchDir : deprecatedBaseSearchDir;
 	}
 
 	private int retryLimit() {
-		if (¤deprecatedRetryLimit != DEFAULT_RETRY_LIMIT && retryLimit == DEFAULT_RETRY_LIMIT) {
-			return ¤deprecatedRetryLimit;
+		if (deprecatedRetryLimit != DEFAULT_RETRY_LIMIT && retryLimit == DEFAULT_RETRY_LIMIT) {
+			return deprecatedRetryLimit;
 		} else {
 			return retryLimit;
 		}
 	}
 
 	private int retryTimer() {
-		if (¤deprecatedRetryTimer != DEFAULT_RETRY_TIMER && retryTimer == DEFAULT_RETRY_TIMER) {
-			return ¤deprecatedRetryTimer;
+		if (deprecatedRetryTimer != DEFAULT_RETRY_TIMER && retryTimer == DEFAULT_RETRY_TIMER) {
+			return deprecatedRetryTimer;
 		} else {
 			return retryTimer;
 		}
 	}
 
 	private Set<String> fileNames() {
-		return Sets.union(fileNames, ¤deprecatedFileNames);
+		return Sets.union(fileNames, deprecatedFileNames);
 	}
 
 	private String[] signFiles() {
-		return ObjectArrays.concat(signFiles, ¤deprecatedSignFiles, String.class);
+		return ObjectArrays.concat(signFiles, deprecatedSignFiles, String.class);
 	}
 
 	private boolean continueOnFail() {
-		return continueOnFail || ¤deprecatedContinueOnFail;
+		return continueOnFail || deprecatedContinueOnFail;
 	}
 
     static Set<PathMatcher> getPathMatchers(FileSystem fs, Set<String> fileNames, Log log) {

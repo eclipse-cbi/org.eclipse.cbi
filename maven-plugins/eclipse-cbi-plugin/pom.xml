@@ -18,7 +18,7 @@
   <packaging>maven-plugin</packaging>
   
   <parent>
-    <groupId>org.eclipse.cbi</groupId>
+    <groupId>org.eclipse.cbi.maven.plugins</groupId>
     <artifactId>maven-plugin-parent</artifactId>
     <version>1.1.3-SNAPSHOT</version>
   </parent>

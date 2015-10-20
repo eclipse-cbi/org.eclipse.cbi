@@ -10,7 +10,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.eclipse.cbi</groupId>
+  <groupId>org.eclipse.cbi.maven.plugins</groupId>
   <artifactId>maven-plugin-parent</artifactId>
   <version>1.1.3-SNAPSHOT</version>
   <packaging>pom</packaging>
@@ -34,7 +34,7 @@
   </scm>
 
   <properties>
-      <apache-httpclient-version>4.5.1</apache-httpclient-version>
+    <apache-httpclient-version>4.5.1</apache-httpclient-version>
   </properties>
 
   <modules>
@@ -76,7 +76,7 @@
         <version>${cbi-common-version}</version>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.cbi</groupId>
+        <groupId>org.eclipse.cbi.maven.plugins</groupId>
         <artifactId>cbi-maven-plugin-common</artifactId>
         <version>${project.version}</version>
       </dependency>

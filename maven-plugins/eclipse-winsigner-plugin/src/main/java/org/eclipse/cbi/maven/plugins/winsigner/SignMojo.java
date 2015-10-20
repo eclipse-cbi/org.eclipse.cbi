@@ -43,6 +43,15 @@ import com.google.common.collect.Sets;
 public class SignMojo extends AbstractMojo {
 
 	/**
+	 * The default number of seconds the process will wait if
+	 */
+	private static final String DEFAULT_RETRY_TIMER_STRING = "10";
+	private static final int DEFAULT_RETRY_TIMER = Integer.parseInt(DEFAULT_RETRY_TIMER_STRING);
+
+	private static final String DEFAULT_RETRY_LIMIT_STRING = "3";
+	private static final int DEFAULT_RETRY_LIMIT = Integer.parseInt(DEFAULT_RETRY_LIMIT_STRING);
+	
+	/**
 	 * Default eclipsec executable name
 	 */
 	private static final String ECLIPSEC_EXE = "eclipsec.exe";
@@ -139,7 +148,7 @@ public class SignMojo extends AbstractMojo {
 	 * {@code baseSearchDir}. This parameter is ignored if {@link #signFiles} is
 	 * set.
 	 *<p>
-	 * Default value is <code>{eclipse.exe, eclipsec.exe}</code>.
+	 * Default value is <code>{"eclipse.exe", "eclipsec.exe"}}</code>.
 	 * 
 	 * @since 1.0.4 (for the parameter, since 1.1.3 for the qualified user
 	 *        property).
@@ -174,24 +183,55 @@ public class SignMojo extends AbstractMojo {
 	/**
 	 * Number of times to retry signing if server fails to sign
 	 *
-	 * @parameter property="retryLimit" default-value="3"
-	 * @since 1.1.0
+	 * @since 1.1.0 (for the parameter, since 1.1.3 for the qualified user
+	 *        property).
 	 */
+	@Parameter(property = "cbi.winsigner.retryLimit", defaultValue = "3")
 	private int retryLimit;
+	
+	/**
+	 * Number of times to retry signing if server fails to sign
+	 *
+	 * @deprecated The user property {@code retryLimit} is deprecated. You
+	 *             should use the qualified property
+	 *             {@code cbi.winsigner.retryLimit} instead. The
+	 *             {@code ¤deprecatedRetryLimit} parameter has been introduced
+	 *             to support this deprecated user property for backward
+	 *             compatibility only.
+	 * @since 1.1.0 (for the user property, since 1.1.3 for the parameter).
+	 */
+	@Parameter(property = "retryLimit", defaultValue = DEFAULT_RETRY_LIMIT_STRING)
+	private int ¤deprecatedRetryLimit;
+
 
 	/**
 	 * Number of seconds to wait before retrying to sign
 	 *
-	 * @parameter property="retryTimer" default-value="10"
-	 * @since 1.1.0
+	 * @since 1.1.0 (for the parameter, since 1.1.3 for the qualified user
+	 *        property).
 	 */
+	@Parameter(property = "cbi.winsigner.retryTimer", defaultValue = DEFAULT_RETRY_TIMER_STRING)
 	private int retryTimer;
+	
+	/**
+	 * Number of seconds to wait before retrying to sign
+	 *
+	 * @deprecated The user property {@code retryTimer} is deprecated. You
+	 *             should use the qualified property
+	 *             {@code cbi.winsigner.retryTimer} instead. The
+	 *             {@code ¤deprecatedRetryTimer} parameter has been introduced
+	 *             to support this deprecated user property for backward
+	 *             compatibility only.
+	 * @since 1.1.0 (for the user property, since 1.1.3 for the parameter).
+	 */
+	@Parameter(property = "retryTimer", defaultValue = "10")
+	private int ¤deprecatedRetryTimer;
 
 	@Override
 	public void execute() throws MojoExecutionException {
 		HttpClient httpClient = RetryHttpClient.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())))
-    			.maxRetries(retryLimit)
-    			.waitBeforeRetry(retryTimer, TimeUnit.SECONDS)
+    			.maxRetries(retryLimit())
+    			.waitBeforeRetry(retryTimer(), TimeUnit.SECONDS)
     			.log(new MavenLogger(getLog()))
     			.build();
 		WindowsExeSigner exeSigner = WindowsExeSigner.builder()
@@ -211,9 +251,29 @@ public class SignMojo extends AbstractMojo {
     	} else { 
     		//perform search
     		Set<PathMatcher> pathMatchers = getPathMatchers(FileSystems.getDefault(), fileNames(), getLog());
-    		exeSigner.signExecutables(FileSystems.getDefault().getPath(baseSearchDir), pathMatchers);
+    		exeSigner.signExecutables(FileSystems.getDefault().getPath(baseSearchDir()), pathMatchers);
     	}
     }
+
+	private String baseSearchDir() {
+		return baseSearchDir != null ? baseSearchDir : ¤deprecatedBaseSearchDir;
+	}
+
+	private int retryLimit() {
+		if (¤deprecatedRetryLimit != DEFAULT_RETRY_LIMIT && retryLimit == DEFAULT_RETRY_LIMIT) {
+			return ¤deprecatedRetryLimit;
+		} else {
+			return retryLimit;
+		}
+	}
+
+	private int retryTimer() {
+		if (¤deprecatedRetryTimer != DEFAULT_RETRY_TIMER && retryTimer == DEFAULT_RETRY_TIMER) {
+			return ¤deprecatedRetryTimer;
+		} else {
+			return retryTimer;
+		}
+	}
 
 	private Set<String> fileNames() {
 		return Sets.union(fileNames, ¤deprecatedFileNames);

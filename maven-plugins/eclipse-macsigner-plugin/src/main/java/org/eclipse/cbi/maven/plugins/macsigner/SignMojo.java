@@ -11,7 +11,6 @@
  *******************************************************************************/
 package org.eclipse.cbi.maven.plugins.macsigner;
 
-import java.io.File;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -24,169 +23,240 @@ import java.util.concurrent.TimeUnit;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.eclipse.cbi.maven.ExceptionHandler;
 import org.eclipse.cbi.maven.MavenLogger;
 import org.eclipse.cbi.maven.http.HttpClient;
 import org.eclipse.cbi.maven.http.RetryHttpClient;
 import org.eclipse.cbi.maven.http.apache.ApacheHttpClient;
 
+import com.google.common.collect.Sets;
+
 /**
- * Signs project main and attached artifact using
- * <a href="http://wiki.eclipse.org/IT_Infrastructure_Doc#Sign_my_plugins.2FZIP_files.3F">Eclipse macsigner webservice</a>.
- *
- * @goal sign
- * @phase package
- * @requiresProject
- * @description runs the eclipse signing process
+ * Signs OS X applications found in the project build directory using the
+ * Eclipse OS X application signer webservice.
  */
+@Mojo(name = "sign", defaultPhase = LifecyclePhase.PACKAGE)
 public class SignMojo extends AbstractMojo {
 
+	/**
+	 * The default number of seconds the process will wait if
+	 */
+	private static final String DEFAULT_RETRY_TIMER_STRING = "10";
+	private static final int DEFAULT_RETRY_TIMER = Integer.parseInt(DEFAULT_RETRY_TIMER_STRING);
+
+	private static final String DEFAULT_RETRY_LIMIT_STRING = "3";
+	private static final int DEFAULT_RETRY_LIMIT = Integer.parseInt(DEFAULT_RETRY_LIMIT_STRING);
+	
 	private static final String ECLIPSE_APP = "Eclipse.app";
 
 	private static final String DOT_APP = ".app";
 
 	/**
-     * The signing service URL for signing Mac binaries
-     *
-     * <p>The signing service should return a signed zip file. Containing
-     * the Mac *.app directory.</p>
-     *
-     * <p>The Official Eclipse signer service URL as described in the
-     * <a href="http://wiki.eclipse.org/IT_Infrastructure_Doc#Sign_my_plugins.2FZIP_files.3F">
-     * wiki</a>.</p>
-     *
-     * <p><b>Configuration via Maven commandline</b></p>
-     * <pre>-Dcbi.macsigner.signerUrl=http://localhost/macsign.php</pre>
-     *
-     * <p><b>Configuration via pom.xml</b></p>
-     * <pre>{@code
-     * <configuration>
-     *   <signerUrl>http://localhost/macsign</signerUrl>
-     * </configuration>
-     * }</pre>
-     *
-     * @parameter property="cbi.macsigner.signerUrl" default-value="http://build.eclipse.org:31338/macsign.php"
-     * @required
-     * @since 1.0.4
-     */
+	 * The signing service URL for signing OS X applications. The signing
+	 * service should return a signed zip file containing the Mac *.app
+	 * directory.
+	 * 
+	 * @since 1.0.4
+	 */
+	@Parameter(required = true, property = "cbi.macsigner.signerUrl", defaultValue = "http://build.eclipse.org:31338/macsign.php")
     private String signerUrl;
 
-    /**
-     * Maven build directory
-     *
-     * @parameter property="project.build.directory"
-     * @readonly
-     * @since 1.0.4
-     * @deprecated not used anymore. Use {@code java.io.tmpdir} property instead.
-     */
-    @SuppressWarnings("unused")
-	@Deprecated
-    private File workdir;
-
-    /**
-     * A list of full paths to the Mac directory *.app
-     *
-     * <p>If configured only these executables will be signed.</p>
-     * <p><b><i>
-     *    NOTE: If this is configured "baseSearchDir" and "fileNames"
-     *    do NOT need to be configured.
-     * </i></b></p>
-     *
-     * <p><b>Configuration via pom.xml</b></p>
-     * <pre>{@code
-     * <configuration>
-     *   <signFiles>
-     *     <signFile>}${project.build.directory}/products/org.eclipse.sdk.ide/macosx/cocoa/x86/eclipse/Eclipse.app{@code</signFile>
-     *     <signFile>}${project.build.directory}/products/org.eclipse.sdk.ide/macosx/cocoa/x86_64/eclipse/Eclipse.app{@code</signFile>
-     *   </signFiles>
-     * </configuration>
-     * }</pre>
-     *
-     * @parameter property="signFiles"
-     * @since 1.0.4
-     */
+	/**
+	 * A list of absolute paths to OS X application directories ({@code *.app})
+	 * (e.g.,
+	 * <code>${project.build.directory}/products/myProduct/macosx/cocoa/x86/eclipse/Eclipse.app</code>
+	 * ). If configured only these executables will be signed and
+	 * {@code baseSearchDir} and {@code fileNames} will be ignored.
+	 *
+	 * @since 1.0.4 (for the parameter, since 1.1.3 for the qualified user
+	 *        property)
+	 */
+	@Parameter(property = "cbi.macsigner.signFiles")
     private Set<String> signFiles;
 
+	/**
+	 * A list of absolute paths to the OS X directory {@code *.app} (e.g.,
+	 * <code>${project.build.directory}/products/myProduct/macosx/cocoa/x86/eclipse/Eclipse.app</code>
+	 * ). If configured only these executables will be signed and
+	 * {@code baseSearchDir} and {@code fileNames} will be ignored.
+	 *
+	 * @deprecated The user property {@code signFiles} is deprecated. You should
+	 *             use the qualified property {@code cbi.macsigner.signFiles}
+	 *             instead. The {@code ¤deprecatedSignFiles} parameter has been
+	 *             introduced to support this deprecated user property for
+	 *             backward compatibility only.
+	 * @since 1.0.4 (for the user property, since 1.1.3 for the parameter).
+	 */
+	@Deprecated
+	@Parameter(property = "signFiles")
+    private Set<String> ¤deprecatedSignFiles;
+	
     /**
-     * The base directory to search for executables to sign
+     * The base directory to search for applications to sign. 
      *
-     * <p>If NOT configured baseSearchDir is ${project.build.directory}/products/</p>
-     *
-     * @parameter property="baseSearchDir" default-value="${project.build.directory}/products/"
-     * @since 1.0.4
+     * @since 1.0.4 (for the parameter, since 1.1.3 for the qualified user
+	 *        property)
      */
+	@Parameter(property = "cbi.macsigner.baseSearchDir", defaultValue = "${project.build.directory}/products/")
     private String baseSearchDir;
+	
+	/**
+     * The base directory to search for applications to sign. 
+     *
+	 * @deprecated The user property {@code baseSearchDir} is deprecated. You should
+	 *             use the qualified property {@code cbi.macsigner.baseSearchDir}
+	 *             instead. The {@code ¤deprecatedBaseSearchDir} parameter has been
+	 *             introduced to support this deprecated user property for
+	 *             backward compatibility only.
+     * @since 1.0.4 (for the user property, since 1.1.3 for the parameter).
+     */
+	@Deprecated
+	@Parameter(property = "baseSearchDir", defaultValue = "${project.build.directory}/products/")
+    private String ¤deprecatedBaseSearchDir;
 
     /**
-     * A list of *.app filenames to sign
+     * A list of {@code *.app} application folder to sign.
      *
-     * <p>If NOT configured {@value #ECLIPSE_APP} is signed.</p>
+     * <p>Default value is <code>{{@value #ECLIPSE_APP}}</code> is signed.</p>
      *
-     * @parameter property="fileNames"
-     * @since 1.0.4
+     * @since 1.0.4 (for the parameter, since 1.1.3 for the qualified user
+	 *        property)
      */
+	@Parameter(property = "cbi.macsigner.fileNames")
     private Set<String> fileNames;
+	
+	/**
+	 * A list of {@code *.app} application folder name to sign. Default value is
+	 * <code>{"Eclipse.app"}</code>.
+	 * </p>
+	 *
+	 * @deprecated The user property {@code fileNames} is deprecated. You should
+	 *             use the qualified property {@code cbi.macsigner.fileNames}
+	 *             instead. The {@code ¤deprecatedFileNames} parameter has been
+	 *             introduced to support this deprecated user property for
+	 *             backward compatibility only.
+	 * @since 1.0.4 (for the user property, since 1.1.3 for the parameter).
+	 */
+	@Deprecated
+	@Parameter(property = "fileNames")
+    private Set<String> ¤deprecatedFileNames;
 
     /**
-     * Continue the build even if signing fails
+     * Whether the build should be stopped if the signing process fails.
      *
-     * <p><b>Configuration via Maven commandline</b></p>
-     * <pre>-DcontinueOnFail=true</pre>
-     *
-     * <p><b>Configuration via pom.xml</b></p>
-     * <pre>{@code
-     * <configuration>
-     *   <continueOnFail>true</continueOnFail>
-     * </configuration>
-     * }</pre>
-     *
-     * @parameter property="continueOnFail" default-value="false"
-     * @since 1.0.5
+     * @since 1.0.5 (for the parameter, since 1.1.3 for the qualified user
+	 *        property)
      */
+    @Parameter(property = "cbi.macsigner.continueOnFail")
     private boolean continueOnFail;
 
+	/**
+	 * Whether the build should be stopped if the signing process fails.
+	 * 
+	 * @deprecated The user property {@code continueOnFail} is deprecated. You
+	 *             should use the qualified property
+	 *             {@code cbi.macsigner.continueOnFail} instead. The
+	 *             {@code ¤deprecatedContinueOnFail} parameter has been
+	 *             introduced to support this deprecated user property for
+	 *             backward compatibility only.
+	 * @since 1.0.5 (for the user property, since 1.1.3 for the parameter).
+	 */
+	@Deprecated
+	@Parameter(property = "continueOnFail", defaultValue = "false")
+	private boolean ¤deprecatedContinueOnFail;
+    
     /**
-     * Number of times to retry signing if server fails to sign
-     *
-     * @parameter property="retryLimit" default-value="3"
-     * @since 1.1.0
-     */
-    private int retryLimit;
+	 * Number of times to retry signing if server fails to sign
+	 *
+	 * @since 1.1.0 (for the parameter, since 1.1.3 for the qualified user
+	 *        property).
+	 */
+	@Parameter(property = "cbi.macsigner.retryLimit", defaultValue = "3")
+	private int retryLimit;
+	
+	/**
+	 * Number of times to retry signing if server fails to sign
+	 *
+	 * @deprecated The user property {@code retryLimit} is deprecated. You
+	 *             should use the qualified property
+	 *             {@code cbi.macsigner.retryLimit} instead. The
+	 *             {@code ¤deprecatedRetryLimit} parameter has been introduced
+	 *             to support this deprecated user property for backward
+	 *             compatibility only.
+	 * @since 1.1.0 (for the user property, since 1.1.3 for the parameter).
+	 */
+	@Parameter(property = "retryLimit", defaultValue = "3")
+	private int ¤deprecatedRetryLimit;
 
-    /**
-     * Number of seconds to wait before retrying to sign
-     *
-     * @parameter property="retryTimer" default-value="30"
-     * @since 1.1.0
-     */
-    private int retryTimer;
+
+	/**
+	 * Number of seconds to wait before retrying to sign
+	 *
+	 * @since 1.1.0 (for the parameter, since 1.1.3 for the qualified user
+	 *        property).
+	 */
+	@Parameter(property = "cbi.macsigner.retryTimer", defaultValue = "10")
+	private int retryTimer;
+	
+	/**
+	 * Number of seconds to wait before retrying to sign
+	 *
+	 * @deprecated The user property {@code retryTimer} is deprecated. You
+	 *             should use the qualified property
+	 *             {@code cbi.macsigner.retryTimer} instead. The
+	 *             {@code ¤deprecatedRetryTimer} parameter has been introduced
+	 *             to support this deprecated user property for backward
+	 *             compatibility only.
+	 * @since 1.1.0 (for the user property, since 1.1.3 for the parameter).
+	 */
+	@Parameter(property = "retryTimer", defaultValue = "10")
+	private int ¤deprecatedRetryTimer;
 
     @Override
     public void execute() throws MojoExecutionException {
     	HttpClient httpClient = RetryHttpClient.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())))
-    			.maxRetries(retryLimit)
-    			.waitBeforeRetry(retryTimer, TimeUnit.SECONDS)
+    			.maxRetries(retryLimit())
+    			.waitBeforeRetry(retryTimer(), TimeUnit.SECONDS)
     			.log(new MavenLogger(getLog()))
     			.build();
     	OSXAppSigner osxAppSigner = OSXAppSigner.builder()
     		.serverUri(URI.create(signerUrl))
     		.httpClient(httpClient)
-    		.exceptionHandler(new ExceptionHandler(getLog(), continueOnFail))
+    		.exceptionHandler(new ExceptionHandler(getLog(), continueOnFail()))
     		.log(getLog())
     		.build();
 
-        if (signFiles != null && !signFiles.isEmpty()) {
+        if (signFiles() != null && !signFiles().isEmpty()) {
         	//app paths are configured
         	Set<Path> filesToSign = new LinkedHashSet<>();
-        	for (String pathString : signFiles) {
+        	for (String pathString : signFiles()) {
 				filesToSign.add(FileSystems.getDefault().getPath(pathString));
 			}
             osxAppSigner.signApplications(filesToSign);
         } else {
         	//perform search
-        	osxAppSigner.signApplications(FileSystems.getDefault().getPath(baseSearchDir), getPathMatchers(FileSystems.getDefault(), fileNames, getLog()));
+        	osxAppSigner.signApplications(FileSystems.getDefault().getPath(baseSearchDir()), getPathMatchers(FileSystems.getDefault(), fileNames(), getLog()));
         }
     }
+
+    private Set<String> fileNames() {
+		return Sets.union(fileNames, ¤deprecatedFileNames);
+	}
+    
+    private String baseSearchDir() {
+		return baseSearchDir != null ? baseSearchDir : ¤deprecatedBaseSearchDir;
+	}
+    
+	private Set<String> signFiles() {
+		return Sets.union(signFiles, ¤deprecatedSignFiles);
+	}
+
+    private boolean continueOnFail() {
+		return continueOnFail || ¤deprecatedContinueOnFail;
+	}
 
 	static Set<PathMatcher> getPathMatchers(FileSystem fs, Set<String> fileNames, Log log) {
 		final Set<PathMatcher> pathMatchers = new LinkedHashSet<>();
@@ -203,5 +273,21 @@ public class SignMojo extends AbstractMojo {
 			}
 		}
 		return pathMatchers;
+	}
+	
+	private int retryLimit() {
+		if (¤deprecatedRetryLimit != DEFAULT_RETRY_LIMIT && retryLimit == DEFAULT_RETRY_LIMIT) {
+			return ¤deprecatedRetryLimit;
+		} else {
+			return retryLimit;
+		}
+	}
+
+	private int retryTimer() {
+		if (¤deprecatedRetryTimer != DEFAULT_RETRY_TIMER && retryTimer == DEFAULT_RETRY_TIMER) {
+			return ¤deprecatedRetryTimer;
+		} else {
+			return retryTimer;
+		}
 	}
 }

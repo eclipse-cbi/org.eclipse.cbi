@@ -1,0 +1,13 @@
+name = "solstice"
+license = "EPL"
+licenselink = "https://github.com/EclipseFdn/solstice-hugo-theme/blob/master/LICENSE.md"
+description = ""
+homepage = "http://www.eclipse.org/"
+tags = ["", ""]
+features = ["", ""]
+min_version = 0.13
+
+[author]
+  name = "Christopher Guindon"
+  homepage = "http://www.chrisguindon.com"
+

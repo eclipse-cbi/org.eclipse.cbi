@@ -1,0 +1,22 @@
+MetaDataFormat = "yaml"
+theme = "solstice"
+languageCode = "en-us"
+title = "Common Build Infrastructure"
+
+[params]
+  description = "Common Build Infrastructure Website"
+  author = "Mikaël Barbero"
+
+[taxonomies]
+  tag = "tags"
+  group = "groups"
+
+# [[menu.main]]
+#     name = "about"
+#     pre = ""
+#     url = "/about/"
+# [[menu.main]]
+#     name = "other"
+#     parent = "about"
+#     pre = ""
+#     url = "/other/"

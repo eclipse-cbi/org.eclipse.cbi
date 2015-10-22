@@ -1,0 +1,25 @@
+{{ $currentNode := . }}
+{{ range .Site.Menus.main }}
+{{ if .HasChildren }}
+<li class="dropdown">
+  <a href="#" data-toggle="dropdown" class="dropdown-toggle">
+    {{ .Pre }}
+    <!--<i class="icon_desktop"></i>-->
+    <span>{{ .Name }}</span>
+    <b class="caret"></b>
+  </a>
+  <ul class="dropdown-menu">
+    {{ range .Children }}
+    <li{{if $currentNode.IsMenuCurrent "main" . }} class="active"{{end}}><a href="{{.URL}}">{{ .Name }}</a> </li>
+    {{ end }}
+  </ul>
+  {{else}}
+<li>
+  <a class="" href="{{.URL}}">
+  {{ .Pre }}
+  {{ .Name }}
+  </a>
+  {{end}}
+</li>
+{{end}}
+{{ partial "menu-item-more.html" . }}

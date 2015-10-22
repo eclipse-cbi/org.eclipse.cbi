@@ -1,0 +1,25 @@
+{
+  "name": "solstice",
+  "version": "0.0.1",
+  "description": "Solstice is a responsive theme for eclipse.org.",
+  "main": "Gruntfile.js",
+  "author": "Christopher Guindon",
+  "license": "EPL",
+  "bugs": {
+    "url": "https://bugs.eclipse.org/bugs/buglist.cgi?component=Website&list_id=8318814&product=Community&resolution=---"
+  },
+  "scripts": {
+    "bower": "node_modules/.bin/bower",
+    "grunt": "node_modules/.bin/grunt"
+  },
+  "readmeFilename": "README.md",
+  "devDependencies": {
+    "bower": "^1.4.1",
+    "grunt-cli": "^0.1.13",
+    "grunt-contrib-concat": "^0.5.1",
+    "grunt-contrib-copy": "^0.5.0",
+    "grunt-contrib-less": "^1.0.1",
+    "grunt-contrib-uglify": "^0.9.1",
+    "grunt-contrib-watch": "^0.6.1"
+  }
+}

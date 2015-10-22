@@ -1,0 +1,11 @@
+{{ partial "header.html" . }}
+<div class="container">
+  <h1>404 Error</h1>
+  <p>Maybe you want one of these?</p>
+  {{ range .Data.Pages }}
+  <ul>
+    <li><a href="{{ .Permalink }}">{{ .Title }}</a><span class="lead">({{ .Date.Format "Mon, Jan 2, 2006" }})</span></li>
+  </ul>
+  {{ end }}
+</div>
+{{ partial "footer.html" . }}

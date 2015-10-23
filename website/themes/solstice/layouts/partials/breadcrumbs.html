@@ -6,7 +6,7 @@
       {{ $.Scratch.Add "path" .Site.BaseURL }}
       <ol class="breadcrumb">
         <li><a href="https://www.eclipse.org/">Home</a></li>
-        <li><a href="/">{{ .Site.Title }}</a></li>
+        <li><a href="{{ .Site.BaseURL }}">{{ .Site.Title }}</a></li>
         {{ range $index, $element := split $url "/" }}
         {{ $.Scratch.Add "path" $element }}
         {{ if ne $element "" }}

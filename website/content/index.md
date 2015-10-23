@@ -102,7 +102,7 @@ This URL is a composite P2 repo containing the license bundle.
 
 If you are using Tycho you can add the p2 repo to the <repositories> section of your pom.xml file. Something similar to this:
 
-```xml
+```xml,line-numbers
 <repository>
   <id>license-feature</id>
   <url>http://download.eclipse.org/cbi/updates/license/</url>
@@ -112,7 +112,7 @@ If you are using Tycho you can add the p2 repo to the <repositories> section of 
 
 In any particular feature which you need the license you can use the usual feature.xml section:
 
-```xml
+```xml,line-numbers
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
   id="org.eclipse.help"

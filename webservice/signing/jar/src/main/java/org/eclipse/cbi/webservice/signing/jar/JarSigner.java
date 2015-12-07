@@ -256,9 +256,13 @@ public abstract class JarSigner {
 		if (digestAlg != MessageDigestAlgorithm.DEFAULT) {
 			command.add("-digestalg", digestAlg.standardName());
 		}
+		
+		String tsa = timestampingAuthority().toString();
+		if (!Strings.isNullOrEmpty(tsa)) {
+			command.add("-tsa", tsa);
+		}
 
-		command.add("-tsa", timestampingAuthority().toString())
-			.add("-keystore", keystore().toString())
+		command.add("-keystore", keystore().toString())
 			.add("-storepass", keystorePassword())
 			.add(jar.toString())
 			.add(keystoreAlias());

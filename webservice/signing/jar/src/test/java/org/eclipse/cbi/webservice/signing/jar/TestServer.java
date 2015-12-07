@@ -274,8 +274,12 @@ public class TestServer {
 			if (Strings.isNullOrEmpty(env)) {
 				envVariableName = scheme.toUpperCase() + "_PROXY";
 				env = System.getenv(envVariableName);
-				if (Strings.isNullOrEmpty(env) && !scheme.equals("all")) {
-					ret = getEnvProxy("all");
+				if (Strings.isNullOrEmpty(env)) {
+					if (!scheme.equals("all")) {
+						ret = getEnvProxy("all");
+					} else {
+						ret = null;
+                                        }
 				} else {
 					ret = URI.create(env);
 					if (ret.getScheme() != null && !scheme.equalsIgnoreCase(ret.getScheme())) {

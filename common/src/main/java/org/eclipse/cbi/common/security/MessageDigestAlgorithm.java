@@ -28,8 +28,25 @@ import com.google.common.collect.Iterables;
  * standard names for algorithms</a>".
  */
 public enum MessageDigestAlgorithm {
-	DEFAULT("JVM-Default-Message-Digest-Algorithm"), MD2("MD2"), MD5("MD5"), SHA_1("SHA-1", "SHA1"), SHA_224(
-			"SHA-224"), SHA_256("SHA-256"), SHA_384("SHA-384"), SHA_512("SHA-512");
+	DEFAULT("JVM-Default-Message-Digest-Algorithm"), 
+	MD2("MD2"), 
+	MD5("MD5"), 
+	SHA_1("SHA-1"), 
+	/**
+	 * For backward compatibility with frameworks only accepting "SHA1-Digest"
+	 * from Java 6 and before and reject "SHA-1-Digest". See
+	 * https://bugs.eclipse.org/bugs/show_bug.cgi?id=483881 for details.
+	 * 
+	 * @deprecated You should really consider using
+	 *             {@link MessageDigestAlgorithm#SHA_1} instead except if you
+	 *             really need to be compatible with some old frameworks (e.g.,
+	 *             Eclipse Equinox 3.7 / Indigo)
+	 */
+	SHA1("SHA1"),
+	SHA_224("SHA-224"), 
+	SHA_256("SHA-256"), 
+	SHA_384("SHA-384"), 
+	SHA_512("SHA-512");
 
 	private final String standardName;
 	private final Set<String> aliases;

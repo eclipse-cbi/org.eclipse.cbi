@@ -262,7 +262,7 @@ public class SignMojo extends AbstractMojo {
 						.handleError("Unable to sign jar '" + artifactFile.toString() + "'", e);
 			}
 		} else {
-			getLog().warn("Can't find file associated with artifact '" + artifact.toString() + "'");
+			getLog().debug("No file is associated with artifact '" + artifact.toString() + "'");
 		}
 	}
 

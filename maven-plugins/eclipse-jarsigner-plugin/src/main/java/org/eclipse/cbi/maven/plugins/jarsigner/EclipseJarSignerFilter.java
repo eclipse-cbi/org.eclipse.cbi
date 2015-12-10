@@ -66,7 +66,7 @@ public class EclipseJarSignerFilter implements Filter {
 			log.warn("Can not read file '" + file + "', it will not be signed");
 			ret = false;
 		} else if (!file.getFileSystem().getPathMatcher(DOT_JAR_GLOB_PATTERN).matches(file)) {
-			log.info("Extension of file '" + file + "' is not 'jar', it will not be signed");
+			log.debug("Extension of file '" + file + "' is not 'jar', it will not be signed");
 			ret = false;
 		} else if (isDisabledInEclipseInf(file)) {
 			log.info("Signing of file '" + file + "' is disabled in '" + META_INF_ECLIPSE_INF + "', it will not be signed.");

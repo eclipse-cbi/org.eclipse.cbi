@@ -12,6 +12,7 @@ package org.eclipse.cbi.maven.plugins.jarsigner;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
@@ -46,7 +47,6 @@ public abstract class RemoteJarSigner extends FilteredJarSigner {
 	public int doSignJar(final Path jar, Options options) throws IOException {
 		log().info("Signing jar: " + jar.toString());
 		log().debug("Jar signing options: " + options.toString());
-		int ret = 0;
 		
 		final HttpRequest request = HttpRequest.on(serverUri())
 				.withParam(PART_NAME, jar)
@@ -56,9 +56,10 @@ public abstract class RemoteJarSigner extends FilteredJarSigner {
 		
 		OverwriteJarOnSuccess completionListener = new OverwriteJarOnSuccess(jar.getParent(), jar.getFileName().toString(), RemoteJarSigner.class.getSimpleName(), new MavenLogger(log()), jar);
 		if (httpClient().send(request, completionListener)) {
-			ret = 1;
+			return 1;
+		} else {
+			return 0;
 		}
-		return ret;
 	}
 
 	private static final class OverwriteJarOnSuccess extends AbstractCompletionListener {
@@ -71,7 +72,13 @@ public abstract class RemoteJarSigner extends FilteredJarSigner {
 
 		@Override
 		public void onSuccess(HttpResult result) throws IOException {
+			if (result.contentLength() == 0) {
+				throw new IOException("Length of the returned content is 0");
+			}
 			result.copyContent(jar, StandardCopyOption.REPLACE_EXISTING);
+			if (Files.size(jar) == 0) {
+				throw new IOException("Size of the returned signed Jar is 0");
+			}
 		}
 	}
 	

@@ -119,7 +119,13 @@ public abstract class WindowsExeSigner {
 		boolean success = httpClient().send(request, new AbstractCompletionListener(file.getParent(), file.getFileName().toString(), WindowsExeSigner.class.getSimpleName(), new MavenLogger(log())) {
 			@Override
 			public void onSuccess(HttpResult result) throws IOException {
+				if (result.contentLength() == 0) {
+					throw new IOException("Length of the returned content is 0");
+				}
 				result.copyContent(file, StandardCopyOption.REPLACE_EXISTING);
+				if (Files.size(file) == 0) {
+					throw new IOException("Size of the returned signed executable is 0");
+				}
 			}
 		});
 		return success;

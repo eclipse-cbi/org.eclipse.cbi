@@ -229,13 +229,17 @@ public class CreateDMGMojo extends AbstractMojo {
 		httpClient.send(request, new AbstractCompletionListener(source.toPath().getParent(), source.toPath().getFileName().toString(), CreateDMGMojo.class.getSimpleName(), new MavenLogger(getLog())) {
 			@Override
 			public void onSuccess(HttpResult result) throws IOException {
+				if (result.contentLength() == 0) {
+					throw new IOException("Length of the returned content is 0");
+				}
+				
+				final Path dmgPath;
 				if (target != null) {
-					Path targetPath = target.toPath();
-					Path parent = targetPath.getParent();
+					dmgPath = target.toPath();
+					Path parent = dmgPath.getParent();
 					if (parent != null) {
 						Files.createDirectories(parent);
 					}
-					result.copyContent(targetPath, StandardCopyOption.REPLACE_EXISTING);
 				} else {
 					Path sourcePath = source.toPath();
 					String filename = sourcePath.getFileName().toString();
@@ -247,10 +251,16 @@ public class CreateDMGMojo extends AbstractMojo {
 					}
 					Path parent = sourcePath.getParent();
 					if (parent != null) {
-						result.copyContent(parent.resolve(dmgFilename), StandardCopyOption.REPLACE_EXISTING);
+						dmgPath = parent.resolve(dmgFilename);
 					} else {
-						result.copyContent(Paths.get(dmgFilename), StandardCopyOption.REPLACE_EXISTING);
+						dmgPath = Paths.get(dmgFilename);
 					}
+				}
+				
+				result.copyContent(dmgPath, StandardCopyOption.REPLACE_EXISTING);
+				
+				if (Files.size(dmgPath) == 0) {
+					throw new IOException("Size of the returned DMG is 0");
 				}
 			}
 		});

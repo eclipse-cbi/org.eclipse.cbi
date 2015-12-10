@@ -32,7 +32,7 @@ import org.eclipse.cbi.maven.http.HttpClient;
 import org.eclipse.cbi.maven.http.HttpRequest;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 
@@ -56,6 +56,8 @@ public class ApacheHttpClient implements HttpClient {
 		Objects.requireNonNull(request);
 		HttpUriRequest apacheRequest = toApacheRequest(request);
 		log.debug("Will send request to '" + apacheRequest.getURI() + "'");
+		
+		Stopwatch stopwatch = Stopwatch.createStarted();
 		try (CloseableHttpClient apacheHttpClient = HttpClientBuilder.create().build()) {
 			return apacheHttpClient.execute(apacheRequest, new ResponseHandler<Boolean>() {
 				@Override
@@ -64,6 +66,7 @@ public class ApacheHttpClient implements HttpClient {
 				}
 			});
 		} catch (Exception e) {
+			log.debug("HTTP request and response handled in " + stopwatch);
 			Throwables.propagateIfInstanceOf(e, IOException.class);
 			throw Throwables.propagate(e);
 		}

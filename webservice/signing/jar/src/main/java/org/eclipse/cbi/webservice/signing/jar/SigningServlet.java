@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.cbi.common.security.MessageDigestAlgorithm;
+import org.eclipse.cbi.common.security.SignatureAlgorithm;
 import org.eclipse.cbi.webservice.servlet.RequestFacade;
 import org.eclipse.cbi.webservice.servlet.ResponseFacade;
 
@@ -37,6 +38,7 @@ public abstract class SigningServlet extends HttpServlet {
 	private static final String TEMP_FILE_PREFIX = SigningServlet.class.getSimpleName() + "-";
 	private static final String FILE_PART_NAME = "file";
 	private static final String DIGEST_ALG_PARAMETER = "digestalg";
+	private static final String SIGNATURE_ALG_PARAMETER = "sigalg";
 
 	/**
 	 * {@inheritDoc}
@@ -57,8 +59,9 @@ public abstract class SigningServlet extends HttpServlet {
 			String submittedFileName = requestFacade.getSubmittedFileName(FILE_PART_NAME).get();
 			if (submittedFileName.endsWith(".jar")) {
 				Path unsignedJar = requestFacade.getPartPath(FILE_PART_NAME, TEMP_FILE_PREFIX).get();
+				SignatureAlgorithm signatureAlgorithm = getSignatureAlgorithm(requestFacade);
 				MessageDigestAlgorithm digestAlgorithm = getDigestAlgorithm(requestFacade);
-				Path signedJar = jarSigner().signJar(unsignedJar, digestAlgorithm);
+				Path signedJar = jarSigner().signJar(unsignedJar, signatureAlgorithm, digestAlgorithm);
 				responseFacade.replyWithFile(JAR_CONTENT_TYPE, submittedFileName, signedJar);
 			} else {
 				responseFacade.replyError(HttpServletResponse.SC_BAD_REQUEST, "Submitted '" + FILE_PART_NAME + "' '" + submittedFileName + "' must ends with '.jar' ");
@@ -77,6 +80,17 @@ public abstract class SigningServlet extends HttpServlet {
 			digestAlgorihtm = MessageDigestAlgorithm.DEFAULT;
 		}
 		return digestAlgorihtm;
+	}
+	
+	private SignatureAlgorithm getSignatureAlgorithm(final RequestFacade requestFacade) throws IOException {
+		Optional<String> signatureAlgorithmParameter = requestFacade.getParameter(SIGNATURE_ALG_PARAMETER);
+		final SignatureAlgorithm signatureAlgorihtm;
+		if (signatureAlgorithmParameter.isPresent()) {
+			signatureAlgorihtm = SignatureAlgorithm.fromStandardName(signatureAlgorithmParameter.get());
+		} else {
+			signatureAlgorihtm = SignatureAlgorithm.DEFAULT;
+		}
+		return signatureAlgorihtm;
 	}
 	
 	abstract Path tempFolder();

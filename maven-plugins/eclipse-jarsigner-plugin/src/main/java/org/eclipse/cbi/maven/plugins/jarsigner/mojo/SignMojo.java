@@ -27,6 +27,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.cbi.common.security.MessageDigestAlgorithm;
+import org.eclipse.cbi.common.security.SignatureAlgorithm;
 import org.eclipse.cbi.maven.ExceptionHandler;
 import org.eclipse.cbi.maven.MavenLogger;
 import org.eclipse.cbi.maven.http.HttpClient;
@@ -212,6 +213,7 @@ public class SignMojo extends AbstractMojo {
 	 * <li><strong>MD2</strong></li>
 	 * <li><strong>MD5</strong></li>
 	 * <li><strong>SHA_1</strong></li>
+	 * <li><strong>SHA1</strong> Use this value if you need to be compatible with some old frameworks (e.g., Eclipse Equinox 3.7 / Indigo). Use SHA_1 otherwise.</li>
 	 * <li><strong>SHA_224</strong></li>
 	 * <li><strong>SHA_256</strong></li>
 	 * <li><strong>SHA_384</strong></li>
@@ -222,6 +224,41 @@ public class SignMojo extends AbstractMojo {
 	 */
 	@Parameter(property = "cbi.jarsigner.digestAlgorithm", defaultValue = "DEFAULT")
 	private MessageDigestAlgorithm digestAlgorithm;
+	
+	/**
+	 * The signature algorithm to use for signing the jar file. Supported values
+	 * depends on the remote signing web services. Values recognized by this
+	 * plugin are:
+	 * <ul>
+	 * <li><strong>DEFAULT</strong>, tells to the remote signing webservice to use its default
+	 * digest algorithm to sign the jar</li>
+	 * 
+	 * <li><strong>NONEwithRSA</strong></li>
+	 * <li><strong>MD2withRSA</strong></li>
+	 * <li><strong>MD5withRSA</strong></li>
+	 * 
+	 * <li><strong>SHA1withRSA</strong></li>
+	 * <li><strong>SHA224withRSA</strong></li>
+	 * <li><strong>SHA256withRSA</strong></li>
+	 * <li><strong>SHA384withRSA</strong></li>
+	 * <li><strong>SHA512withRSA</strong></li>
+	 * 
+	 * <li><strong>SHA1withDSA</strong></li>
+	 * <li><strong>SHA224withDSA</strong></li>
+	 * <li><strong>SHA256withDSA</strong></li>
+	 * 
+	 * <li><strong>NONEwithECDSA</strong></li>
+	 * <li><strong>SHA1withECDSA</strong></li>
+	 * <li><strong>SHA224withECDSA</strong></li>
+	 * <li><strong>SHA256withECDSA</strong></li>
+	 * <li><strong>SHA384withECDSA</strong></li>
+	 * <li><strong>SHA512withECDSA</strong></li>
+	 * </ul>
+	 * 
+	 * @since 1.1.3
+	 */
+	@Parameter(property = "cbi.jarsigner.signatureAlgorithm", defaultValue = "DEFAULT")
+	private SignatureAlgorithm signatureAlgorithm;
 
 	/**
 	 * {@inheritDoc}
@@ -254,7 +291,10 @@ public class SignMojo extends AbstractMojo {
 		if (artifactFile != null) {
 			try {
 				if (new EclipseJarSignerFilter(getLog()).shouldBeSigned(artifactFile.toPath())) {
-					Options options = Options.builder().digestAlgorithm(digestAlgorithm).build();
+					Options options = Options.builder()
+							.signatureAlgorithm(signatureAlgorithm)
+							.digestAlgorithm(digestAlgorithm)
+							.build();
 					jarSigner.sign(artifactFile.toPath(), options);
 				}
 			} catch (IOException e) {

@@ -20,10 +20,12 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 import org.eclipse.cbi.common.security.MessageDigestAlgorithm;
+import org.eclipse.cbi.common.security.SignatureAlgorithm;
 import org.eclipse.cbi.webservice.util.ProcessExecutor;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 
@@ -202,26 +204,14 @@ public abstract class JarSigner {
 	 *             if the execution of the command did not end properly.
 	 */
 	public Path signJar(Path jar) throws IOException {
-		return signJar(jar, MessageDigestAlgorithm.DEFAULT);
+		return signJar(jar, SignatureAlgorithm.DEFAULT, MessageDigestAlgorithm.DEFAULT);
 	}
 	
-	/**
-	 * Sign the given jar file with the configured jarsigner command.
-	 * 
-	 * @param jar
-	 *            the jar to be sign
-	 * @param digestAlg
-	 *            the message digest algorithm to use when digesting the entries
-	 *            of a JAR file. If <code>null</code>, jarsigner will use its
-	 *            default digest algorithm.
-	 * @return the path to the signed jar file (the same as the one given in
-	 *         parameter).
-	 * @throws IOException
-	 *             if the execution of the command did not end properly.
-	 */
-	public Path signJar(Path jar, MessageDigestAlgorithm digestAlg) throws IOException {
+	public Path signJar(Path jar, SignatureAlgorithm sigAlg, MessageDigestAlgorithm digestAlg) throws IOException {
+		Preconditions.checkNotNull(sigAlg);
+		Preconditions.checkNotNull(digestAlg);
 		final StringBuilder output = new StringBuilder();
-		int jarSignerExitValue = processExecutor().exec(createCommand(jar, digestAlg), output , timeout(), TimeUnit.SECONDS);
+		int jarSignerExitValue = processExecutor().exec(createCommand(jar, sigAlg, digestAlg), output , timeout(), TimeUnit.SECONDS);
 		if (jarSignerExitValue != 0) {
 			throw new IOException(Joiner.on('\n').join(
 					"The '" + jarSigner().toString() + "' command exited with value '" + jarSignerExitValue + "'",
@@ -237,12 +227,15 @@ public abstract class JarSigner {
 	 * @param jar
 	 *            the path of the file to be signed.
 	 * @param digestAlg
+	 *            the signature algorithm to use when digesting the entries
+	 *            of a JAR file. Must not be <code>null</code>.
+	 * @param digestAlg
 	 *            the message digest algorithm to use when digesting the entries
-	 *            of a JAR file. May be <code>null</code>.
+	 *            of a JAR file. Must not be <code>null</code>.
 	 * @return a list of string composing the command (see
 	 *         {@link ProcessBuilder} for format).
 	 */
-	private ImmutableList<String> createCommand(Path jar, MessageDigestAlgorithm digestAlg) {
+	private ImmutableList<String> createCommand(Path jar, SignatureAlgorithm sigAlg, MessageDigestAlgorithm digestAlg) {
 		ImmutableList.Builder<String> command = ImmutableList.<String>builder().add(jarSigner().toString());
 		
 		if (!Strings.isNullOrEmpty(httpProxyHost())) {
@@ -251,6 +244,10 @@ public abstract class JarSigner {
 		
 		if (!Strings.isNullOrEmpty(httpProxyHost())) {
 			command.add("-J-Dhttps.proxyHost=" + httpsProxyHost()).add("-J-Dhttps.proxyPort=" + httpsProxyPort());
+		}
+		
+		if (sigAlg != SignatureAlgorithm.DEFAULT) {
+			command.add("-sigalg", sigAlg.standardName());
 		}
 		
 		if (digestAlg != MessageDigestAlgorithm.DEFAULT) {

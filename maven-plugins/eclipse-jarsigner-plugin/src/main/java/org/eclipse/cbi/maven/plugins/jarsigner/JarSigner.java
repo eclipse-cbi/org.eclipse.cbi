@@ -15,6 +15,7 @@ import java.nio.file.Path;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.eclipse.cbi.common.security.MessageDigestAlgorithm;
+import org.eclipse.cbi.common.security.SignatureAlgorithm;
 
 import com.google.auto.value.AutoValue;
 
@@ -34,19 +35,24 @@ public interface JarSigner {
 	abstract class Options {
 		
 		public abstract MessageDigestAlgorithm digestAlgorithm();
+		public abstract SignatureAlgorithm signatureAlgorithm();
 		
 		public static Builder builder() {
-			return new AutoValue_JarSigner_Options.Builder();
+			return new AutoValue_JarSigner_Options.Builder()
+					.signatureAlgorithm(SignatureAlgorithm.DEFAULT)
+					.digestAlgorithm(MessageDigestAlgorithm.DEFAULT);
 		}
 		
 		public static Builder copy(Options option) {
 			return builder()
-					.digestAlgorithm(option.digestAlgorithm());
+					.digestAlgorithm(option.digestAlgorithm())
+					.signatureAlgorithm(option.signatureAlgorithm());
 		}
 		
 		@AutoValue.Builder
 		public static abstract class Builder {
 			public abstract Builder digestAlgorithm(MessageDigestAlgorithm digestAlgorithm);
+			public abstract Builder signatureAlgorithm(SignatureAlgorithm signatureAlgorithm);
 			public abstract Options build();
 		}
 	}

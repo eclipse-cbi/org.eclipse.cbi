@@ -51,6 +51,7 @@ public abstract class RemoteJarSigner extends FilteredJarSigner {
 		final HttpRequest request = HttpRequest.on(serverUri())
 				.withParam(PART_NAME, jar)
 				.withParam("digestalg", options.digestAlgorithm().standardName())
+				.withParam("sigalg", options.signatureAlgorithm().standardName())
 				.build();
 		log().debug("Jar signing request: " + request.toString());
 		

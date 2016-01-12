@@ -12,18 +12,17 @@ package org.eclipse.cbi.webservice.signing.macosx;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.base.Throwables.*;
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.base.Throwables.propagateIfInstanceOf;
 import static java.util.Objects.requireNonNull;
 import static org.eclipse.cbi.webservice.util.function.UnsafePredicate.safePredicate;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
-import java.util.zip.ZipInputStream;
 
 import org.eclipse.cbi.common.util.Paths;
 import org.eclipse.cbi.common.util.Zips;
@@ -57,14 +56,11 @@ public abstract class Codesigner {
 		Path unzipDirectory = null;
 		try {
 			unzipDirectory = Files.createTempDirectory(tempFolder(), TEMP_FILE_PREFIX);
-			
-			try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(source)))) {
-				// unzip the part in temp folder.
-				if (Zips.unpack(zis, unzipDirectory) > 0) {
-					return signAndRezip(unzipDirectory, target);
-				} else {
-					throw new IOException("The provided Zip file is invalid");
-				}
+			// unzip the part in temp folder.
+			if (Zips.unpackZip(source, unzipDirectory) > 0) {
+				return signAndRezip(unzipDirectory, target);
+			} else {
+				throw new IOException("The provided Zip file is invalid");
 			}
 		} finally {
 			// clean up temp folder if used

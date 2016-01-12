@@ -33,7 +33,6 @@ import java.util.zip.ZipInputStream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
-import org.eclipse.cbi.common.util.Zips;
 import org.junit.Test;
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
@@ -58,7 +57,7 @@ public class ZipsTest {
 	@DataPoints
 	public static Configuration[] fsConfiguration() {
 		return new Configuration[] {
-				Configuration.unix(),
+				Configuration.unix().toBuilder().setAttributeViews("basic", "owner", "unix", "posix").build(),
 				Configuration.osX(),
 				Configuration.windows(),
 		};
@@ -67,70 +66,118 @@ public class ZipsTest {
 	@Theory
 	public void testPackSingleFile(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
-		Path path = createLoremIpsumFile(fs.getPath("workDir/Test.java"), 3);
-		Path zip = fs.getPath("testPackSingleFile.zip");
-		assertEquals(1, Zips.packZip(path, zip, false));
-
-		try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zip))) {
-			checkNextEntry(zis, path, "Test.java");
-			assertNull(zis.getNextEntry());
+			Path path = createLoremIpsumFile(fs.getPath("workDir/Test.java"), 3);
+			Path zip = fs.getPath("testPackSingleFile.zip");
+			assertEquals(1, Zips.packZip(path, zip, false));
+	
+			try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zip))) {
+				checkNextEntry(zis, path, "Test.java");
+				assertNull(zis.getNextEntry());
+			}
 		}
-}
+	}
+	
+	@Theory
+	public void testUnpackZipPreserveFilePerms(Configuration conf) throws IOException {
+		try (FileSystem fs = Jimfs.newFileSystem(conf)) {
+			Path zip = fs.getPath("fileperm.zip");
+			Files.copy(this.getClass().getResourceAsStream("/fileperm.zip"), zip);
+			assertEquals(5, Zips.unpackZip(zip, fs.getPath("unzipFolder")));
+			
+			PosixFileAttributeView posixView = Files.getFileAttributeView(zip, PosixFileAttributeView.class);
+			if (posixView != null) {
+				assertEquals("777", Long.toOctalString(MorePosixFilePermissions.toFileMode(Files.getPosixFilePermissions(fs.getPath("unzipFolder", "fileperm", "a")))));
+				assertEquals("660", Long.toOctalString(MorePosixFilePermissions.toFileMode(Files.getPosixFilePermissions(fs.getPath("unzipFolder", "fileperm", "b")))));
+				assertEquals("744", Long.toOctalString(MorePosixFilePermissions.toFileMode(Files.getPosixFilePermissions(fs.getPath("unzipFolder", "fileperm", "c")))));
+				assertEquals("500", Long.toOctalString(MorePosixFilePermissions.toFileMode(Files.getPosixFilePermissions(fs.getPath("unzipFolder", "fileperm", "f1")))));
+				assertEquals("777", Long.toOctalString(MorePosixFilePermissions.toFileMode(Files.getPosixFilePermissions(fs.getPath("unzipFolder", "fileperm", "f2")))));
+			}
+		}
+	}
+	
+	@Test
+	public void testPackZipPreserveFilePerms() throws IOException {
+		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix().toBuilder().setAttributeViews("basic", "owner", "unix", "posix").build())) {
+			Path a = SampleFilesGenerators.createLoremIpsumFile(fs.getPath("fileperm", "a"), 1);
+			Path b = SampleFilesGenerators.createLoremIpsumFile(fs.getPath("fileperm", "b"), 1);
+			Path c = SampleFilesGenerators.createLoremIpsumFile(fs.getPath("fileperm", "c"), 1);
+			Path f1 = Files.createDirectories(fs.getPath("fileperm", "f1"));
+			Path f2 = Files.createDirectories(fs.getPath("fileperm", "f2"));
+			
+			PosixFileAttributeView posixView = Files.getFileAttributeView(f1, PosixFileAttributeView.class);
+			if (posixView != null) {
+				Files.setAttribute(a, "posix:permissions", MorePosixFilePermissions.fromFileMode(0777));
+				Files.setAttribute(b, "posix:permissions", MorePosixFilePermissions.fromFileMode(0660));
+				Files.setAttribute(c, "posix:permissions", MorePosixFilePermissions.fromFileMode(0744));
+				Files.setAttribute(f1, "posix:permissions", MorePosixFilePermissions.fromFileMode(0500));
+				Files.setAttribute(f2, "posix:permissions", MorePosixFilePermissions.fromFileMode(0777));
+			}
+			
+			assertEquals(5, Zips.packZip(fs.getPath("fileperm"), fs.getPath("fileperm.zip"), false));
+			assertEquals(5, Zips.unpackZip(fs.getPath("fileperm.zip"), fs.getPath("unzipFolder")));
+			if (posixView != null) {
+				assertEquals("777", Long.toOctalString(MorePosixFilePermissions.toFileMode(Files.getPosixFilePermissions(fs.getPath("unzipFolder", "a")))));
+				assertEquals("660", Long.toOctalString(MorePosixFilePermissions.toFileMode(Files.getPosixFilePermissions(fs.getPath("unzipFolder", "b")))));
+				assertEquals("744", Long.toOctalString(MorePosixFilePermissions.toFileMode(Files.getPosixFilePermissions(fs.getPath("unzipFolder", "c")))));
+				assertEquals("500", Long.toOctalString(MorePosixFilePermissions.toFileMode(Files.getPosixFilePermissions(fs.getPath("unzipFolder", "f1")))));
+				assertEquals("777", Long.toOctalString(MorePosixFilePermissions.toFileMode(Files.getPosixFilePermissions(fs.getPath("unzipFolder", "f2")))));
+			}
+		}
 	}
 
 	@Theory
 	public void testPackTwoFiles(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
-		Path path1 = createLoremIpsumFile(fs.getPath("folder", "Test1.java"), 3);
-		Path path2 = createLoremIpsumFile(fs.getPath("folder", "Test2.java"), 10);
-		Path zip = fs.getPath("testPackTwoFiles.zip");
-		assertEquals(2, Zips.packZip(path1.getParent(), zip, false));
-		
-		try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zip))) {
-			checkNextEntry(zis, path1, "Test1.java");
-			checkNextEntry(zis, path2, "Test2.java");
-			assertNull(zis.getNextEntry());
+			Path path1 = createLoremIpsumFile(fs.getPath("folder", "Test1.java"), 3);
+			Path path2 = createLoremIpsumFile(fs.getPath("folder", "Test2.java"), 10);
+			Path zip = fs.getPath("testPackTwoFiles.zip");
+			assertEquals(2, Zips.packZip(path1.getParent(), zip, false));
+			
+			try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zip))) {
+				checkNextEntry(zis, path1, "Test1.java");
+				checkNextEntry(zis, path2, "Test2.java");
+				assertNull(zis.getNextEntry());
+			}
 		}
-}
 	}
 	
 	@Theory
 	public void testPackWithFolders(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
-		Path path1 = createLoremIpsumFile(fs.getPath("folder", "t1", "Test1.java"), 3);
-		Path path2 = createLoremIpsumFile(fs.getPath("folder", "t2", "t3", "Test2.java"), 10);
-		Path zip = fs.getPath("testPackWithFolders.zip");
-		assertEquals(5, Zips.packZip(path1.getParent().getParent(), zip, false));
-		
-		try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zip))) {
-			checkNextEntry(zis, path1.getParent(), "t1/");
-			checkNextEntry(zis, path1, "t1/Test1.java");
-			checkNextEntry(zis, path2.getParent(), "t2/");
-			checkNextEntry(zis, path2.getParent().getParent(), "t2/t3/");
-			checkNextEntry(zis, path2, "t2/t3/Test2.java");
-			assertNull(zis.getNextEntry());
+			Path path1 = createLoremIpsumFile(fs.getPath("folder", "t1", "Test1.java"), 3);
+			Path path2 = createLoremIpsumFile(fs.getPath("folder", "t2", "t3", "Test2.java"), 10);
+			Path zip = fs.getPath("testPackWithFolders.zip");
+			assertEquals(5, Zips.packZip(path1.getParent().getParent(), zip, false));
+			
+			try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zip))) {
+				checkNextEntry(zis, path1.getParent(), "t1/");
+				checkNextEntry(zis, path1, "t1/Test1.java");
+				checkNextEntry(zis, path2.getParent(), "t2/");
+				checkNextEntry(zis, path2.getParent().getParent(), "t2/t3/");
+				checkNextEntry(zis, path2, "t2/t3/Test2.java");
+				assertNull(zis.getNextEntry());
+			}
 		}
-}
 	}
 	
 	@Theory
 	public void testPackWithFoldersPreservingRoot(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
-		Path path1 = createLoremIpsumFile(fs.getPath("folder", "t1", "Test1.java"), 3);
-		Path path2 = createLoremIpsumFile(fs.getPath("folder", "t2", "t3", "Test2.java"), 10);
-		Path zip = fs.getPath("testPackWithFoldersPreservingRoot.zip");
-		assertEquals(6, Zips.packZip(path1.getParent().getParent(), zip, true));
-		
-		try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zip))) {
-			checkNextEntry(zis, path1.getParent().getParent(), "folder/");
-			checkNextEntry(zis, path1.getParent(), "folder/t1/");
-			checkNextEntry(zis, path1, "folder/t1/Test1.java");
-			checkNextEntry(zis, path2.getParent(), "folder/t2/");
-			checkNextEntry(zis, path2.getParent().getParent(), "folder/t2/t3/");
-			checkNextEntry(zis, path2, "folder/t2/t3/Test2.java");
-			assertNull(zis.getNextEntry());
+			Path path1 = createLoremIpsumFile(fs.getPath("folder", "t1", "Test1.java"), 3);
+			Path path2 = createLoremIpsumFile(fs.getPath("folder", "t2", "t3", "Test2.java"), 10);
+			Path zip = fs.getPath("testPackWithFoldersPreservingRoot.zip");
+			assertEquals(6, Zips.packZip(path1.getParent().getParent(), zip, true));
+			
+			try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zip))) {
+				checkNextEntry(zis, path1.getParent().getParent(), "folder/");
+				checkNextEntry(zis, path1.getParent(), "folder/t1/");
+				checkNextEntry(zis, path1, "folder/t1/Test1.java");
+				checkNextEntry(zis, path2.getParent(), "folder/t2/");
+				checkNextEntry(zis, path2.getParent().getParent(), "folder/t2/t3/");
+				checkNextEntry(zis, path2, "folder/t2/t3/Test2.java");
+				assertNull(zis.getNextEntry());
+			}
 		}
-}
 	}
 	
 	@Test
@@ -148,7 +195,7 @@ public class ZipsTest {
 		testPackAbsolutePath(Jimfs.newFileSystem(Configuration.windows()), "C:\\");
 	}
 	
-	public void testPackAbsolutePath(FileSystem fs, String root) throws IOException {
+	private static void testPackAbsolutePath(FileSystem fs, String root) throws IOException {
 		Path path1 = createLoremIpsumFile(fs.getPath(root, "tmp", "folder", "t1", "Test1.java"), 3);
 		Path path2 = createLoremIpsumFile(fs.getPath(root, "tmp", "folder", "t2", "t3", "Test2.java"), 10);
 		Path zip = fs.getPath("testPackAbsolutePath.zip");
@@ -182,9 +229,10 @@ public class ZipsTest {
 	@Theory
 	public void testUnpackStream(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
-			try (ZipInputStream is = new ZipInputStream(this.getClass().getResource("/folder.zip").openStream())) {
-				assertEquals(17, Zips.unpack(is, fs.getPath("unzipFolder")));
+			try (InputStream zipStream = this.getClass().getResourceAsStream("/folder.zip")) {
+				Files.copy(zipStream, fs.getPath("folder.zip"));
 			}
+			assertEquals(17, Zips.unpackZip(fs.getPath("folder.zip"), fs.getPath("unzipFolder")));
 			assertTrue(Files.exists(fs.getPath("unzipFolder/folder/t1/Test1.java")));
 			assertTrue(Files.size(fs.getPath("unzipFolder/folder/t1/Test1.java")) > 0);
 			assertTrue(Files.exists(fs.getPath("unzipFolder/folder/t2/t3/Test2.java")));
@@ -195,19 +243,19 @@ public class ZipsTest {
 	@Theory
 	public void testPackUnpackZip(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
-		Path path1 = createLoremIpsumFile(fs.getPath("folder", "t1", "Test1.java"), 3);
-		Path path2 = createLoremIpsumFile(fs.getPath("folder", "t2", "t3", "Test2.java"), 10);
-		Path zip = fs.getPath("testPackWithFolders.zip");
-		assertEquals(5, Zips.packZip(path1.getParent().getParent(), zip, false));
-		Path unpackFolder = Files.createDirectories(fs.getPath("unpackFolder"));
-		assertEquals(5, Zips.unpackZip(zip, unpackFolder));
-		assertTrue(Files.exists(fs.getPath("unpackFolder/t1/Test1.java")));
-		assertTrue(Files.exists(fs.getPath("unpackFolder/t2/t3/Test2.java")));
-		assertArrayEquals(Files.readAllBytes(path1), Files.readAllBytes(fs.getPath("unpackFolder/t1/Test1.java")));
-		assertArrayEquals(Files.readAllBytes(path2), Files.readAllBytes(fs.getPath("unpackFolder/t2/t3/Test2.java")));
+			Path path1 = createLoremIpsumFile(fs.getPath("folder", "t1", "Test1.java"), 3);
+			Path path2 = createLoremIpsumFile(fs.getPath("folder", "t2", "t3", "Test2.java"), 10);
+			Path zip = fs.getPath("testPackWithFolders.zip");
+			assertEquals(5, Zips.packZip(path1.getParent().getParent(), zip, false));
+			Path unpackFolder = Files.createDirectories(fs.getPath("unpackFolder"));
+			assertEquals(5, Zips.unpackZip(zip, unpackFolder));
+			assertTrue(Files.exists(fs.getPath("unpackFolder/t1/Test1.java")));
+			assertTrue(Files.exists(fs.getPath("unpackFolder/t2/t3/Test2.java")));
+			assertArrayEquals(Files.readAllBytes(path1), Files.readAllBytes(fs.getPath("unpackFolder/t1/Test1.java")));
+			assertArrayEquals(Files.readAllBytes(path2), Files.readAllBytes(fs.getPath("unpackFolder/t2/t3/Test2.java")));
+		}
 	}
-}
-	
+
 	@Theory
 	public void testPackJar(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	

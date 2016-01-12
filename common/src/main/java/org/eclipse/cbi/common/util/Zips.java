@@ -36,7 +36,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.eclipse.cbi.common.record.SeekableByteChannelRecordReader;
 import org.eclipse.cbi.common.util.ZipPosixPermissionFixer.ZipReader;
 
 import com.google.common.annotations.VisibleForTesting;

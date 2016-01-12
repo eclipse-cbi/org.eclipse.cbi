@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.cbi.common.util;
 
-import static org.eclipse.cbi.common.record.RecordDefinition.createLEField;
+import static org.eclipse.cbi.common.util.RecordDefinition.createLEField;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -19,12 +19,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipException;
 
-import org.eclipse.cbi.common.record.ByteBufferRecord;
-import org.eclipse.cbi.common.record.Record;
-import org.eclipse.cbi.common.record.RecordDefinition;
-import org.eclipse.cbi.common.record.RecordDefinition.Field;
+import org.eclipse.cbi.common.util.RecordDefinition.Field;
 import org.eclipse.cbi.common.util.ZipPosixPermissionFixer.CentralDirectoryHeader.Platform;
-import org.eclipse.cbi.common.record.SeekableByteChannelRecordReader;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;

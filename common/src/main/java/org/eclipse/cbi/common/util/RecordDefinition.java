@@ -8,14 +8,14 @@
  * Contributors:
  *   Mikael Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.common.record;
+package org.eclipse.cbi.common.util;
 
 import java.nio.ByteOrder;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.eclipse.cbi.common.record.RecordDefinition.Field.Type;
+import org.eclipse.cbi.common.util.RecordDefinition.Field.Type;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.MoreObjects;
@@ -24,7 +24,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 @AutoValue
-public abstract class RecordDefinition {
+abstract class RecordDefinition {
 	
 	public abstract String name();
 	
@@ -34,7 +34,7 @@ public abstract class RecordDefinition {
 	
 	public abstract List<Field> fields();
 	
-	abstract Map<Field, Field> sizeDefinitionFields();
+	protected abstract Map<Field, Field> sizeDefinitionFields();
 	
 	public abstract Class<? extends Record> recordClass();
 	

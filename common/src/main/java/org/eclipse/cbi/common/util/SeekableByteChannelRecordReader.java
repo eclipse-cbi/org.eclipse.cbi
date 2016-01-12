@@ -8,20 +8,20 @@
  * Contributors:
  *   Mikael Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.common.record;
+package org.eclipse.cbi.common.util;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 
-import org.eclipse.cbi.common.record.RecordDefinition.Field;
+import org.eclipse.cbi.common.util.RecordDefinition.Field;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedInteger;
 import com.google.common.primitives.UnsignedLong;
 
-public class SeekableByteChannelRecordReader {
+class SeekableByteChannelRecordReader {
 	private final SeekableByteChannel channel;
 	
 	public SeekableByteChannelRecordReader(SeekableByteChannel channel) {

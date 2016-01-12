@@ -8,17 +8,17 @@
  * Contributors:
  *   Mikael Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.common.record;
+package org.eclipse.cbi.common.util;
 
 import java.nio.charset.Charset;
 
-import org.eclipse.cbi.common.record.RecordDefinition.Field;
+import org.eclipse.cbi.common.util.RecordDefinition.Field;
 
 import com.google.common.collect.ForwardingObject;
 import com.google.common.primitives.UnsignedInteger;
 import com.google.common.primitives.UnsignedLong;
 
-public interface Record {
+interface Record {
 
 	int uint16Value(RecordDefinition.Field field);
 

@@ -8,20 +8,20 @@
  * Contributors:
  *   Mikael Barbero - initial implementation
  *******************************************************************************/
-package org.eclipse.cbi.common.record;
+package org.eclipse.cbi.common.util;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
-import org.eclipse.cbi.common.record.RecordDefinition.Field;
+import org.eclipse.cbi.common.util.RecordDefinition.Field;
 
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedInteger;
 import com.google.common.primitives.UnsignedLong;
 
-public class ByteBufferRecord implements Record {
+class ByteBufferRecord implements Record {
 
 	private final ByteBuffer buffer;
 	private final RecordDefinition recordDefinition;

@@ -9,7 +9,7 @@
   <parent>
     <groupId>org.eclipse.cbi</groupId>
     <artifactId>cbi-parent</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.2</version>
   </parent>
 
   <scm>
@@ -30,7 +30,7 @@
   <properties>
     <jetty-version>9.3.7.v20160115</jetty-version>
     <log4j-version>2.3</log4j-version>
-    <cbi-common-version>1.2.1-SNAPSHOT</cbi-common-version>
+    <cbi-common-version>1.2.1</cbi-common-version>
   </properties>
 
   <build>

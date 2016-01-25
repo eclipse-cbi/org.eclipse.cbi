@@ -33,6 +33,19 @@
     <url>http://git.eclipse.org/c/cbi/org.eclipse.cbi.git/</url>
   </scm>
 
+  <repositories>
+    <repository>
+      <id>repo.eclipse.org</id>
+      <url>https://repo.eclipse.org/content/repositories/cbi</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
   <properties>
     <apache-httpclient-version>4.5.1</apache-httpclient-version>
     <cbi-common-version>1.2.1</cbi-common-version>

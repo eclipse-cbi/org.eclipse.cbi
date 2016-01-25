@@ -96,7 +96,7 @@
       <dependency>
         <groupId>org.eclipse.tycho</groupId>
         <artifactId>tycho-core</artifactId>
-        <version>0.24</version>
+        <version>0.24.0</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven</groupId>
@@ -138,7 +138,7 @@
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-server</artifactId>
-        <version>9.3.7.v20160115</version>
+        <version>9.2.14.v20151106</version>
         <scope>test</scope>
       </dependency>
     </dependencies>

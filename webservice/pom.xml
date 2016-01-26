@@ -34,10 +34,8 @@
 
   <modules>
     <module>common</module>
-    <module>packaging/dmg</module>
-    <module>signing/jar</module>
-    <module>signing/windows</module>
-    <module>signing/macosx</module>
+    <module>packaging</module>
+    <module>signing</module>
   </modules>
 
   <properties>

@@ -18,6 +18,10 @@
     <url>http://git.eclipse.org/c/cbi/org.eclipse.cbi.git/</url>
   </scm>
 
+  <modules>
+    <module>dmg</module>
+  </modules>
+
   <build>
     <plugins>
       <plugin>

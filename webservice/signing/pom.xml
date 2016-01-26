@@ -18,6 +18,12 @@
     <url>http://git.eclipse.org/c/cbi/org.eclipse.cbi.git/</url>
   </scm>
 
+  <modules>
+    <module>jar</module>
+    <module>windows</module>
+    <module>macosx</module>
+  </modules>
+
   <build>
     <plugins>
       <plugin>

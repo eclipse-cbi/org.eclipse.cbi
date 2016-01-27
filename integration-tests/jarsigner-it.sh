@@ -56,7 +56,7 @@ cat >pom.xml <<EOL
         <plugin>
           <groupId>org.eclipse.cbi.maven.plugins</groupId>
           <artifactId>eclipse-jarsigner-plugin</artifactId>
-          <version>1.1.3-SNAPSHOT</version>
+          <version>1.1.4-SNAPSHOT</version>
           <executions>
             <execution>
               <goals>
@@ -74,7 +74,7 @@ cat >pom.xml <<EOL
       <plugin>
         <groupId>org.eclipse.cbi.maven.plugins</groupId>
         <artifactId>eclipse-jarsigner-plugin</artifactId>
-        <version>1.1.3-SNAPSHOT</version>
+        <version>1.1.4-SNAPSHOT</version>
       </plugin>
     </plugins>
   </build>

@@ -48,7 +48,7 @@ function mvn {
 
 function git-clean-reset {
   git clean -q -x -d -ff
-  git reset -q --hard "${GIT_BRANCH}"
+  git reset -q --hard "origin/${GIT_BRANCH}"
   git checkout -q "${GIT_BRANCH}"
 }
 

@@ -74,7 +74,7 @@ if [ -z ${DRY_RUN} ]; then
   git add --all
   git commit -m "Prepare release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}"
   git tag "${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}" -m "Release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}"
-  git push origin "${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}"
+  git push origin "${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}"
   git push origin "${GIT_BRANCH}"
 else 
   echo "DRY RUN: git add --all"

@@ -1,0 +1,8 @@
+To try your changes locally, run 
+$ hugo server -w --buildDrafts -b http://localhost:1313/cbi/
+and open a browser at http://localhost:1313/cbi/
+
+Add the following lines to the file .git/config
+
+[include]
+	path = ../.gitconfig

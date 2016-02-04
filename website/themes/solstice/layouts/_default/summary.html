@@ -1,0 +1,15 @@
+ (summary)
+<div class="news_item">
+  <div class="news_item_date"><strong>{{ if ge .Date.Unix .Now.Unix }}Upcoming - {{end}}{{ .Date.Format "January 2, 2006" }}</strong></div>
+  <div class="news_item_title">
+    <h3><a href="{{.Permalink}}">{{ .Title }}</a></h3>
+  </div>
+  <div class="news_item_description">
+    {{ .Summary }}
+    {{ if .Truncated }}
+  <div class="read-more-link">
+    <a href="{{ .RelPermalink }}">Read More…</a>
+  </div>
+  {{ end }}
+  </div>
+</div>

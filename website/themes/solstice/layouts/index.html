@@ -1,10 +1,29 @@
 {{ partial "header.html" . }}
 <div class="container">
-  <h1>{{ .Title }}</h1>
-  {{ range .Data.Pages }}
-    {{if eq .Type "index" }}
-        {{.Content}}
-    {{end}}
-  {{ end }}
+	<div class="row">
+		<div class="">
+		<div class="col-sm-16">
+			<h1>{{.Title}}</h1>
+			{{ range where .Data.Pages "Type" "index" }}
+				{{.Content}}
+			{{end}}
+		</div>
+		<div class="col-sm-8">
+			<h3>Content</h3>
+		    <div class="news_item">
+		    {{ range $taxonomyname, $taxonomy := .Site.Taxonomies }}
+		      <div class="news_item_title"><h3><a href="/{{ $taxonomyname | urlize }}">{{slicestr $taxonomyname 0 1 | upper}}{{slicestr $taxonomyname 1}}</a></h3></div>
+		      <div class="news_item_description">
+						<ul>
+		        {{ range $orderedTaxonomy := $taxonomy.ByCount }}
+		        <li><a href="/{{ $taxonomyname | urlize }}/{{ $orderedTaxonomy.Term | urlize }}">{{slicestr $orderedTaxonomy.Term 0 1 | upper}}{{slicestr $orderedTaxonomy.Term 1}} ({{ $orderedTaxonomy.Count }})</li>
+		        {{ end }}
+					</ul>
+		      </div>
+		    {{ end }}
+		  </div>
+			<div class="news_view_all">> <a href="{{ .Site.BaseURL }}/news">View all news</a></div>
+		</div>
+	</div>
 </div>
 {{ partial "footer.html" . }}

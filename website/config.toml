@@ -3,20 +3,17 @@ theme = "solstice"
 languageCode = "en-us"
 title = "Common Build Infrastructure"
 
+canonifyurls = true
+
 [params]
   description = "Common Build Infrastructure Website"
   author = "Mikaël Barbero"
 
 [taxonomies]
   tag = "tags"
-  group = "groups"
 
-# [[menu.main]]
-#     name = "about"
-#     pre = ""
-#     url = "/about/"
-# [[menu.main]]
-#     name = "other"
-#     parent = "about"
-#     pre = ""
-#     url = "/other/"
+[[menu.main]]
+  name = "Hudson for Eclipse Projects"
+  pre = ""
+  url = "/build/hudson"
+  parent = "Build"

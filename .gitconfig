@@ -1,0 +1,3 @@
+[filter "dater"]
+	clean = $(git rev-parse --show-toplevel)/git-tools/dater_clean.sh
+	smudge = $(git rev-parse --show-toplevel)/git-tools/dater_smudge.sh %f

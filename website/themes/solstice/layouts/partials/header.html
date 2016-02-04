@@ -10,13 +10,13 @@
     <meta name="keywords" content="" />
     {{ .Hugo.Generator }}
     <link href="//fonts.googleapis.com/css?family=Open+Sans:400,700,300,600,100" rel="stylesheet" type="text/css">
-    <link rel="shortcut icon" href="{{ .Site.BaseURL }}public/images/favicon.ico"/>
+    <link rel="shortcut icon" href="/images/favicon.ico"/>
     <title>{{ .Site.Title}}</title>
     <meta property="og:title" content="" />
     <meta property="og:description" content="{{ with .Site.Params.description }}{{ . }}{{ end }}" />
-    <meta property="og:image" content="{{ .Site.BaseURL }}images/logo/eclipse.png" />
-    <link rel="stylesheet" href="{{ .Site.BaseURL }}public/css/solstice.css">
-    <link href="{{ .Site.BaseURL }}/css/prism.css" rel="stylesheet" />
+    <meta property="og:image" content="/images/logo/eclipse.png" />
+    <link rel="stylesheet" href="/css/solstice.css">
+    <link href="/css/prism.css" rel="stylesheet" />
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
     <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
@@ -42,7 +42,7 @@
           <div id="header-left" class="col-sm-14 col-md-16 col-lg-19">
             <div class="row">
               <div class="hidden-xs">
-                <a href="https://eclipse.org/"><img src="{{ .Site.BaseURL }}public/images/logo/eclipse-800x188.png" alt="Eclipse.org logo" class="logo-eclipse-default"/></a>
+                <a href="https://eclipse.org/"><img src="/images/logo/eclipse-800x188.png" alt="Eclipse.org logo" class="logo-eclipse-default"/></a>
               </div>
               <div id="main-menu" class="navbar row yamm">
                 <div id="navbar-collapse-1" class="navbar-collapse collapse">
@@ -58,7 +58,7 @@
                   <span class="icon-bar"></span>
                   <span class="icon-bar"></span>
                   </button>
-                  <a href="https://eclipse.org/" class="navbar-brand visible-xs"><img src="{{ .Site.BaseURL }}/public/images/logo/eclipse-800x188.png" alt="Eclipse.org logo" width="174" class="logo-eclipse-default"/></a>
+                  <a href="{{.Site.BaseURL}}" class="navbar-brand visible-xs"><img src="/images/logo/eclipse-800x188.png" alt="Eclipse.org logo" width="174" class="logo-eclipse-default"/></a>
                 </div>
               </div>
             </div>

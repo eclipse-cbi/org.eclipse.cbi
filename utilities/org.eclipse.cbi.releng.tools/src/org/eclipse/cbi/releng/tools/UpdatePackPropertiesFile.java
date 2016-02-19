@@ -1,14 +1,10 @@
 /*******************************************************************************
- * Copyright (c) 2007-2016 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
+ * Copyright (c) 2007-2016 IBM Corporation and others. All rights reserved. This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License v1.0 which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
- * Contributors:
- *     David Williams - initial API and implementation
- *     This file is a modified version of similar one, created by 
- *     the same author, in the WTP Project.
+ * Contributors: David Williams - initial API and implementation This file is a modified version of similar one, created by the same
+ * author, in the WTP Project.
  *******************************************************************************/
 
 package org.eclipse.cbi.releng.tools;
@@ -46,19 +42,16 @@ public class UpdatePackPropertiesFile extends Task {
     }
 
     private static final String LINE_SEPARATOR_PROPERTY_NAME = "line.separator";
-    // private static final String PATH_SEPARATOR_PROPERTY_NAME =
-    // "path.separator";
     private static final String FILE_SEPARATOR_PROPERTY_NAME = "file.separator";
-
     private static String       EOL                          = System.getProperty(LINE_SEPARATOR_PROPERTY_NAME);
-    // private static String PATH_SEPERATOR =
-    // System.getProperty(PATH_SEPARATOR_PROPERTY_NAME);
     private static String       FILE_SEPERATOR               = System.getProperty(FILE_SEPARATOR_PROPERTY_NAME);
-
+    private static String       DEFAULT_PACK200_ARGS         = "-E4";
+    private String              pack200args;
     private boolean             verbose;
     private String              archiveFilename;
     private FilenameFilter      jarFileFilter                = new JarFileFilter();
     private String              tempdir;
+    private boolean             packPropertiesExisted;
 
     /**
      * Purely a test method while in workbench
@@ -81,6 +74,7 @@ public class UpdatePackPropertiesFile extends Task {
             invalidProperties = true;
         }
         ZipFile archiveFile = null;
+        // confirm the zip file exists?
         try {
             archiveFile = new ZipFile(getArchiveFilename());
             archiveFile.close();
@@ -96,7 +90,12 @@ public class UpdatePackPropertiesFile extends Task {
             log("verbose logging is enabled");
         }
         try {
-            excludeSignedJars();
+            packPropertiesExisted = packPropertiesExists();
+            if (packPropertiesExisted) {
+                log("A 'pack.properties' file was found in the archive so we did not create one and did not modify anything.");
+            } else {
+                excludeSignedJars();
+            }
         }
         catch (IOException e) {
             throw new BuildException(e);
@@ -149,7 +148,8 @@ public class UpdatePackPropertiesFile extends Task {
 
         log("adding pack.properties to archive");
         FileWriter packFile = new FileWriter(destinationdirectory + "pack.properties");
-        packFile.write("pack200.default.args=-E4" + EOL);
+
+        packFile.write("pack200.default.args=" + getPack200args() + EOL);
         packFile.write("pack.excludes=" + result + EOL);
         packFile.write("sign.excludes=" + result + EOL);
         packFile.close();
@@ -330,7 +330,7 @@ public class UpdatePackPropertiesFile extends Task {
             for (int i = 0; i < jars.length; i++) {
                 String jarname = jars[i];
                 JarFile jarFile = new JarFile(destinationDir + parentDir + jarname);
-                Enumeration<JarEntry> jarentries = jarFile.entries();
+                Enumeration<? extends ZipEntry> jarentries = jarFile.entries();
                 while (jarentries.hasMoreElements()) {
                     JarEntry jarentry = (JarEntry) jarentries.nextElement();
                     String entryname = jarentry.getName();
@@ -357,7 +357,7 @@ public class UpdatePackPropertiesFile extends Task {
 
         File testFile = new File(zipfilename);
         if (!testFile.exists()) {
-            log("Zip file, " + zipfilename + ", does not exist.");
+            throw new BuildException("Zip file, " + zipfilename + ", disappeared after staring run.");
         } else {
             zipinputstream = new ZipInputStream(new FileInputStream(zipfilename));
 
@@ -463,5 +463,54 @@ public class UpdatePackPropertiesFile extends Task {
         }
 
         return tempdir;
+    }
+
+    public String getPack200args() {
+        if (pack200args == null) {
+            pack200args = DEFAULT_PACK200_ARGS;
+        }
+        return pack200args;
+    }
+
+    public void setPack200args(String pack200args) {
+        this.pack200args = pack200args;
+    }
+
+    private boolean packPropertiesExists() {
+        boolean result = false;
+        // The file we are looking for is only valid if at "top"
+        // of hierarchy. Not if in subdirectory.
+        String packPropertiesName = "pack.properties";
+        ZipFile zipFile = null;
+        try {
+            zipFile = new ZipFile(getArchiveFilename());
+
+            // get an enumeration of the ZIP file entries
+            Enumeration<? extends ZipEntry> e = zipFile.entries();
+
+            while (e.hasMoreElements()) {
+                ZipEntry entry = e.nextElement();
+                // get the name of the entry
+                String entryName = entry.getName();
+                if (entryName.equalsIgnoreCase(packPropertiesName)) {
+                    result = true;
+                    break;
+                }
+            }
+        }
+        catch (IOException ioe) {
+            System.out.println("Error opening zip file" + ioe);
+        }
+        finally {
+            try {
+                if (zipFile != null) {
+                    zipFile.close();
+                }
+            }
+            catch (IOException ioe) {
+                System.out.println("Error while closing zip file" + ioe);
+            }
+        }
+        return result;
     }
 }

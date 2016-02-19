@@ -342,6 +342,22 @@ public class UpdatePackPropertiesFile extends Task {
         }
     }
 
+    /**
+     * This method uses a simple heuristic to determine if signed. 
+     * It simple looks for "ECLIPSE.SF" and all known variants. 
+     * 
+     * I was thinking that should be improved someday, but I looked
+     * at how Ant implements their "signed selector" and turns out that 
+     * they do the same thing (basically). See 
+     * http://grepcode.com/file/repo1.maven.org/maven2/org.apache.ant/ant/1.8.4/org/apache/tools/ant/taskdefs/condition/IsSigned.java#40
+     * 
+     * @param currentresults
+     * @param destinationDir
+     * @param parentDir
+     * @param jars
+     * @return
+     * @throws IOException
+     */
     private String checkIfJarsSigned(String currentresults, String destinationDir, String parentDir, String[] jars)
             throws IOException {
         if (jars != null) {

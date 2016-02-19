@@ -146,13 +146,31 @@ public class UpdatePackPropertiesFile extends Task {
         }
         log("list of jars already signed: " + result);
 
-        log("adding pack.properties to archive");
+        log("starting to add pack.properties to archive");
         FileWriter packFile = new FileWriter(destinationdirectory + "pack.properties");
 
-        packFile.write("pack200.default.args=" + getPack200args() + EOL);
-        packFile.write("pack.excludes=" + result + EOL);
-        packFile.write("sign.excludes=" + result + EOL);
+        boolean wroteValue = false;
+        // even though default is '-E4' if someone passes in empty
+        // string, we assume no property file line is written at all.
+        String argsValue = getPack200args();
+        if (argsValue != null && argsValue.length() > 0) {
+            packFile.write("pack200.default.args=" + getPack200args() + EOL);
+            wroteValue = true;
+        }
+        // similar for 'results'. If nothing should be excluded, we
+        // do not write the lines at all.
+        if (result != null && result.length() > 0) {
+            packFile.write("pack.excludes=" + result + EOL);
+            packFile.write("sign.excludes=" + result + EOL);
+            wroteValue = true;
+        }
         packFile.close();
+        if (! wroteValue) {
+           new File(destinationdirectory,"pack.properties").delete();
+           log ("Did not write pack.properties file, since all values were empty.");
+        } else {
+            log ("Created pack.properties file to add to archive.");
+        }
 
         // again, include zip file name to make sure unique
         String tempzipFileName = getTempdir() + "tempzip" + zipfilenameOnly + ".zip";

@@ -330,7 +330,7 @@ public class UpdatePackPropertiesFile extends Task {
             for (int i = 0; i < jars.length; i++) {
                 String jarname = jars[i];
                 JarFile jarFile = new JarFile(destinationDir + parentDir + jarname);
-                Enumeration jarentries = jarFile.entries();
+                Enumeration<JarEntry> jarentries = jarFile.entries();
                 while (jarentries.hasMoreElements()) {
                     JarEntry jarentry = (JarEntry) jarentries.nextElement();
                     String entryname = jarentry.getName();

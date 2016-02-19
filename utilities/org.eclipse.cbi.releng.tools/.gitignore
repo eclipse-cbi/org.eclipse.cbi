@@ -4,6 +4,5 @@ temp.folder
 org.eclipse.cbi.releng.tools_*.jar
 bin/
 *.jpage
-runTychoBuild.sh
 target/
-lib/*.jar
+/lib/

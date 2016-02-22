@@ -1,0 +1,150 @@
+#!/bin/sh
+
+#*******************************************************************************
+#* Copyright (c) 2006 Eclipse Foundation and others.
+#* All rights reserved. This program and the accompanying materials
+#* are made available under the terms of the Eclipse Public License v1.0
+#* which accompanies this distribution, and is available at
+#* http://www.eclipse.org/legal/epl-v10.html
+#*
+#* Contributors:
+#*    Denis Roy (Eclipse Foundation)
+#*    Matt Ward (Eclipse Fonudation)
+#*******************************************************************************/
+
+# sign - adds files to a queue for signing
+# Files may be .zip or .jar files
+# Queue is processed by genie via a cronjob
+
+
+LOGFILE=/home/data/httpd/download-staging.priv/arch/signer.log
+QUEUEFILE=/home/data/httpd/download-staging.priv/arch/signing_queue
+
+if [[ -z "$2"  ||  "$2" -ne "mail"  ||  "$2" -ne "nomail"  ||  "$2" -ne "now" ]] ; then
+	echo
+        echo "Usage: $0 <file> <mail|nomail|now> [outputDir] [skiprepack] [notsa]"
+        echo "Signs JAR or ZIP file <file>, placing the resulting file in optional [outputDir] and mails notification that signing is complete, if requested."
+	echo "You must provide one of mail,nomail or now"
+        exit 255
+fi
+
+function is_signed() {
+  VERIFIED=$($JARSIGNER -verify $FILE | grep -o "verified")
+  echo "Testing if $FILE is signed: [$VERIFIED] " >> $LOGFILE
+  if [ -n "$VERIFIED" ]; then
+    #file already signed, skip it
+    echo "$FILE already signed, skipping"
+    exit 1
+  fi
+
+}
+
+# Get directory name from file to ensure it is in the staging area
+DIR=$(dirname "$1")
+cd $DIR
+
+DIR=$PWD
+FILE=$(basename "$1")
+
+FILENAME=$(echo -n "$DIR"; echo -n "/"; echo "$FILE");
+SKIPREPACK=$(echo -n $* | grep -o "skiprepack")
+
+VALIDLOCATION=$(echo "$DIR" | egrep -c "(\/shared\/download-staging.priv|\/opt\/public\/download-staging.priv\/|\/home\/data\/httpd\/download-staging.priv)")
+
+if [ $VALIDLOCATION = 0 ]; then
+        echo "ERROR: File $FILENAME is not in the downloads staging area, or the hudson directory. Not signing from unknown location."
+	echo "Signing aborted."
+	echo
+        exit 1
+fi
+
+if [ ! -f $FILENAME ]; then
+        echo "ERROR: File $1 not found, or not a valid file."
+	echo "Signing aborted."
+	echo
+        exit 2
+fi
+
+#check for pre-signed jar
+if [ -n "$JAR_PROCESSOR_JAVA" ]; then
+  echo "Batch signer is using Java 8" >> $LOGFILE
+  JARSIGNER="/shared/common/jdk1.8.0_x64-latest/bin/jarsigner"
+else
+  #Check to see if the path name has java8 in it for projects that can't add extra params.
+  JAR_PROCESSOR_JAVA=$(echo -n "$DIR"  | grep -o "java8")
+  if [ -n "$JAR_PROCESSOR_JAVA" ]; then
+    echo "Batch signer is using Java 8" >> $LOGFILE
+    JARSIGNER="/shared/common/jdk1.8.0_x64-latest/bin/jarsigner"
+  else
+    echo "Batch signer is using Java 6" >> $LOGFILE
+    JARSIGNER="/shared/common/jdk-1.6.x86_64/bin/jarsigner"
+  fi
+fi
+
+is_signed
+
+# validate outputDir
+if [ ! -z "$3" -a "$3" != "skiprepack" -a "$3" != "java8" ]; then
+	if [ ! -d $3  ]; then
+	        echo "WARNING: $3 is not a valid directory. Creating."
+		mkdir -p $3
+	fi
+
+	# Get directory name from file to ensure it is in the staging area
+	CURRDIR=$PWD
+	cd $3	
+
+	DIR=$PWD
+	VALIDLOCATION=$(echo "$DIR" | egrep -c "(\/shared\/download-staging.priv|\/opt\/public\/download-staging.priv\/|\/home\/data\/httpd\/download-staging.priv)")
+
+	if [ $VALIDLOCATION = 0 ]; then
+	        echo "ERROR: Output Directory is not in the downloads staging area, or the hudson directory. Cannot work in an unknown location."
+		echo "Signing aborted."
+		echo
+	        exit 3
+	fi
+	cd $CURRDIR
+
+	# outputDir must be group writable
+	if [ $(getfacl --all-effective $3 2> /dev/null | grep ^user:genie | awk {'print $2'} | grep "rw" | wc -l) -eq 0  ]; then
+        	echo "WARNING: outputDir $3 not writable by user genie. Changing permissions to make file group-writable."
+		chmod g+w $3
+		echo
+	fi;
+
+fi
+if [ $(getfacl --all-effective $FILENAME 2> /dev/null | grep ^user:genie | awk {'print $2'} | grep "rw" | wc -l) -eq 0  ]; then
+        echo "WARNING: File $1 not writable by user genie. Changing permissions to make file group-writable."
+	chmod g+w $FILENAME
+	echo
+fi;
+
+#if [ "$3" = "skiprepack" -o "$4" = "skiprepack" ]; then
+#	SKIPREPACK=":skiprepack"
+#fi
+
+if [ "$2" = "now" ]; then
+	echo "Signing $1 now"
+	echo -n "$(date +%s):$USER:$FILENAME:nomail:${DIR}${SKIPREPACK}${JAVA8}" | netcat build.eclipse.org 31337
+else
+
+	# Write the queue
+	echo -n $(date +%s) >> $QUEUEFILE
+	echo -n ":" >> $QUEUEFILE
+	echo -n $USER >> $QUEUEFILE
+	echo -n ":" >> $QUEUEFILE
+	echo -n $FILENAME >> $QUEUEFILE
+	echo -n ":" >> $QUEUEFILE
+	echo -n $2 >> $QUEUEFILE
+	echo -n ":" >> $QUEUEFILE
+	echo -n $DIR >> $QUEUEFILE
+	echo -n ":$SKIPREPACK" >> $QUEUEFILE
+	echo  ":$JAR_PROCESSOR_JAVA" >> $QUEUEFILE
+
+	echo "File $FILENAME added to queue."
+	echo "You will receive notification when the file is signed, if you used the mail parameter."
+	echo
+	echo "You can check signing status by tailing /home/data/httpd/download-staging.priv/arch/signer.log"
+	echo
+fi
+exit 0

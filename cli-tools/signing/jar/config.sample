@@ -14,8 +14,58 @@
 
 # The keystore where the jar signing certificate is stored
 # Must be an absolute path
-KEYSTORE=/path/to/file.keystore
+KEYSTORE="${KEYSTORE:-/path/to/file.keystore}"
+
+# The alias name of the certificate to be used for signing
+ALIASNAME="${ALIASNAME:-Acme Inc.}"
 
 # The file containing the password for the keystore above
 # Must be an absolute path
-STOREPASSFILE=/path/to/keystore.passwd
+STOREPASSFILE="${STOREPASSFILE:-/path/to/keystore.passwd}"
+
+# Log file for all jar signing service messages
+LOGFILE="${LOGFILE:-/path/to/log/signer.log}"
+
+# File into which the signing requests are queued (when not 'NOW')
+QUEUE="${QUEUE:-/path/to/signing_queue}"
+
+# File that will be used a a lock file for a giving signing process 
+# (a PPID will be appended to the path)
+QUEUE_LOCK_PREFIX="${QUEUE_LOCK_PREFIX:-/prefix/path/to/signing_queue.lock}"
+
+# Paths where files to be signed can be found or where results can be written to.
+# If inputs or outputs are outside of these folders, signing scripts will raise exceptions.
+SAFE_WD=("${SAFE_WD[@]:-/valid/path/to/staging.priv /another/valid/path/to/staging.priv}")
+
+# The hostname running the sign_queue_process.sh script as a xinetd service
+SIGN_SERVER_HOSTNAME="${SIGN_SERVER_HOSTNAME:-sign.acme.com}"
+
+# The port on which the sign_queue_process.sh script runs as a xinetd service
+SIGN_SERVER_PORT="${SIGN_SERVER_PORT:-31337}"
+
+# The name of the user which will run the jarprocesor and signer scripts
+SIGNER_USERNAME="${SIGNER_USERNAME:-signer_user}"
+
+# Default java version to be used when neither the JAR_PROCESSOR_JAVA env variable
+# is set or the dirname of the file to be signed does not contain the pattern 'java[0-9]+'
+# Must be a valid suffix in the JAR_PROCESSORS and JDKS (kind-of) associative arrays.
+DEFAULT_JAVA_VERSION="${DEFAULT_JAVA_VERSION:-java6}"
+
+# The JDK that will be used to run the jar processor and from which the jarsigner
+# executable will be used.
+JDKS_java6="${JDKS_java6:-/usr/local/java/jdk1.6.0}"
+JDKS_java7="${JDKS_java7:-/usr/local/java/jdk1.7.0}"
+JDKS_java8="${JDKS_java8:-/usr/local/java/jdk1.8.0}"
+
+# Path to a recent JDK (the latest available is reasonable)
+# Will be used to check that a jar is already signed or not and run some
+# tools not influenced by the JDK version.
+JAVA_HOME="${JAVA_HOME:-${JDKS_java8}}"
+
+# The path to the jar processor to be used for each Java version
+JAR_PROCESSORS_java6="${JAR_PROCESSORS_java6:-/path/to/jar/processor/when/signing/and/processing/with/java6/jarprocessor.jar}"
+JAR_PROCESSORS_java7="${JAR_PROCESSORS_java7:-/path/to/jar/processor/when/signing/and/processing/with/java7/jarprocessor.jar}"
+JAR_PROCESSORS_java8="${JAR_PROCESSORS_java8:-/path/to/jar/processor/when/signing/and/processing/with/java8/org.eclipse.equinox.p2.jarprocessor_1.0.300.v20131211-1531.jar}"
+
+# The URL of the timestamp authority to be used by the jarsigner
+TSA_URL="${TSA_URL:-https://timestamp.geotrust.com/tsa}"

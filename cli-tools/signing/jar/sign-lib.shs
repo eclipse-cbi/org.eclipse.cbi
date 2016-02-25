@@ -1,0 +1,131 @@
+#!/bin/bash
+
+##############################################################################
+# Copyright (c) 2016 Eclipse Foundation and others.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+# Contributors:
+#    Mikaël Barbero (Eclipse Foundation)
+##############################################################################
+
+function debug() {
+  printf "[DEBUG] %b\n" "${*}" >&2
+}
+
+function info() {
+  printf "[INFO] %b\n" "${*}" >&2
+}
+
+function warning() {
+  printf "[WARNING] %b\n" "${*}" >&2
+}
+
+function error() {
+  printf "[ERROR] %b\n" "${*}" >&2
+}
+
+##
+# Tests whether the jar is already signed by invoking a jarsigner program
+# $1: the jar file to be tested
+# $2: path to the jarsigner executable (default value is $JAVA_HOME/bin/jarsigner)
+# $*: additional jarsigner parameters (e.g. -strict)
+# Print 0 on stdout if the jar is signed, print 1 otherwise
+##
+function jar_is_signed() {
+  local file="${1}"
+  local jarsigner="${2:-${JAVA_HOME}/bin/jarsigner}"
+  local options="${@:2}"
+  
+  if "${jarsigner}" -verify "${file}" ${options} 2>&1 | grep -q "verified"; then
+    info "Testing if '${file}' is signed: [verified]"
+    return 0
+  else 
+    info "Testing if '${file}' is signed: [unsigned]"
+    return 1
+  fi
+}
+
+##
+# Prints the absolute path of the given path (maybe relative or not).
+# The parent folder of the given path must exist.
+# Does not mess with cwd.
+##
+function absolute_path() {
+  local path="${1}"
+  local dirname="$(dirname "${path}")"
+  local basename="$(basename "${path}")"
+  if [[ ! -d "${dirname}" ]]; then
+    error "Folder '${dirname}' does not exists, cannot resolve its absolute path"
+    return 1
+  fi
+  pushd "${dirname}" > /dev/null
+  local ret="$(pwd)/${basename}"
+  popd > /dev/null
+  printf "${ret}"
+}
+
+##
+# Prints a string as the concatenation of all arguments except then
+# first one which is used as a separator between each part.
+##
+function join_strings { 
+  local IFS="${1}"; 
+  shift; 
+  printf "${*}";
+}
+
+##
+# Checks whether the first argument is a subfolder of any of the other arguments
+# All folders must exists.
+# Returns 0 if the first argument is a subfolder of any other, 1 otherwise
+# ex: "is_sub_folder /tmp/my_dir /tmp/bla /home" will return 1 while
+# "is_sub_folder /tmp/my_dir /tmp /home" will return 0
+##
+function is_sub_folder() {
+  local path="$(absolute_path "${1}")"
+  local folders=("${@:2}")
+  local abs_folders=()
+  for i in "${!folders[@]}"; do
+    abs_folders[${i}]="$(absolute_path "${folders[${i}]}")"
+  done
+  if echo "${path}" | egrep -q "$(join_strings "|" "${abs_folders[@]}")"; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+##
+# Returns the java version to use for batch signer (actually the java with which will
+# be run the jarprocessor and the jarsigner command).
+# Returned value is something like "java[0-9]+"
+function batch_signer_java_version() {
+  local path="${1}"
+  local jarProcessorJava="${2:-}" # optional
+  local java_version="$(echo "${jarProcessorJava}" | egrep -o "^java[0-9]+$")" || true
+  if [[ -z "${java_version}" ]]; then
+    # Check to see if the path name has java8 in it for projects that can't add extra params.
+    java_version="$(echo "${path}" | egrep -o "java[0-9]+")" || true
+  fi
+  printf "%s" "${java_version}"
+}
+
+function has_effective_acl() {
+  local user="${1}"
+  local perm="${2}"
+  local file="${3}"
+  
+  if getfacl --all-effective "${file}" 2> /dev/null | grep ^user:${user} | awk {'print $2'} | grep -q "${perm}"; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+function dynvar() {
+  local varname="${1}"
+  printf "%s" ${!varname}
+}

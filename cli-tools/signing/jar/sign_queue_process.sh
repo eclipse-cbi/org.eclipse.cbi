@@ -1,126 +1,139 @@
-#!/bin/sh
+#!/bin/bash
 
-#*******************************************************************************
-#* Copyright (c) 2005, 2007 Eclipse Foundation and others.
-#* All rights reserved. This program and the accompanying materials
-#* are made available under the terms of the Eclipse Public License v1.0
-#* which accompanies this distribution, and is available at
-#* http://www.eclipse.org/legal/epl-v10.html
-#*
-#* Contributors:
-#*    Denis Roy (Eclipse Foundation)
-#*******************************************************************************/
+##############################################################################
+# Copyright (c) 2005-2016 Eclipse Foundation and others.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+#
+# Contributors:
+#    Denis Roy (Eclipse Foundation)
+#    Mikaël Barbero (Eclipse Foundation)
+##############################################################################
 
 # sign_queue_process.sh: Run as a cronjob, this script processes the signing queue
 # and invokes jarprocessor.jar (and sign.sh) for files that need to be signed.
 
+# switch to strict mode
+set -o nounset
+set -o errexit
+set -o pipefail
+
+shopt -s nullglob
+shopt -s extglob
+shopt -s expand_aliases
+
+SCRIPT_NAME="$(basename ${0})"
+SCRIPT_PATH="$(dirname "${0}")"
+SCRIPT_READLINK="$(readlink -e -n "${0}")"
+SCRIPT_REALNAME="$(basename "${SCRIPT_READLINK}")"
+SCRIPT_REALPATH="$(dirname "${SCRIPT_READLINK}")"
+
+source "${SCRIPT_REALPATH}/config"
+source "${SCRIPT_REALPATH}/sign-lib.shs"
+
 umask 0007
 
-PID=$$
+LOCK="${QUEUE_LOCK_PREFIX}.${$}"
 
-HOSTNAME=$(hostname)
-LOGFILE=/home/data/httpd/download-staging.priv/arch/signer.log
-LOCKFILE=/home/data/httpd/download-staging.priv/arch/signing_queue.lock.$PID
+function log_prefix() {
+  printf "%s:%s:QUEUE(%s)" "$(date +%Y-%m-%d\ %H:%M:%S)" "$(hostname)" "${$}"
+}
+
+function process_queue_file() {
+  local queue_file="${1}"
+  debug "====> start of (${$}) contents" >> "${LOGFILE}" 2>&1
+  cat "${queue_file}" >> "${LOGFILE}" 2>&1
+  debug "====> end of (${$}) contents" >> "${LOGFILE}" 2>&1
+  
+  for queue_line in $(cat "${queue_file}"); do
+    REQUEST_DATE=$(echo -n ${queue_line} | awk -F: {'print $1'})
+    SIGNER_USERNAME=$(echo -n ${queue_line} | awk -F: {'print $2'})
+    FILE=$(echo -n ${queue_line} | awk -F: {'print $3'})
+    QUEUE_OPTION=$(echo -n ${queue_line} | awk -F: {'print $4'})
+    OUTPUT_DIR=$(echo -n ${queue_line} | awk -F: {'print $5'})
+    SKIPREPACK=$(echo -n ${queue_line} | awk -F: {'print $6'})
+    JAVA_VERSION=$(echo -n ${queue_line} | awk -F: {'print $7'})
+    
+    if [[ -z "${FILE}" || ! -f "${FILE}" || ("${FILE}" != *.jar && "${FILE}" != *.zip) ]]; then
+      error "$(log_prefix): File '${FILE}' is not valid jar or zip file. Skipping." >> "${LOGFILE}" 2>&1
+      continue
+    fi
+    
+    if [[ -z "${OUTPUT_DIR}" ]]; then
+      OUTPUT_DIR="$(dirname "${FILE}")"
+    elif [[ ! -d "${OUTPUT_DIR}" ]]; then
+      error "$(log_prefix): Output directory '${OUTPUT_DIR}' is not a valid directory. Skipping." >> "${LOGFILE}" 2>&1
+      continue
+    fi
+  
+    if [[ ! "${JAVA_VERSION}" =~ ^java[0-9]+$ ]]; then 
+      error "$(log_prefix): Java version '${JAVA_VERSION}' in queue file is invalid. Expecting something like '^java[0-9]+$'. Skipping." >> "${LOGFILE}" 2>&1
+      continue
+    fi
+
+    info "$(log_prefix): Processing queue item '${FILE}'" >> "${LOGFILE}" 2>&1
+    
+    JAR_PROCESSOR="$(dynvar "JAR_PROCESSORS_${JAVA_VERSION}")"
+    JDK="$(dynvar "JDKS_${JAVA_VERSION}")"
+    SIGNSCRIPT="${SCRIPT_REALPATH}/jar_processor_signer_${JAVA_VERSION}.sh"
+    info "$(log_prefix): Using '${JDK}/bin/java' to run '${JAR_PROCESSOR}'" >> "${LOGFILE}" 2>&1
+    
+    if [[ -z "$SKIPREPACK" ]]; then
+      REPACK="-repack"
+    else 
+      REPACK=""
+    fi
+
+    debug "$(log_prefix): Executing '${JDK}/bin/java -jar "${JAR_PROCESSOR}" -outputDir "${OUTPUT_DIR}" "${REPACK}" -verbose -processAll -sign "${SIGNSCRIPT}" "${FILE}"'" >> "${LOGFILE}" 2>&1
+    "${JDK}/bin/java" -jar "${JAR_PROCESSOR}" -outputDir "${OUTPUT_DIR}" "${REPACK}" -verbose -processAll -sign "${SIGNSCRIPT}" "${FILE}" >> "${LOGFILE}" 2>&1
+    
+    #alter ownership to match that of the source file
+    if [ -f "${OUTPUT_DIR}/$(basename "${FILE}")" ]; then
+      # for some reasons, when -repack is not specified, jar files are not put in the -outputDir by the jarprocessor!!
+      # do no try to alter ownership as "${OUTPUT_DIR}/$(basename "${FILE}")" does not exist
+      chgrp "$(stat -c %G "${FILE}")" "${OUTPUT_DIR}/$(basename "${FILE}")" 2>/dev/null
+    fi
+    
+  done
+
+  info "$(log_prefix): Finished processing queue." >> "${LOGFILE}" 2>&1
+}
 
 # read stdin to see if we need to sign now
-read -t 2 stdin
+read -t 2 stdin || true
 
-if [ -n "$stdin" ]; then
-	STARTDATE=$(date +%Y-%m-%d\ %H:%M:%S)
-        echo "$STARTDATE: $HOSTNAME QUEUE($$): Begin processing queue NOW: $$" >> $LOGFILE
-        echo "$stdin" > $LOCKFILE
-else
-	if [ -f /home/data/httpd/download-staging.priv/arch/signing_queue ]; then
-		if [ $(awk -F. '{print $1}' /proc/loadavg) -gt 40 ]; then echo "Too busy to sign.  Going to sleep."; exit 128; fi
-
-		STARTDATE=$(date +%Y-%m-%d\ %H:%M:%S)
-
-		mv /home/data/httpd/download-staging.priv/arch/signing_queue $LOCKFILE 
-		echo "$STARTDATE: $HOSTNAME QUEUE($$): Begin processing queue: $$" >> $LOGFILE
-	fi
-fi
-
-# Do we have a queue?
-if [ -f $LOCKFILE ]; then
-	cat $LOCKFILE >> $LOGFILE
-	echo "======================= end of ($$) contents" >> $LOGFILE
-	for i in $(cat $LOCKFILE); do
-		FILE=$(echo -n $i | awk -F: {'print $3'})
-		DIR=$(echo -n $i | awk -F: {'print $5'})
-		if [ "$DIR" = "skiprepack" ]; then
-			DIR=""
-		fi
-		SKIPREPACK=$(echo -n $i | grep -o "skiprepack")
-		REPACK=""
-		if [ -z "$SKIPREPACK" ]; then
-			REPACK="-repack"
-		fi
-		# /home/admin/sign.sh $FILE 
-
-		# Bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=135044
-
-		if [ -z "$DIR" ]; then
-			DIR=$(dirname "$FILE")
-		fi
-
-		# Check for files on build2 ... otherwise they're on build
-		if [ ! -e "$FILE" ]; then
-			FILE=$(echo $FILE | sed -e 's#/opt/users/hudsonbuild/.hudson/jobs#/opt/public/jobs#')
-		fi
-		if [ ! -e "$DIR" ]; then
-			DIR=$(echo $DIR | sed -e 's#/opt/users/hudsonbuild/.hudson/jobs#/opt/public/jobs#')
-		fi
-
-	
-		# /shared/common/ibm-java2-ppc-50/jre/bin/java /home/admin/jarprocessor.jar -outputDir $DIR $REPACK -verbose -processAll -sign /home/admin/sign.sh $FILE
-		NOWDATE=$(date +%Y-%m-%d\ %H:%M:%S)
-		echo "$NOWDATE: $HOSTNAME QUEUE($$): calling jarprocessor.jar for [$FILE]" >> $LOGFILE
-		#Mward 09/20/10 /shared/common/ibm-java2-ppc-50/jre/bin/java -jar /home/admin/jarprocessor.jar -outputDir $DIR $REPACK -verbose -processAll -sign ~/signing/sign.sh $FILE >> $LOGFILE 2>&1
-		# echo /opt/public/common/ibm-java-x86_64-60/bin/java -jar /home/admin/jarprocessor.jar -outputDir $DIR $REPACK -verbose -processAll -sign /home/data/users/genie/signing/sign.sh  $FILE >> $LOGFILE 2>&1
-		
-		JAVA8=$(echo -n $i | grep -o "java8")
-                if [ -n "$JAVA8" ]; then
-		    echo "$NOWDATE: $HOSTNAME QUEUE($$): Using Java8 to run jarprocessor and signing" >> $LOGFILE
-		    JAVA_DIR=/opt/public/common/jdk1.8.0_x64-latest
-	   	    JARPROCESSOR=/home/data/users/genie/signing/org.eclipse.equinox.p2.jarprocessor_1.0.300.v20131211-1531.jar
-		    SIGNSCRIPT=/home/data/users/genie/signing/sign8.sh
-                else
-		    echo "$NOWDATE: $HOSTNAME QUEUE($$): Using Java6 to run old jarprocessor and signing" >> $LOGFILE
-		    JAVA_DIR=/opt/public/common/ibm-java-x86_64-60
-		    JARPROCESSOR=/home/data/users/genie/signing/jarprocessor.jar
-		    SIGNSCRIPT=/home/data/users/genie/signing/sign.sh
-		fi
-	        echo "$JAVA_DIR/bin/java -jar $JARPROCESSOR -outputDir $DIR $REPACK -verbose -processAll -sign /home/data/users/genie/signing/sign.sh  $FILE $JAVA8"  >> $LOGFILE
-		$JAVA_DIR/bin/java -jar $JARPROCESSOR -outputDir $DIR $REPACK -verbose -processAll -sign $SIGNSCRIPT  $FILE  >> $LOGFILE 2>&1
-
-
-#		$JAVA_DIR/bin/java -jar /home/admin/jarprocessor.jar -outputDir $DIR $REPACK -verbose -processAll -sign /home/data/users/genie/signing/sign.sh  $FILE  >> $LOGFILE 2>&1
-		OUTPUTFILE=$(basename "$FILE")
-		DESTGROUP=$(ls -l $FILE | awk {'print $4'})
-	        #alter ownership to match that of the source file
-                chgrp $DESTGROUP $DIR/$OUTPUTFILE 2>/dev/null
-	done
-	ENDDATE=$(date +%Y-%m-%d\ %H:%M:%S)
-	echo "$ENDDATE: $HOSTNAME QUEUE($$): Finished processing queue." >> $LOGFILE
-
-	# If we asked to sign now, report back to STDIN
-	if [ -n "$stdin" ]; then
-		echo "Finished signing $FILE."
-	fi
-
-	# send notification e-mails
-	for i in $(cat $LOCKFILE | grep ":mail:" | awk -F: {'print $2'} | sort | uniq); do
-		USERID=$i
-		#updating the final awk to catch users like dmadruga that have more than a first and last name
-		#M. Ward 06/10/09
-                #MAIL=$(getent passwd | grep $USERID | awk -F: {'print $5'} | awk {'print $NF'})
-		#With the email adress removed from teh gecos field this line needed to be updated. M. Ward 02/08/11
-                MAIL=$(ldapsearch -LLL -x  "uid=$USERID" mail | awk {'getline;print $2'})
-
-                echo "One or more files placed in the signing queue are now signed." | /usr/bin/mail -s "File Signing Complete" -r "webmaster@eclipse.org" $MAIL
-        done
-
-	rm $LOCKFILE
-	#echo -n "End signing at "
-	#date
+if [[ -n "${stdin:-}" ]]; then
+  
+  info "$(log_prefix): Begin processing queue NOW: ${$}"
+  
+  printf "%s\n" "${stdin}" > "${LOCK}"
+  process_queue_file "${LOCK}"
+  rm "${LOCK}"
+  
+  info "$(log_prefix): Finished signing '${FILE}'."
+  
+elif [[ -f "${QUEUE}" ]]; then
+  if [[ $(awk -F. '{print $1}' /proc/loadavg) > 40 ]]; then 
+    warning "Too busy to sign. Going to sleep." >> "${LOGFILE}" 2>&1
+    exit 128; 
+  fi
+  
+  info "$(log_prefix): Begin processing queue: ${$}" >> "${LOGFILE}" 2>&1
+  
+  mv "${QUEUE}" "${LOCK}"
+  process_queue_file "${LOCK}"
+  
+  # send notification e-mails
+  for userToBeMailed in $(cat "${LOCK}" | grep ":mail:" | awk -F: {'print $2'} | sort | uniq); do
+    # updating the final awk to catch users like dmadruga that have more than a first and last name
+    # M. Ward 06/10/09
+    # MAIL=$(getent passwd | grep $USERID | awk -F: {'print $5'} | awk {'print $NF'})
+    # With the email adress removed from teh gecos field this line needed to be updated. M. Ward 02/08/11
+    MAIL="$(ldapsearch -LLL -x "uid=${userToBeMailed}" mail | awk {'getline;print $2'})"
+    echo "One or more files placed in the signing queue are now signed." | /usr/bin/mail -s "File Signing Complete" -r "webmaster@eclipse.org" "${MAIL}"
+  done
+  
+  rm "${LOCK}"
 fi

@@ -50,9 +50,9 @@ export JAR_PROCESSORS_java6="$(pwd)/jarprocessor.jar"
 export JAR_PROCESSORS_java7="$(pwd)/jarprocessor.jar"
 export JAR_PROCESSORS_java8="$(pwd)/jarprocessor.jar"
 
-export JDKS_java6="$(pwd)/jdks/1.6"
-export JDKS_java7="$(pwd)/jdks/1.7"
-export JDKS_java8="$(pwd)/jdks/1.8"
+export JDKS_java6="${JDKS_java6:-$(pwd)/jdks/1.6}"
+export JDKS_java7="${JDKS_java7:-$(pwd)/jdks/1.7}"
+export JDKS_java8="${JDKS_java8:-$(pwd)/jdks/1.8}"
 ## end of config
 ##############################################################################
 
@@ -71,10 +71,18 @@ wget -q "http://download.eclipse.org/equinox/drops/R-Mars.2-201602121500/org.ecl
 
 # JAVA_HOME will be used for all java versions, but we just want to test that
 # the script retrieve the proper path.
-mkdir jdks
-ln -s "${JAVA_HOME}" "jdks/1.6"
-ln -s "${JAVA_HOME}" "jdks/1.7"
-ln -s "${JAVA_HOME}" "jdks/1.8"
+if [[ ! -d "${JDKS_java6}" ]]; then
+  mkdir -p "$(dirname "${JDKS_java6}")"
+  ln -s "${JAVA_HOME}" "${JDKS_java6}"
+fi
+if [[ ! -d "${JDKS_java7}" ]]; then
+  mkdir -p "$(dirname "${JDKS_java7}")"
+  ln -s "${JAVA_HOME}" "${JDKS_java7}"
+fi
+if [[ ! -d "${JDKS_java8}" ]]; then
+  mkdir -p "$(dirname "${JDKS_java8}")"
+  ln -s "${JAVA_HOME}" "${JDKS_java8}"
+fi
 
 ## Copy test data into test-staging folder
 mkdir test-staging

@@ -64,7 +64,7 @@ source "${SCRIPT_REALPATH}/../sign-lib.shs"
 ## Test data initialization 
 # generate dummy keystore
 rm -f "${KEYSTORE}"
-keytool -genkey -keyalg RSA -alias "${ALIAS}" -keystore "${KEYSTORE}" -storepass "${STOREPASS}" -keypass "${STOREPASS}" -validity 360 -keysize 2048 -dname "CN=User, OU=Test, O=Acme, L=Bli, ST=World, C=Internet"
+${JAVA_HOME}/bin/keytool -genkey -keyalg RSA -alias "${ALIAS}" -keystore "${KEYSTORE}" -storepass "${STOREPASS}" -keypass "${STOREPASS}" -validity 360 -keysize 2048 -dname "CN=User, OU=Test, O=Acme, L=Bli, ST=World, C=Internet"
 
 # get jarprocessor
 wget -q "http://download.eclipse.org/equinox/drops/R-Mars.2-201602121500/org.eclipse.equinox.p2.jarprocessor_1.0.400.v20150430-1836.jar" -O jarprocessor.jar

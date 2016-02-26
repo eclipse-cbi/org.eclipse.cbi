@@ -40,7 +40,7 @@ function testSuccessJarProcessorSigner() {
       echo "" > "${LOGFILE}"
     fi
   else
-    fail "jar_processor_signer.sh should have worked on '${file}'"
+    fail "'${script}' should have worked on '${file}'"
   fi
 }
 
@@ -56,7 +56,7 @@ function testFailureJarProcessorSigner() {
       echo "" > "${LOGFILE}"
     fi
   else
-    fail "jar_processor_signer.sh should have failed on '${file}'"
+    fail "'${script}' should have failed on '${file}'"
   fi
 }
 

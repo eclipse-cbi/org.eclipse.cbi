@@ -44,62 +44,58 @@ function log_prefix() {
 
 function process_queue_file() {
   local queue_file="${1}"
-  debug "====> start of (${$}) contents" >> "${LOGFILE}" 2>&1
-  cat "${queue_file}" >> "${LOGFILE}" 2>&1
-  debug "====> end of (${$}) contents" >> "${LOGFILE}" 2>&1
-  
+  local log="${2}"
+
   for queue_line in $(cat "${queue_file}"); do
-    REQUEST_DATE=$(echo -n ${queue_line} | awk -F: {'print $1'})
-    SIGNER_USERNAME=$(echo -n ${queue_line} | awk -F: {'print $2'})
-    FILE=$(echo -n ${queue_line} | awk -F: {'print $3'})
-    QUEUE_OPTION=$(echo -n ${queue_line} | awk -F: {'print $4'})
-    OUTPUT_DIR=$(echo -n ${queue_line} | awk -F: {'print $5'})
-    SKIPREPACK=$(echo -n ${queue_line} | awk -F: {'print $6'})
-    JAVA_VERSION=$(echo -n ${queue_line} | awk -F: {'print $7'})
+    local requestDate=$(echo -n ${queue_line} | awk -F: {'print $1'})
+    local signerUsername=$(echo -n ${queue_line} | awk -F: {'print $2'})
+    local file=$(echo -n ${queue_line} | awk -F: {'print $3'})
+    local queueOption=$(echo -n ${queue_line} | awk -F: {'print $4'})
+    local outputDir=$(echo -n ${queue_line} | awk -F: {'print $5'})
+    local skiprepack=$(echo -n ${queue_line} | awk -F: {'print $6'})
+    local javaVersion=$(echo -n ${queue_line} | awk -F: {'print $7'})
     
-    if [[ -z "${FILE}" || ! -f "${FILE}" || ("${FILE}" != *.jar && "${FILE}" != *.zip) ]]; then
-      error "$(log_prefix): File '${FILE}' is not valid jar or zip file. Skipping." >> "${LOGFILE}" 2>&1
+    if [[ -z "${file}" || ! -f "${file}" || ("${file}" != *.jar && "${file}" != *.zip) ]]; then
+      error "$(log_prefix): File '${file}' is not valid jar or zip file. Skipping." >> "${log}" 2>&1
       continue
     fi
     
-    if [[ -z "${OUTPUT_DIR}" ]]; then
-      OUTPUT_DIR="$(dirname "${FILE}")"
-    elif [[ ! -d "${OUTPUT_DIR}" ]]; then
-      error "$(log_prefix): Output directory '${OUTPUT_DIR}' is not a valid directory. Skipping." >> "${LOGFILE}" 2>&1
+    if [[ -z "${outputDir}" ]]; then
+      outputDir="$(dirname "${file}")"
+    elif [[ ! -d "${outputDir}" ]]; then
+      error "$(log_prefix): Output directory '${outputDir}' is not a valid directory. Skipping." >> "${log}" 2>&1
       continue
     fi
   
-    if [[ ! "${JAVA_VERSION}" =~ ^java[0-9]+$ ]]; then 
-      error "$(log_prefix): Java version '${JAVA_VERSION}' in queue file is invalid. Expecting something like '^java[0-9]+$'. Skipping." >> "${LOGFILE}" 2>&1
+    if [[ ! "${javaVersion}" =~ ^java[0-9]+$ ]]; then 
+      error "$(log_prefix): Java version '${javaVersion}' in queue file is invalid. Expecting something like '^java[0-9]+$'. Skipping." >> "${log}" 2>&1
       continue
     fi
 
-    info "$(log_prefix): Processing queue item '${FILE}'" >> "${LOGFILE}" 2>&1
+    info "$(log_prefix): Processing queue item '${file}'" >> "${log}" 2>&1
     
-    JAR_PROCESSOR="$(dynvar "JAR_PROCESSORS_${JAVA_VERSION}")"
-    JDK="$(dynvar "JDKS_${JAVA_VERSION}")"
-    SIGNSCRIPT="${SCRIPT_REALPATH}/jar_processor_signer_${JAVA_VERSION}.sh"
-    info "$(log_prefix): Using '${JDK}/bin/java' to run '${JAR_PROCESSOR}'" >> "${LOGFILE}" 2>&1
+    local jarProcessor="$(dynvar "JAR_PROCESSORS_${javaVersion}")"
+    local JDK="$(dynvar "JDKS_${javaVersion}")"
+    local signingScript="${SCRIPT_REALPATH}/jar_processor_signer_${javaVersion}.sh"
+    info "$(log_prefix): Using '${JDK}/bin/java' to run '${jarProcessor}'" >> "${log}" 2>&1
     
-    if [[ -z "$SKIPREPACK" ]]; then
-      REPACK="-repack"
+    if [[ -z "$skiprepack" ]]; then
+      local repack="-repack"
     else 
-      REPACK=""
+      local repack=""
     fi
 
-    debug "$(log_prefix): Executing '${JDK}/bin/java -jar "${JAR_PROCESSOR}" -outputDir "${OUTPUT_DIR}" "${REPACK}" -verbose -processAll -sign "${SIGNSCRIPT}" "${FILE}"'" >> "${LOGFILE}" 2>&1
-    "${JDK}/bin/java" -jar "${JAR_PROCESSOR}" -outputDir "${OUTPUT_DIR}" "${REPACK}" -verbose -processAll -sign "${SIGNSCRIPT}" "${FILE}" >> "${LOGFILE}" 2>&1
+    debug "$(log_prefix): Executing '${JDK}/bin/java -jar "${jarProcessor}" -outputDir "${outputDir}" "${repack}" -verbose -processAll -sign "${signingScript}" "${file}"'" >> "${log}" 2>&1
+    "${JDK}/bin/java" -jar "${jarProcessor}" -outputDir "${outputDir}" "${repack}" -verbose -processAll -sign "${signingScript}" "${file}" >> "${log}" 2>&1
     
     #alter ownership to match that of the source file
-    if [ -f "${OUTPUT_DIR}/$(basename "${FILE}")" ]; then
+    if [ -f "${outputDir}/$(basename "${file}")" ]; then
       # for some reasons, when -repack is not specified, jar files are not put in the -outputDir by the jarprocessor!!
-      # do no try to alter ownership as "${OUTPUT_DIR}/$(basename "${FILE}")" does not exist
-      chgrp "$(stat -c %G "${FILE}")" "${OUTPUT_DIR}/$(basename "${FILE}")" 2>/dev/null
+      # do no try to alter ownership as "${outputDir}/$(basename "${file}")" does not exist
+      chgrp "$(stat -c %G "${file}")" "${outputDir}/$(basename "${file}")" 2>/dev/null
     fi
     
   done
-
-  info "$(log_prefix): Finished processing queue." >> "${LOGFILE}" 2>&1
 }
 
 # read stdin to see if we need to sign now
@@ -107,16 +103,12 @@ read -t 2 stdin || true
 
 if [[ -n "${stdin:-}" ]]; then
   
-  info "$(log_prefix): Begin processing queue NOW: ${$}"
-  
   printf "%s\n" "${stdin}" > "${LOCK}"
-  process_queue_file "${LOCK}"
+  process_queue_file "${LOCK}" "/dev/stdout"
   rm "${LOCK}"
   
-  info "$(log_prefix): Finished signing '${FILE}'."
-  
 elif [[ -f "${QUEUE}" ]]; then
-  if [[ $(awk -F. '{print $1}' /proc/loadavg) > 40 ]]; then 
+  if [[ -e /proc/loadavg && $(awk -F. '{print $1}' /proc/loadavg) > 40 ]]; then 
     warning "Too busy to sign. Going to sleep." >> "${LOGFILE}" 2>&1
     exit 128; 
   fi
@@ -124,7 +116,14 @@ elif [[ -f "${QUEUE}" ]]; then
   info "$(log_prefix): Begin processing queue: ${$}" >> "${LOGFILE}" 2>&1
   
   mv "${QUEUE}" "${LOCK}"
-  process_queue_file "${LOCK}"
+  
+  debug "====> start of (${$}) contents" >> "${LOGFILE}" 2>&1
+  cat "${LOCK}" >> "${LOGFILE}" 2>&1
+  debug "====> end of (${$}) contents" >> "${LOGFILE}" 2>&1
+  
+  process_queue_file "${LOCK}" "${LOGFILE}"
+  
+  info "$(log_prefix): Finished processing queue." >> "${LOGFILE}" 2>&1
   
   # send notification e-mails
   for userToBeMailed in $(cat "${LOCK}" | grep ":mail:" | awk -F: {'print $2'} | sort | uniq); do

@@ -23,8 +23,40 @@ shopt -s expand_aliases
 function fail() {
   echo "[FAILURE] ${@}"
   echo "[FAILURE] Content of '${LOGFILE}'"
+  echo "=== $(basename "${LOGFILE}") ======================================"
   cat "${LOGFILE}"
+  echo "=== $(basename "${LOGFILE}") ======================================"
   exit 1
+}
+
+function testSuccess() {
+  local script="${1}"
+  local expectedLog="${2}"
+
+  if ${script}; then
+    if ! cat "${LOGFILE}" | grep -q "${expectedLog}"; then
+      fail "'${script}' should have written \"${expectedLog}\" in '${LOGFILE}'"
+    else 
+      echo -n "" > "${LOGFILE}"
+    fi
+  else
+    fail "'${script}' should have passed"
+  fi
+}
+
+function testFailure() {
+  local script="${1}"
+  local expectedLog="${2}"
+
+  if ! ${script}; then
+    if ! cat "${LOGFILE}" | grep -q "${expectedLog}"; then
+      fail "'${script}' should have written \"${expectedLog}\" in '${LOGFILE}'"
+    else 
+      echo -n "" > "${LOGFILE}"
+    fi
+  else
+    fail "'${script}' should have failed"
+  fi
 }
 
 if [[ -z "${JAVA_HOME}" ]]; then
@@ -43,9 +75,9 @@ pushd "${SCRIPT_REALPATH}/target/${SCRIPT_REALNAME}"
 export KEYSTORE="$(pwd)/acme.jks"
 STOREPASS="dumbkeystorepass"
 export STOREPASSFILE="$(pwd)/acme.jks.passwd"
-echo "${STOREPASS}" > "${STOREPASSFILE}"
 export ALIAS="Acme Inc."
 
+export QUEUE="$(pwd)/queue"
 export LOGFILE="$(pwd)/signer.log"
 
 export JAR_PROCESSORS_java6="$(pwd)/jarprocessor.jar"
@@ -64,6 +96,14 @@ source "${SCRIPT_REALPATH}/../sign-lib.shs"
 
 ##############################################################################
 ## Test data initialization 
+
+# create log file
+rm -f "${LOGFILE}"
+touch "${LOGFILE}"
+
+# store keystore password in a file
+echo "${STOREPASS}" > "${STOREPASSFILE}"
+
 # generate dummy keystore
 rm -f "${KEYSTORE}"
 ${JAVA_HOME}/bin/keytool -genkey -keyalg RSA -alias "${ALIAS}" -keystore "${KEYSTORE}" -storepass "${STOREPASS}" -keypass "${STOREPASS}" -validity 360 -keysize 2048 -dname "CN=User, OU=Test, O=Acme, L=Bli, ST=World, C=Internet"
@@ -88,10 +128,8 @@ fi
 
 ## Copy test data into test-staging folder
 mkdir test-staging
+mkdir output-staging
 
 cp "${SCRIPT_REALPATH}/data/hello.jar" "test-staging/hello.jar"
 
-if jar_is_signed "test-staging/hello.jar"; then
-  fail "test-staging/hello.jar should not be signed before"
-fi
 ##############################################################################

@@ -31,7 +31,7 @@ QUEUE="${QUEUE:-/path/to/signing_queue}"
 
 # File that will be used a a lock file for a giving signing process 
 # (a PPID will be appended to the path)
-QUEUE_LOCK_PREFIX="${QUEUE_LOCK_PREFIX:-/prefix/path/to/signing_queue.lock}"
+QUEUE_LOCK_PREFIX="${QUEUE_LOCK_PREFIX:-${QUEUE}.lock}"
 
 # Paths where files to be signed can be found or where results can be written to.
 # If inputs or outputs are outside of these folders, signing scripts will raise exceptions.

@@ -22,6 +22,8 @@ shopt -s expand_aliases
 
 function fail() {
   echo "[FAILURE] ${@}"
+  echo "[FAILURE] Content of '${LOGFILE}'"
+  cat "${LOGFILE}"
   exit 1
 }
 

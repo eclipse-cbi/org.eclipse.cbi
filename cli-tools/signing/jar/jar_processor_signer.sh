@@ -90,8 +90,9 @@ fi
 info "$(log_prefix):Signing Jar file '${FILE}' with '${JDK}/bin/jarsigner'" >> "${LOGFILE}" 2>&1
 
 umask 0007
+set -x
 STOREPASS=$(cat $STOREPASSFILE)
-"${JDK}/bin/jarsigner" -tsa "${TSA_URL}" "${JARSIGNER_OPTIONS:+${JARSIGNER_OPTIONS} }"-verbose -keystore "${KEYSTORE}" -storepass "${STOREPASS}" "${FILE}" "${ALIASNAME}"  >> "${LOGFILE}" 2>&1
+"${JDK}/bin/jarsigner" ${JARSIGNER_OPTIONS:+${JARSIGNER_OPTIONS} }-tsa "${TSA_URL}" -verbose -keystore "${KEYSTORE}" -storepass "${STOREPASS}" "${FILE}" "${ALIASNAME}"  >> "${LOGFILE}" 2>&1
 unset STOREPASS
 chmod g+w ${FILE} # TODO: is it still required?
 

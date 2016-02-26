@@ -29,7 +29,8 @@ SCRIPT_READLINK="$(readlink -e -n "${0}")"
 SCRIPT_REALNAME="$(basename "${SCRIPT_READLINK}")"
 SCRIPT_REALPATH="$(dirname "${SCRIPT_READLINK}")"
 
-source "${SCRIPT_REALPATH}/config"
+CONFIG="${CONFIG:-${SCRIPT_REALPATH}/config}"
+source "${CONFIG}"
 source "${SCRIPT_REALPATH}/sign-lib.shs"
 
 if [[ $UID = 0 ]]; then
@@ -51,8 +52,11 @@ if [[ -z "${FILE}" ]]; then
 fi
 
 function log_prefix() {
-  local GPPID=$(cat /proc/$PPID/status | grep "PPid" | awk '{print $2}')
-  printf "%s:%s(%s):%s(%s)" "$(date +%Y-%m-%d\ %H:%M:%S)" "$(hostname)" "${UID}" "${SCRIPT_NAME}" "${GPPID}"
+	local GPPID="/proc not available"
+	if [[ -e /proc/$PPID/status ]]; then # to be able to run tests on other system
+		GPPID=$(cat /proc/$PPID/status | grep "PPid" | awk '{print $2}')
+	fi
+  printf "%s:%s(%s):SIGNER(%s)" "$(date +%Y-%m-%d\ %H:%M:%S)" "$(hostname)" "${UID}" "${GPPID}"
 }
 
 # this script should be the target of a symlink whose name must end with java[0-9]+ 
@@ -83,7 +87,7 @@ if [[ "${FILE}" != *.jar ]]; then
   exit 3
 fi
 
-info "$(log_prefix):Signing JAR file '${FILE}' with '${JDK}/bin/jarsigner'" >> "${LOGFILE}" 2>&1
+info "$(log_prefix):Signing Jar file '${FILE}' with '${JDK}/bin/jarsigner'" >> "${LOGFILE}" 2>&1
 
 umask 0007
 STOREPASS=$(cat $STOREPASSFILE)

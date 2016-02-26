@@ -32,7 +32,8 @@ SCRIPT_READLINK="$(readlink -e -n "${0}")"
 SCRIPT_REALNAME="$(basename "${SCRIPT_READLINK}")"
 SCRIPT_REALPATH="$(dirname "${SCRIPT_READLINK}")"
 
-source "${SCRIPT_REALPATH}/config"
+CONFIG="${CONFIG:-${SCRIPT_REALPATH}/config}"
+source "${CONFIG}"
 source "${SCRIPT_REALPATH}/sign-lib.shs"
 
 function print_usage() {

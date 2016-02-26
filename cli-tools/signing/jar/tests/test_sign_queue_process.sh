@@ -28,9 +28,6 @@ export SCRIPT_REALPATH="$(dirname "${SCRIPT_READLINK}")"
 
 source "${SCRIPT_REALPATH}/init.sh"
 
-rm -f "${QUEUE}"
-testSuccess "${SCRIPT_REALPATH}/../sign_queue_process.sh" ""
-
 if ! echo "42:user:file:now::skiprepack:java6" | "${SCRIPT_REALPATH}/../sign_queue_process.sh" | egrep -q "[ERROR].*File 'file' is not valid jar or zip file"; then
   fail "sign_queue_process.sh should have failed because 'file' is not a valid file to be signed"
 fi
@@ -144,6 +141,19 @@ if ! jar_is_signed test-staging/hello.skiprepack.outputdir.jar; then
 fi
 
 echo -n "" > "${LOGFILE}"
+rm -f "${QUEUE}"
+if "${SCRIPT_REALPATH}/../sign_queue_process.sh"; then
+  if cat "${LOGFILE}" | egrep -q "Processing queue item"; then
+    fail "Should not have processed anything out of an empty file"
+  fi
+  if [[ -f "${QUEUE}" ]]; then
+    fail "Queue '${QUEUE}' should have been consumed"
+  fi
+else 
+    fail "Failed to process not existing queue"
+fi
+
+echo -n "" > "${LOGFILE}"
 echo "" > "${QUEUE}"
 if "${SCRIPT_REALPATH}/../sign_queue_process.sh"; then
   if cat "${LOGFILE}" | egrep -q "Processing queue item"; then
@@ -152,6 +162,8 @@ if "${SCRIPT_REALPATH}/../sign_queue_process.sh"; then
   if [[ -f "${QUEUE}" ]]; then
     fail "Queue '${QUEUE}' should have been consumed"
   fi
+else 
+    fail "Failed to process empty queue (newline only)"
 fi
 
 echo -n "" > "${LOGFILE}"
@@ -163,6 +175,8 @@ if "${SCRIPT_REALPATH}/../sign_queue_process.sh"; then
   if [[ -f "${QUEUE}" ]]; then
     fail "Queue '${QUEUE}' should have been consumed"
   fi
+else 
+    fail "Failed to process empty queue"
 fi
 
 echo -n "" > "${LOGFILE}"
@@ -177,6 +191,8 @@ if "${SCRIPT_REALPATH}/../sign_queue_process.sh"; then
   if [[ -f "${QUEUE}" ]]; then
     fail "Queue '${QUEUE}' should have been consumed"
   fi
+else 
+    fail "Failed to process queue with 1 element"
 fi
 
 echo -n "" > "${LOGFILE}"
@@ -198,6 +214,8 @@ if "${SCRIPT_REALPATH}/../sign_queue_process.sh"; then
   if [[ -f "${QUEUE}" ]]; then
     fail "Queue '${QUEUE}' should have been consumed"
   fi
+else 
+    fail "Failed to process queue with 2 elements"
 fi
 
 echo "[SUCCESS] All tests passed [${SCRIPT_REALNAME}]"

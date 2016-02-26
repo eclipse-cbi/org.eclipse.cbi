@@ -69,3 +69,6 @@ JAR_PROCESSORS_java8="${JAR_PROCESSORS_java8:-/path/to/jar/processor/when/signin
 
 # The URL of the timestamp authority to be used by the jarsigner
 TSA_URL="${TSA_URL:-https://timestamp.geotrust.com/tsa}"
+
+# Additional options to pass to jarsigner, e.g., "-J-Dhttp.proxyHost=<hostname> -J-Dhttp.proxyPort=<portnumber> -J-Dhttps.proxyHost=<hostname> -J-Dhttps.proxyPort=<portnumber>"
+JARSIGNER_OPTIONS="${JARSIGNER_OPTIONS:-}"

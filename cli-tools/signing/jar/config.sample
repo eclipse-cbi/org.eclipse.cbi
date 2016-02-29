@@ -35,7 +35,7 @@ QUEUE_LOCK_PREFIX="${QUEUE_LOCK_PREFIX:-${QUEUE}.lock}"
 
 # Paths where files to be signed can be found or where results can be written to.
 # If inputs or outputs are outside of these folders, signing scripts will raise exceptions.
-SAFE_WD=("${SAFE_WD[@]:-/valid/path/to/staging.priv /another/valid/path/to/staging.priv}")
+SAFE_WD=("${SAFE_WD[@]:-/path/valid/staging.priv /another/path/valid/staging.priv}")
 
 # The hostname running the sign_queue_process.sh script as a xinetd service
 SIGN_SERVER_HOSTNAME="${SIGN_SERVER_HOSTNAME:-sign.acme.com}"

@@ -52,39 +52,35 @@ fi
 FILE="${1:-}"; shift # for/case would interpret $1 as output dir otherwise
 
 # handle optional arguments
-QUEUE_OPTION="${2:-now}"
-for i in "${@}"; do
-  case $i in
-    mail)
-      QUEUE_OPTION="${i#*=}"
-    ;;
-    nomail)
-      QUEUE_OPTION="${i#*=}"
-    ;;
-    now)
-      QUEUE_OPTION="${i#*=}"
-    ;;
-    skiprepack)
-      SKIPREPACK="skiprepack"
-    ;;
-    notsa)
-      NOTSA=""
-      warning "Argument 'notsa' is deprecated and not used anymore."
-    ;;
-    *)
-      OUTPUT_DIR="${i#*=}"
-    ;;
-  esac
-  shift
-done
-
-if [[ -z "${QUEUE_OPTION}"  ||  ("${QUEUE_OPTION}" != "mail"  &&  "${QUEUE_OPTION}" != "nomail"  &&  "${QUEUE_OPTION}" != "now") ]] ; then
-  print_usage "${SCRIPT_NAME}"
-  exit 128
+if [[ ${#} > 0 ]]; then
+  for i in "${@}"; do
+    case "${i}" in
+      mail)
+        QUEUE_OPTION="${i}"
+      ;;
+      nomail)
+        QUEUE_OPTION="${i}"
+      ;;
+      now)
+        QUEUE_OPTION="${i}"
+      ;;
+      skiprepack)
+        SKIPREPACK="skiprepack"
+      ;;
+      notsa)
+        NOTSA=""
+        warning "Argument 'notsa' is deprecated and not used anymore."
+      ;;
+      *)
+        OUTPUT_DIR="${i}"
+      ;;
+    esac
+    shift
+  done
 fi
 
 # Checks that the file is valid existing file
-if [[ ! -f "${FILE}" ]]; then
+if [[ -z "${FILE}" || ! -f "${FILE}" || ("${FILE}" != *.jar && "${FILE}" != *.zip) ]]; then
   error "File '${FILE}' not found, or not a valid file."
   error "Signing aborted."
   exit 2
@@ -98,13 +94,17 @@ elif [[ "${FILE}" == *.zip ]]; then
   debug "run ant task to add pack.properties if needed"
 fi
 
-# if output dir is not specified, write the output in the folder as the input
-if [[ -z "${OUTPUT_DIR:-}" ]]; then
-  OUTPUT_DIR=$(dirname "${FILE}")
+QUEUE_OPTION="${QUEUE_OPTION:-now}"
+if [[ "${QUEUE_OPTION}" != "mail"  &&  "${QUEUE_OPTION}" != "nomail"  &&  "${QUEUE_OPTION}" != "now" ]] ; then
+  print_usage "${SCRIPT_NAME}"
+  exit 128
 fi
 
+# if output dir is not specified, write the output in the folder as the input
+OUTPUT_DIR="${OUTPUT_DIR:-$(dirname "${FILE}")}"
+
 if ! has_effective_acl "${SIGNER_USERNAME}" "rw" "${FILE}"; then
-  warning "File '${FILE}' not writable by user '${SIGNER_USERNAME}'. Changing permissions to make file group-writable."
+  warning "File '${FILE}' not writable by user '${SIGNER_USERNAME}'. Changing permissions to make input file group-writable."
   chmod g+w "${FILE}"
 fi;
 
@@ -135,7 +135,7 @@ fi
 
 # outputDir must be group writable
 if ! has_effective_acl "${SIGNER_USERNAME}" "rw" "${OUTPUT_DIR}"; then
-  warning "Output folder '${OUTPUT_DIR}' not writable by user '${SIGNER_USERNAME}'. Changing permissions to make file group-writable."
+  warning "Output folder '${OUTPUT_DIR}' not writable by user '${SIGNER_USERNAME}'. Changing permissions to make output dir group-writable."
   chmod g+w "${OUTPUT_DIR}"
 fi
 

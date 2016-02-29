@@ -91,7 +91,7 @@ function is_sub_folder() {
   for i in "${!folders[@]}"; do
     abs_folders[${i}]="$(absolute_path "${folders[${i}]}")"
   done
-  if echo "${path}" | egrep -q "$(join_strings "|" "${abs_folders[@]}")"; then
+  if echo "${path}" | egrep -q "^($(join_strings "|" "${abs_folders[@]}"))"; then
     return 0
   else
     return 1

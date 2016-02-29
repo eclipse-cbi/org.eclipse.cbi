@@ -22,10 +22,12 @@ shopt -s expand_aliases
 
 function fail() {
   echo "[FAILURE] ${@}"
-  echo "[FAILURE] Content of '${LOGFILE}'"
-  echo "=== $(basename "${LOGFILE}") ======================================"
-  cat "${LOGFILE}"
-  echo "=== $(basename "${LOGFILE}") ======================================"
+  if [[ ! -e "${LOGFILE}" ]]; then
+    echo "[FAILURE] Content of '${LOGFILE}'"
+    echo "=== $(basename "${LOGFILE}") ======================================"
+    cat "${LOGFILE}"
+    echo "=== $(basename "${LOGFILE}") ======================================"
+  fi
   exit 1
 }
 
@@ -72,26 +74,42 @@ pushd "${SCRIPT_REALPATH}/target/${SCRIPT_REALNAME}"
 
 ##############################################################################
 ## Test Config
-export KEYSTORE="$(pwd)/acme.jks"
 STOREPASS="dumbkeystorepass"
-export STOREPASSFILE="$(pwd)/acme.jks.passwd"
-export ALIAS="Acme Inc."
 
-export QUEUE="$(pwd)/queue"
-export LOGFILE="$(pwd)/signer.log"
+cat >testconfig <<EOL
+KEYSTORE="$(pwd)/acme.jks"
+STOREPASSFILE="$(pwd)/acme.jks.passwd"
+ALIASNAME="Acme Inc."
 
-export JAR_PROCESSORS_java6="$(pwd)/jarprocessor.jar"
-export JAR_PROCESSORS_java7="$(pwd)/jarprocessor.jar"
-export JAR_PROCESSORS_java8="$(pwd)/jarprocessor.jar"
+QUEUE="$(pwd)/queue"
+QUEUE_LOCK_PREFIX="\${QUEUE}.lock"
+LOGFILE="$(pwd)/signer.log"
 
-export JDKS_java6="${JDKS_java6:-$(pwd)/jdks/1.6}"
-export JDKS_java7="${JDKS_java7:-$(pwd)/jdks/1.7}"
-export JDKS_java8="${JDKS_java8:-$(pwd)/jdks/1.8}"
+SAFE_WD=("$(pwd)/test-staging" "$(pwd)/test-staging2")
+
+SIGNER_USERNAME="$(whoami)"
+SIGN_SERVER_HOSTNAME="127.0.0.1"
+SIGN_SERVER_PORT="54783"
+
+DEFAULT_JAVA_VERSION="java6"
+
+JAR_PROCESSORS_java6="$(pwd)/jarprocessor.jar"
+JAR_PROCESSORS_java7="$(pwd)/jarprocessor.jar"
+JAR_PROCESSORS_java8="$(pwd)/jarprocessor.jar"
+
+JDKS_java6="${JDKS_java6:-$(pwd)/jdks/1.6}"
+JDKS_java7="${JDKS_java7:-$(pwd)/jdks/1.7}"
+JDKS_java8="${JDKS_java8:-$(pwd)/jdks/1.8}"
+
+JARSIGNER_OPTIONS="\${JARSIGNER_OPTIONS:-}"
+TSA_URL="https://timestamp.geotrust.com/tsa"
+EOL
+
 ## end of config
 ##############################################################################
 
-# Will load the sample config, with overriden values above
-export CONFIG="${SCRIPT_REALPATH}/../config.sample"
+export CONFIG="$(pwd)/testconfig"
+source "$(pwd)/testconfig" # to make the confi variable available to the test env.
 source "${SCRIPT_REALPATH}/../sign-lib.shs"
 
 ##############################################################################
@@ -100,16 +118,6 @@ source "${SCRIPT_REALPATH}/../sign-lib.shs"
 # create log file
 rm -f "${LOGFILE}"
 touch "${LOGFILE}"
-
-# store keystore password in a file
-echo "${STOREPASS}" > "${STOREPASSFILE}"
-
-# generate dummy keystore
-rm -f "${KEYSTORE}"
-${JAVA_HOME}/bin/keytool -genkey -keyalg RSA -alias "${ALIAS}" -keystore "${KEYSTORE}" -storepass "${STOREPASS}" -keypass "${STOREPASS}" -validity 360 -keysize 2048 -dname "CN=User, OU=Test, O=Acme, L=Bli, ST=World, C=Internet"
-
-# get jarprocessor
-wget -q "http://download.eclipse.org/equinox/drops/R-Mars.2-201602121500/org.eclipse.equinox.p2.jarprocessor_1.0.400.v20150430-1836.jar" -O jarprocessor.jar
 
 # JAVA_HOME will be used for all java versions, but we just want to test that
 # the script retrieve the proper path.
@@ -126,8 +134,19 @@ if [[ ! -d "${JDKS_java8}" ]]; then
   ln -s "${JAVA_HOME}" "${JDKS_java8}"
 fi
 
+# store keystore password in a file
+echo "${STOREPASS}" > "${STOREPASSFILE}"
+
+# generate dummy keystore
+rm -f "${KEYSTORE}"
+${JAVA_HOME}/bin/keytool -genkey -keyalg RSA -alias "${ALIASNAME}" -keystore "${KEYSTORE}" -storepass "${STOREPASS}" -keypass "${STOREPASS}" -validity 360 -keysize 2048 -dname "CN=User, OU=Test, O=Acme, L=Bli, ST=World, C=Internet"
+
+# get jarprocessor
+wget -q "http://download.eclipse.org/equinox/drops/R-Mars.2-201602121500/org.eclipse.equinox.p2.jarprocessor_1.0.400.v20150430-1836.jar" -O jarprocessor.jar
+
 ## Copy test data into test-staging folder
 mkdir test-staging
+mkdir test-staging2
 mkdir output-staging
 
 cp "${SCRIPT_REALPATH}/data/hello.jar" "test-staging/hello.jar"

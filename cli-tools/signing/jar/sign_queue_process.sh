@@ -44,7 +44,6 @@ function log_prefix() {
 
 function process_queue_file() {
   local queue_file="${1}"
-  local log="${2}"
 
   for queue_line in $(cat "${queue_file}"); do
     local requestDate=$(echo -n ${queue_line} | awk -F: {'print $1'})
@@ -56,28 +55,28 @@ function process_queue_file() {
     local javaVersion=$(echo -n ${queue_line} | awk -F: {'print $7'})
     
     if [[ -z "${file}" || ! -f "${file}" || ("${file}" != *.jar && "${file}" != *.zip) ]]; then
-      error "$(log_prefix): File '${file}' is not valid jar or zip file. Skipping." >> "${log}" 2>&1
+      error "$(log_prefix): File '${file}' is not valid jar or zip file. Skipping."
       continue
     fi
     
     if [[ -z "${outputDir}" ]]; then
       outputDir="$(dirname "${file}")"
     elif [[ ! -d "${outputDir}" ]]; then
-      error "$(log_prefix): Output directory '${outputDir}' is not a valid directory. Skipping." >> "${log}" 2>&1
+      error "$(log_prefix): Output directory '${outputDir}' is not a valid directory. Skipping."
       continue
     fi
   
     if [[ ! "${javaVersion}" =~ ^java[0-9]+$ ]]; then 
-      error "$(log_prefix): Java version '${javaVersion}' in queue file is invalid. Expecting something like '^java[0-9]+$'. Skipping." >> "${log}" 2>&1
+      error "$(log_prefix): Java version '${javaVersion}' in queue file is invalid. Expecting something like '^java[0-9]+$'. Skipping."
       continue
     fi
 
-    info "$(log_prefix): Processing queue item '${file}'" >> "${log}" 2>&1
+    info "$(log_prefix): Processing queue item '${file}'"
     
     local jarProcessor="$(dynvar "JAR_PROCESSORS_${javaVersion}")"
     local JDK="$(dynvar "JDKS_${javaVersion}")"
     local signingScript="${SCRIPT_REALPATH}/jar_processor_signer_${javaVersion}.sh"
-    info "$(log_prefix): Using '${JDK}/bin/java' to run '${jarProcessor}'" >> "${log}" 2>&1
+    info "$(log_prefix): Using '${JDK}/bin/java' to run '${jarProcessor}'"
     
     if [[ -z "$skiprepack" ]]; then
       local repack="-repack"
@@ -85,8 +84,8 @@ function process_queue_file() {
       local repack=""
     fi
 
-    debug "$(log_prefix): Executing '${JDK}/bin/java -jar "${jarProcessor}" -outputDir "${outputDir}" "${repack}" -verbose -processAll -sign "${signingScript}" "${file}"'" >> "${log}" 2>&1
-    "${JDK}/bin/java" -jar "${jarProcessor}" -outputDir "${outputDir}" "${repack}" -verbose -processAll -sign "${signingScript}" "${file}" >> "${log}" 2>&1
+    debug "$(log_prefix): Executing '${JDK}/bin/java -jar "${jarProcessor}" -outputDir "${outputDir}" "${repack}" -verbose -processAll -sign "${signingScript}" "${file}"'"
+    "${JDK}/bin/java" -jar "${jarProcessor}" -outputDir "${outputDir}" "${repack}" -verbose -processAll -sign "${signingScript}" "${file}"
     
     #alter ownership to match that of the source file
     if [ -f "${outputDir}/$(basename "${file}")" ]; then
@@ -104,7 +103,7 @@ read -t 2 stdin || true
 if [[ -n "${stdin:-}" ]]; then
   
   printf "%s\n" "${stdin}" > "${LOCK}"
-  process_queue_file "${LOCK}" "/dev/stdout"
+  process_queue_file "${LOCK}" 2>&1 
   rm "${LOCK}"
   
 elif [[ -f "${QUEUE}" ]]; then
@@ -121,7 +120,7 @@ elif [[ -f "${QUEUE}" ]]; then
   cat "${LOCK}" >> "${LOGFILE}" 2>&1
   debug "====> end of (${$}) contents" >> "${LOGFILE}" 2>&1
   
-  process_queue_file "${LOCK}" "${LOGFILE}"
+  process_queue_file "${LOCK}" >> "${LOGFILE}" 2>&1
   
   info "$(log_prefix): Finished processing queue." >> "${LOGFILE}" 2>&1
   

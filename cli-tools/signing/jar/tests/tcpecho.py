@@ -26,7 +26,7 @@ sock.listen(1)
 
 conn, addr = sock.accept()
 data = conn.recv(4096)
-conn.send(data+"\n")
+sys.stdout.write(data)
 
 conn.close()
 sys.exit(0)

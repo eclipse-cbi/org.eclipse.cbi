@@ -68,46 +68,39 @@ if ${SUT} test-staging/hello.5.jar /tmp > /dev/null 2>&1; then
 fi
 
 cp test-staging/hello.jar test-staging/hello.2.jar
-python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" > /dev/null 2>&1  &
-if ! ${SUT} test-staging/hello.2.jar 2>&1 | grep -q "$(whoami):test-staging/hello.2.jar:now:test-staging::${DEFAULT_JAVA_VERSION}"; then
+python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" > tcpecho 2>&1  &
+${SUT} test-staging/hello.2.jar > /dev/null 2>&1
+if ! grep -q "$(whoami):test-staging/hello.2.jar:now:test-staging::${DEFAULT_JAVA_VERSION}" tcpecho; then
   fail "Expecting '$(whoami):test-staging/hello.2.jar:now:test-staging::${DEFAULT_JAVA_VERSION}'"
+fi
+
+python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" > tcpecho 2>&1  &
+${SUT} test-staging/hello.jar test-staging2 > /dev/null 2>&1 
+if ! grep -q "$(whoami):test-staging/hello.jar:now:test-staging2::${DEFAULT_JAVA_VERSION}" tcpecho; then
+  fail "Expecting '$(whoami):test-staging/hello.jar:now:test-staging2::${DEFAULT_JAVA_VERSION}'"
+fi
+
+python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" > tcpecho 2>&1  &
+${SUT} test-staging/hello.jar skiprepack > /dev/null 2>&1
+if ! grep -q "$(whoami):test-staging/hello.jar:now:test-staging:skiprepack:${DEFAULT_JAVA_VERSION}" tcpecho; then
+ fail "Expecting '$(whoami):test-staging/hello.jar:now:test-staging:skiprepack:${DEFAULT_JAVA_VERSION}'"
 fi
 
 cp test-staging/hello.jar test-staging2/hello.3.jar
 chmod 600 test-staging2/hello.3.jar
-python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" > /dev/null 2>&1 &
-${SUT} test-staging2/hello.3.jar > /dev/null 2>&1
+${SUT} test-staging2/hello.3.jar mail > /dev/null 2>&1
 if [[ "$(stat -c %a test-staging2/hello.3.jar)" != *620 ]]; then
-  fail "Should have changed permissions on 'test-staging2/hello.3.jar'"  
+  fail "Should have changed permissions on 'test-staging2/hello.3.jar' (currently=$(stat -c %a test-staging2/hello.3.jar))"  
 fi
+echo -n "" > "${QUEUE}"
 
 chmod 755 test-staging2
 cp test-staging/hello.jar test-staging/hello.4.jar
-python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" &
-${SUT} test-staging/hello.4.jar test-staging2 > /dev/null 2>&1
+${SUT} test-staging/hello.4.jar test-staging2 mail > /dev/null 2>&1
 if [[ "$(stat -c %a test-staging2)" != *775 ]]; then
   fail "Should have changed permissions on output dir 'test-staging2' (currently=$(stat -c %a test-staging2))"
 fi
-
-python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" &
-if ! ${SUT} test-staging/hello.jar test-staging2 2>&1 | grep -q "$(whoami):test-staging/hello.jar:now:test-staging2::${DEFAULT_JAVA_VERSION}"; then
-  fail "Expecting '$(whoami):test-staging/hello.jar:now:test-staging2::${DEFAULT_JAVA_VERSION}'"
-fi
-
-python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" &
-if ! ${SUT} test-staging/hello.jar skiprepack 2>&1 | grep -q "$(whoami):test-staging/hello.jar:now:test-staging:skiprepack:${DEFAULT_JAVA_VERSION}"; then
- fail "Expecting '$(whoami):test-staging/hello.jar:now:test-staging:skiprepack:${DEFAULT_JAVA_VERSION}'"
-fi
-
-python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" &
-if ! ${SUT} test-staging/hello.jar skiprepack test-staging2 2>&1 | grep -q "$(whoami):test-staging/hello.jar:now:test-staging2:skiprepack:${DEFAULT_JAVA_VERSION}"; then
- fail "Expecting '$(whoami):test-staging/hello.jar:now:test-staging2:skiprepack:${DEFAULT_JAVA_VERSION}'"
-fi
-
-python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" &
-if ! ${SUT} test-staging/hello.jar test-staging2 skiprepack 2>&1 | grep -q "$(whoami):test-staging/hello.jar:now:test-staging2:skiprepack:${DEFAULT_JAVA_VERSION}"; then
- fail "Expecting '$(whoami):test-staging/hello.jar:now:test-staging2:skiprepack:${DEFAULT_JAVA_VERSION}'"
-fi
+echo -n "" > "${QUEUE}"
 
 ${SUT} test-staging/hello.jar nomail test-staging2 > /dev/null 2>&1
 if ! grep -q "$(whoami):test-staging/hello.jar:nomail:test-staging2::${DEFAULT_JAVA_VERSION}" "${QUEUE}"; then
@@ -188,6 +181,7 @@ if unzip -p test-staging/tobesigned.zip pack.properties | grep -q "sign.excludes
   fail "Should not see sign.excludes in the pack.properties file (in tobesigned.zip)"
 fi
 echo -n "" > "${QUEUE}"
+
 
 mkdir -p "test-staging/plugins"
 cp test-staging/hello.jar test-staging/plugins/b1.jar

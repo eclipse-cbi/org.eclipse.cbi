@@ -12,17 +12,6 @@
 #    Mikaël Barbero (Eclipse Foundation)
 ##############################################################################
 
-# The keystore where the jar signing certificate is stored
-# Must be an absolute path
-KEYSTORE="${KEYSTORE:-/path/to/file.keystore}"
-
-# The alias name of the certificate to be used for signing
-ALIASNAME="${ALIASNAME:-Acme Inc.}"
-
-# The file containing the password for the keystore above
-# Must be an absolute path
-STOREPASSFILE="${STOREPASSFILE:-/path/to/keystore.passwd}"
-
 # Log file for all jar signing service messages
 LOGFILE="${LOGFILE:-/path/to/log/signer.log}"
 

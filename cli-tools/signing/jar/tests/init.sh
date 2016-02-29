@@ -109,6 +109,7 @@ EOL
 ##############################################################################
 
 export CONFIG="$(pwd)/testconfig"
+export CONFIG_SECRET="$(pwd)/testconfig"
 source "$(pwd)/testconfig" # to make the confi variable available to the test env.
 source "${SCRIPT_REALPATH}/../sign-lib.shs"
 

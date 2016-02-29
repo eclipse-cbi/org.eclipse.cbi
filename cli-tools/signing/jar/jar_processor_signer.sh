@@ -31,6 +31,10 @@ SCRIPT_REALPATH="$(dirname "${SCRIPT_READLINK}")"
 
 CONFIG="${CONFIG:-${SCRIPT_REALPATH}/config}"
 source "${CONFIG}"
+
+CONFIG_SECRET="${CONFIG_SECRET:-${SCRIPT_REALPATH}/config.secret}"
+source "${CONFIG_SECRET}"
+
 source "${SCRIPT_REALPATH}/sign-lib.shs"
 
 if [[ $UID = 0 ]]; then

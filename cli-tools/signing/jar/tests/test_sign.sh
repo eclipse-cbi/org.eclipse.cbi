@@ -164,7 +164,7 @@ cp test-staging/hello.jar test-staging/plugins/a2.jar
 cp test-staging/hello.jar test-staging/plugins/a3.jar
 pushd test-staging > /dev/null && zip -q tobesigned.zip plugins/ plugins/a*.jar && popd > /dev/null
 
-${SUT} test-staging/tobesigned.zip test-staging2 nomail #> /dev/null 2>&1
+${SUT} test-staging/tobesigned.zip test-staging2 nomail > /dev/null 2>&1
 if ! grep -q "$(whoami):test-staging/tobesigned.zip:nomail:test-staging2::java6" "${QUEUE}"; then
  fail "Expecting '$(whoami):test-staging/tobesigned.zip:nomail:test-staging2::java6'"
 fi
@@ -196,13 +196,15 @@ if ! unzip -l test-staging/tobesigned_2.zip | grep -q pack.properties; then
   fail "Was expecting a pack.properties file in the zip tobesigned_2.zip"
   unzip -l test-staging/tobesigned_2.zip
 fi
-if ! unzip -p test-staging/tobesigned_2.zip pack.properties | grep "pack.excludes=plugins/b1.jar,plugins/b3.jar"; then
+if ! unzip -p test-staging/tobesigned_2.zip pack.properties | grep -q "pack.excludes=plugins/b1.jar,plugins/b3.jar"; then
   fail "Should see pack.excludes in the pack.properties file (in tobesigned_2.zip)"
   unzip -p test-staging/tobesigned_2.zip pack.properties
+  echo "<<<<<<<<"
 fi
-if ! unzip -p test-staging/tobesigned_2.zip pack.properties | grep "sign.excludes=plugins/b1.jar,plugins/b3.jar"; then
+if ! unzip -p test-staging/tobesigned_2.zip pack.properties | grep -q "sign.excludes=plugins/b1.jar,plugins/b3.jar"; then
   fail "Should see sign.excludes in the pack.properties file (in tobesigned_2.zip)"
   unzip -p test-staging/tobesigned_2.zip pack.properties
+  echo ">>>>>"
 fi
 echo -n "" > "${QUEUE}"
 

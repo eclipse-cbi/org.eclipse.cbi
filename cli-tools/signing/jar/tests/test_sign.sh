@@ -199,12 +199,10 @@ fi
 if ! unzip -p test-staging/tobesigned_2.zip pack.properties | grep -q "pack.excludes=plugins/b1.jar,plugins/b3.jar"; then
   fail "Should see pack.excludes in the pack.properties file (in tobesigned_2.zip)"
   unzip -p test-staging/tobesigned_2.zip pack.properties
-  echo "<<<<<<<<"
 fi
 if ! unzip -p test-staging/tobesigned_2.zip pack.properties | grep -q "sign.excludes=plugins/b1.jar,plugins/b3.jar"; then
   fail "Should see sign.excludes in the pack.properties file (in tobesigned_2.zip)"
   unzip -p test-staging/tobesigned_2.zip pack.properties
-  echo ">>>>>"
 fi
 echo -n "" > "${QUEUE}"
 

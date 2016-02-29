@@ -20,6 +20,7 @@ if len(sys.argv) != 3:
     sys.exit(1)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sock.bind((sys.argv[1], int(sys.argv[2])))
 sock.listen(1)
 

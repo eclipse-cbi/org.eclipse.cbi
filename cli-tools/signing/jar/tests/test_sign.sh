@@ -26,6 +26,7 @@ export SCRIPT_READLINK="$(readlink -e -n "${0}")"
 export SCRIPT_REALNAME="$(basename "${SCRIPT_READLINK}")"
 export SCRIPT_REALPATH="$(dirname "${SCRIPT_READLINK}")"
 
+set -x
 source "${SCRIPT_REALPATH}/init.sh"
 
 # Script Under Test

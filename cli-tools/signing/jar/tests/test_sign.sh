@@ -32,7 +32,7 @@ source "${SCRIPT_REALPATH}/init.sh"
 SUT="${SCRIPT_REALPATH}/../sign"
 
 # trap 'kill $(jobs -p)' EXIT
-trap "trap - SIGTERM && kill -- -$$ || true" SIGINT SIGTERM EXIT
+trap 'jobs -p | xargs kill > /dev/null 2>&1 || true' SIGINT SIGTERM EXIT
 
 if ${SUT} > /dev/null ; then
   fail "$(basename ${SUT}) should have failed with 0 arguments"
@@ -68,14 +68,14 @@ if ${SUT} test-staging/hello.5.jar /tmp > /dev/null 2>&1; then
 fi
 
 cp test-staging/hello.jar test-staging/hello.2.jar
-python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" 2>&1 > /dev/null &
+python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" > /dev/null 2>&1  &
 if ! ${SUT} test-staging/hello.2.jar 2>&1 | grep -q "$(whoami):test-staging/hello.2.jar:now:test-staging::${DEFAULT_JAVA_VERSION}"; then
   fail "Expecting '$(whoami):test-staging/hello.2.jar:now:test-staging::${DEFAULT_JAVA_VERSION}'"
 fi
 
 cp test-staging/hello.jar test-staging2/hello.3.jar
 chmod 600 test-staging2/hello.3.jar
-python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" 2>&1 > /dev/null &
+python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" > /dev/null 2>&1 &
 ${SUT} test-staging2/hello.3.jar > /dev/null 2>&1
 if [[ "$(stat -c %a test-staging2/hello.3.jar)" != *620 ]]; then
   fail "Should have changed permissions on 'test-staging2/hello.3.jar'"  
@@ -164,6 +164,16 @@ cp test-staging/hello.jar test-staging/java7/inputfile
 ${SUT} test-staging/java7/inputfile/hello.jar test-staging2 nomail > /dev/null 2>&1
 if ! grep -q "$(whoami):test-staging/java7/inputfile/hello.jar:nomail:test-staging2::java7" "${QUEUE}"; then
  fail "Expecting '$(whoami):test-staging/java7/inputfile/hello.jar:nomail:test-staging2::java7'"
+fi
+echo -n "" > "${QUEUE}"
+
+cp test-staging/hello.jar test-staging/a1.jar
+cp test-staging/hello.jar test-staging/a2.jar
+cp test-staging/hello.jar test-staging/a3.jar
+zip -q test-staging/tobesigned.zip test-staging/a*.jar
+${SUT} test-staging/tobesigned.zip test-staging2 nomail > /dev/null 2>&1
+if ! grep -q "$(whoami):test-staging/tobesigned.zip:nomail:test-staging2::java6" "${QUEUE}"; then
+ fail "Expecting '$(whoami):test-staging/tobesigned.zip:nomail:test-staging2::java6'"
 fi
 echo -n "" > "${QUEUE}"
 

@@ -85,7 +85,7 @@ chmod 755 test-staging2
 cp test-staging/hello.jar test-staging/hello.4.jar
 python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" &
 ${SUT} test-staging/hello.4.jar test-staging2 > /dev/null 2>&1
-if [[ "$(stat -c %a test-staging2)" != "775" ]]; then
+if [[ "$(stat -c %a test-staging2)" != "*775" ]]; then
   fail "Should have changed permissions on output dir 'test-staging2' (currently=$(stat -c %a test-staging2))"
 fi
 

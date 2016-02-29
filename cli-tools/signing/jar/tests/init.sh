@@ -69,7 +69,7 @@ fi
 ## Test working directory creation
 rm -rf "${SCRIPT_REALPATH}/target/${SCRIPT_REALNAME}"
 mkdir -p "${SCRIPT_REALPATH}/target/${SCRIPT_REALNAME}"
-pushd "${SCRIPT_REALPATH}/target/${SCRIPT_REALNAME}"
+pushd "${SCRIPT_REALPATH}/target/${SCRIPT_REALNAME}" > /dev/null
 ##############################################################################
 
 ##############################################################################
@@ -79,7 +79,7 @@ STOREPASS="dumbkeystorepass"
 cat >testconfig <<EOL
 KEYSTORE="$(pwd)/acme.jks"
 STOREPASSFILE="$(pwd)/acme.jks.passwd"
-ALIASNAME="Acme Inc."
+ALIASNAME="Eclipse" # do not use somethign different, as ant-tasks search for ECLIPSE.SF
 
 QUEUE="$(pwd)/queue"
 QUEUE_LOCK_PREFIX="\${QUEUE}.lock"

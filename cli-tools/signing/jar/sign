@@ -91,7 +91,20 @@ if [[ "${FILE}" == *.jar ]] && jar_is_signed "${FILE}"; then
   info "${FILE} already signed, skipping."
   exit 0
 elif [[ "${FILE}" == *.zip ]]; then
-  debug "run ant task to add pack.properties if needed"
+  cat >"${FILE}.ant.xml" <<EOL
+<project name="addPackProperties" default="doIt">
+  <target name="doIt">
+    <taskdef name="addPackProperties"
+             classname="org.eclipse.cbi.releng.tools.UpdatePackPropertiesFile">
+      <classpath>
+        <pathelement location="${SCRIPT_REALPATH}/ant-tasks/cbi-ant-tasks.jar"/>
+      </classpath>
+    </taskdef>
+    <addPackProperties archiveFilename="$(absolute_path ${FILE})" verbose="true"/>
+  </target>
+</project>
+EOL
+  ${ANT_HOME}/bin/ant -f "${FILE}.ant.xml"
 fi
 
 QUEUE_OPTION="${QUEUE_OPTION:-now}"

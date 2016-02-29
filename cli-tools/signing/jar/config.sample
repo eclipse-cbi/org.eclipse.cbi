@@ -72,3 +72,6 @@ TSA_URL="${TSA_URL:-https://timestamp.geotrust.com/tsa}"
 
 # Additional options to pass to jarsigner, e.g., "-J-Dhttp.proxyHost=<hostname> -J-Dhttp.proxyPort=<portnumber> -J-Dhttps.proxyHost=<hostname> -J-Dhttps.proxyPort=<portnumber>"
 JARSIGNER_OPTIONS="${JARSIGNER_OPTIONS:-}"
+
+# Will be used to run ant task like addPackProperties
+ANT_HOME="${ANT_HOME:-/path/to/ant/home}"

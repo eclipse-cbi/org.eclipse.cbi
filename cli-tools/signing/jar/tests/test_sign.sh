@@ -167,13 +167,51 @@ if ! grep -q "$(whoami):test-staging/java7/inputfile/hello.jar:nomail:test-stagi
 fi
 echo -n "" > "${QUEUE}"
 
-cp test-staging/hello.jar test-staging/a1.jar
-cp test-staging/hello.jar test-staging/a2.jar
-cp test-staging/hello.jar test-staging/a3.jar
-zip -q test-staging/tobesigned.zip test-staging/a*.jar
+
+mkdir -p "test-staging/plugins"
+cp test-staging/hello.jar test-staging/plugins/a1.jar
+cp test-staging/hello.jar test-staging/plugins/a2.jar
+cp test-staging/hello.jar test-staging/plugins/a3.jar
+pushd test-staging > /dev/null && zip -q tobesigned.zip plugins/ plugins/a*.jar && popd > /dev/null
+
 ${SUT} test-staging/tobesigned.zip test-staging2 nomail > /dev/null 2>&1
 if ! grep -q "$(whoami):test-staging/tobesigned.zip:nomail:test-staging2::java6" "${QUEUE}"; then
  fail "Expecting '$(whoami):test-staging/tobesigned.zip:nomail:test-staging2::java6'"
+fi
+if ! unzip -l test-staging/tobesigned.zip | grep -q pack.properties; then
+  fail "Was expecting a pack.properties file in the zip tobesigned.zip"
+fi
+if unzip -p test-staging/tobesigned.zip pack.properties | grep -q "pack.excludes"; then
+  fail "Should not see pack.excludes in the pack.properties file (in tobesigned.zip)"
+fi
+if unzip -p test-staging/tobesigned.zip pack.properties | grep -q "sign.excludes"; then
+  fail "Should not see sign.excludes in the pack.properties file (in tobesigned.zip)"
+fi
+echo -n "" > "${QUEUE}"
+
+mkdir -p "test-staging/plugins"
+cp test-staging/hello.jar test-staging/plugins/b1.jar
+${SCRIPT_REALPATH}/../jar_processor_signer_java8.sh test-staging/plugins/b1.jar
+cp test-staging/hello.jar test-staging/plugins/b2.jar
+cp test-staging/hello.jar test-staging/plugins/b3.jar
+${SCRIPT_REALPATH}/../jar_processor_signer_java8.sh test-staging/plugins/b3.jar
+
+pushd test-staging > /dev/null && zip -q tobesigned_2.zip plugins/ plugins/b*.jar && popd > /dev/null
+${SUT} test-staging/tobesigned_2.zip test-staging2 nomail > /dev/null 2>&1
+if ! grep -q "$(whoami):test-staging/tobesigned_2.zip:nomail:test-staging2::java6" "${QUEUE}"; then
+ fail "Expecting '$(whoami):test-staging/tobesigned_2.zip:nomail:test-staging2::java6'"
+fi
+if ! unzip -l test-staging/tobesigned_2.zip | grep -q pack.properties; then
+  fail "Was expecting a pack.properties file in the zip tobesigned_2.zip"
+  unzip -l test-staging/tobesigned_2.zip
+fi
+if ! unzip -p test-staging/tobesigned_2.zip pack.properties | grep "pack.excludes=plugins/b1.jar,plugins/b3.jar"; then
+  fail "Should see pack.excludes in the pack.properties file (in tobesigned_2.zip)"
+  unzip -p test-staging/tobesigned_2.zip pack.properties
+fi
+if ! unzip -p test-staging/tobesigned_2.zip pack.properties | grep "sign.excludes=plugins/b1.jar,plugins/b3.jar"; then
+  fail "Should see sign.excludes in the pack.properties file (in tobesigned_2.zip)"
+  unzip -p test-staging/tobesigned_2.zip pack.properties
 fi
 echo -n "" > "${QUEUE}"
 

@@ -26,7 +26,6 @@ export SCRIPT_READLINK="$(readlink -e -n "${0}")"
 export SCRIPT_REALNAME="$(basename "${SCRIPT_READLINK}")"
 export SCRIPT_REALPATH="$(dirname "${SCRIPT_READLINK}")"
 
-set -x
 source "${SCRIPT_REALPATH}/init.sh"
 
 # Script Under Test
@@ -165,7 +164,7 @@ cp test-staging/hello.jar test-staging/plugins/a2.jar
 cp test-staging/hello.jar test-staging/plugins/a3.jar
 pushd test-staging > /dev/null && zip -q tobesigned.zip plugins/ plugins/a*.jar && popd > /dev/null
 
-${SUT} test-staging/tobesigned.zip test-staging2 nomail > /dev/null 2>&1
+${SUT} test-staging/tobesigned.zip test-staging2 nomail #> /dev/null 2>&1
 if ! grep -q "$(whoami):test-staging/tobesigned.zip:nomail:test-staging2::java6" "${QUEUE}"; then
  fail "Expecting '$(whoami):test-staging/tobesigned.zip:nomail:test-staging2::java6'"
 fi

@@ -32,7 +32,7 @@ source "${SCRIPT_REALPATH}/init.sh"
 SUT="${SCRIPT_REALPATH}/../sign"
 
 # trap 'kill $(jobs -p)' EXIT
-trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
+trap "trap - SIGTERM && kill -- -$$ || true" SIGINT SIGTERM EXIT
 
 if ${SUT} > /dev/null ; then
   fail "$(basename ${SUT}) should have failed with 0 arguments"

@@ -28,6 +28,13 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 
+/**
+ * Remember, it is important that this bundle keep it's BREE level of "1.6",
+ * since it must occasionally work with 1.6 JRE's for legacy users.
+ * 
+ * @author david_williams
+ *
+ */
 public class UpdatePackPropertiesFile extends Task {
 
     static class JarFileFilter implements FilenameFilter {
@@ -52,6 +59,7 @@ public class UpdatePackPropertiesFile extends Task {
     private FilenameFilter      jarFileFilter                = new JarFileFilter();
     private String              tempdir;
     private boolean             packPropertiesExisted;
+    private boolean             debugFiles;
 
     /**
      * Purely a test method while in workbench
@@ -61,8 +69,9 @@ public class UpdatePackPropertiesFile extends Task {
     public static void main(String[] args) {
         UpdatePackPropertiesFile testInstance = new UpdatePackPropertiesFile();
         testInstance.setVerbose(true);
-        String archiveName = "/home/davidw/temp/fromSigningDir/site_1676022728.zip";
+        String archiveName = "/home/davidw/work/testSigning/orbit-signed-noPackProperties.zip";
         testInstance.setArchiveFilename(archiveName);
+        //testInstance.setDebugFiles(true);
         testInstance.execute();
     }
 
@@ -182,16 +191,10 @@ public class UpdatePackPropertiesFile extends Task {
         zipDirectory(destinationdirectory, tempzipFileName);
 
         File originalarchive = new File(getArchiveFilename());
-        // we mostly back this up in case we need to compare original with
-        // tweaked version. Eventually, when confidence gained, this could be
-        // removed.
-        File tempbackup = new File(getArchiveFilename() + ".bak");
-        if (tempbackup.exists()) {
-            tempbackup.delete();
-        }
-        boolean success = originalarchive.renameTo(tempbackup);
-        if (!success) {
-            throw new BuildException("Could not rename original zip file to backup name.");
+
+        // Should rarely be needed, but just in case.
+        if (isDebugFiles()) {
+            backupOriginal(originalarchive);
         }
 
         File newarchive = new File(tempzipFileName);
@@ -204,6 +207,23 @@ public class UpdatePackPropertiesFile extends Task {
             deleteDirectory(tempDestDir);
         }
 
+    }
+
+    /**
+     * we only need to back up original if something appears wrong, and someone
+     * turns on "debugging".
+     * 
+     * @param originalarchive
+     */
+    private void backupOriginal(File originalarchive) {
+        File tempbackup = new File(getArchiveFilename() + ".bak");
+        if (tempbackup.exists()) {
+            tempbackup.delete();
+        }
+        boolean success = originalarchive.renameTo(tempbackup);
+        if (!success) {
+            throw new BuildException("Could not rename original zip file to backup name.");
+        }
     }
 
     private static void copyFile(File source, File dest) throws IOException {
@@ -546,5 +566,13 @@ public class UpdatePackPropertiesFile extends Task {
             }
         }
         return result;
+    }
+
+    public boolean isDebugFiles() {
+        return debugFiles;
+    }
+
+    public void setDebugFiles(boolean debug) {
+        this.debugFiles = debug;
     }
 }

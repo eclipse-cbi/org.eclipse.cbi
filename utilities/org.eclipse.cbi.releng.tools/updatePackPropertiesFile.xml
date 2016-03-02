@@ -23,9 +23,6 @@
   
   Usage: 
     ant -f updatePackPropertiesFile.xml -DarchiveFile=<path of zip file>
-    
-  The script will leave a back up of the original file in the same directory named 
-  like  the orininal, but the .bak added as a suffix.
 -->
 <project
   name="updatePackPropertiesFile"

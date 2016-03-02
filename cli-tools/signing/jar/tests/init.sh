@@ -22,7 +22,7 @@ shopt -s expand_aliases
 
 function fail() {
   echo "[FAILURE] ${@}"
-  if [[ ! -e "${LOGFILE}" ]]; then
+  if [[ -f "${LOGFILE}" && ! -z "$(cat ${LOGFILE})" ]]; then
     echo "[FAILURE] Content of '${LOGFILE}'"
     echo "=== $(basename "${LOGFILE}") ======================================"
     cat "${LOGFILE}"

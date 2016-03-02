@@ -107,7 +107,7 @@ if [[ -n "${stdin:-}" ]]; then
   rm "${LOCK}"
   
 elif [[ -f "${QUEUE}" ]]; then
-  if [[ -e /proc/loadavg && $(awk -F. '{print $1}' /proc/loadavg) > 40 ]]; then 
+  if [[ -z "${TEST_RUNNING:-}" && -e /proc/loadavg && $(awk -F. '{print $1}' /proc/loadavg) > 40 ]]; then 
     warning "Too busy to sign. Going to sleep." >> "${LOGFILE}" 2>&1
     exit 128; 
   fi

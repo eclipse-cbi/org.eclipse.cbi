@@ -67,20 +67,20 @@ fi
 cp test-staging/hello.jar test-staging/hello.2.jar
 python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" > tcpecho 2>&1  &
 ${SUT} test-staging/hello.2.jar > /dev/null 2>&1
-if ! grep -q "$(whoami):test-staging/hello.2.jar:now:test-staging::${DEFAULT_JAVA_VERSION}" tcpecho; then
-  fail "Expecting '$(whoami):test-staging/hello.2.jar:now:test-staging::${DEFAULT_JAVA_VERSION}'"
+if ! grep -q "$(whoami):$(pwd)/test-staging/hello.2.jar:now:$(pwd)/test-staging::${DEFAULT_JAVA_VERSION}" tcpecho; then
+  fail "Expecting '$(whoami):$(pwd)/test-staging/hello.2.jar:now:$(pwd)/test-staging::${DEFAULT_JAVA_VERSION}'"
 fi
 
 python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" > tcpecho 2>&1  &
 ${SUT} test-staging/hello.jar test-staging2 > /dev/null 2>&1 
-if ! grep -q "$(whoami):test-staging/hello.jar:now:test-staging2::${DEFAULT_JAVA_VERSION}" tcpecho; then
-  fail "Expecting '$(whoami):test-staging/hello.jar:now:test-staging2::${DEFAULT_JAVA_VERSION}'"
+if ! grep -q "$(whoami):$(pwd)/test-staging/hello.jar:now:$(pwd)/test-staging2::${DEFAULT_JAVA_VERSION}" tcpecho; then
+  fail "Expecting '$(whoami):$(pwd)/test-staging/hello.jar:now:$(pwd)/test-staging2::${DEFAULT_JAVA_VERSION}'"
 fi
 
 python "${SCRIPT_REALPATH}/tcpecho.py" "${SIGN_SERVER_HOSTNAME}" "${SIGN_SERVER_PORT}" > tcpecho 2>&1  &
 ${SUT} test-staging/hello.jar skiprepack > /dev/null 2>&1
-if ! grep -q "$(whoami):test-staging/hello.jar:now:test-staging:skiprepack:${DEFAULT_JAVA_VERSION}" tcpecho; then
- fail "Expecting '$(whoami):test-staging/hello.jar:now:test-staging:skiprepack:${DEFAULT_JAVA_VERSION}'"
+if ! grep -q "$(whoami):$(pwd)/test-staging/hello.jar:now:$(pwd)/test-staging:skiprepack:${DEFAULT_JAVA_VERSION}" tcpecho; then
+ fail "Expecting '$(whoami):$(pwd)/test-staging/hello.jar:now:$(pwd)/test-staging:skiprepack:${DEFAULT_JAVA_VERSION}'"
 fi
 
 cp test-staging/hello.jar test-staging2/hello.3.jar
@@ -100,51 +100,51 @@ fi
 echo -n "" > "${QUEUE}"
 
 ${SUT} test-staging/hello.jar nomail test-staging2 > /dev/null 2>&1
-if ! grep -q "$(whoami):test-staging/hello.jar:nomail:test-staging2::${DEFAULT_JAVA_VERSION}" "${QUEUE}"; then
-  fail "Expecting '$(whoami):test-staging/hello.jar:nomail:test-staging2::${DEFAULT_JAVA_VERSION}'"
+if ! grep -q "$(whoami):$(pwd)/test-staging/hello.jar:nomail:$(pwd)/test-staging2::${DEFAULT_JAVA_VERSION}" "${QUEUE}"; then
+  fail "Expecting '$(whoami):$(pwd)/test-staging/hello.jar:nomail:$(pwd)/test-staging2::${DEFAULT_JAVA_VERSION}'"
 fi
 echo -n "" > "${QUEUE}"
 
 ${SUT} test-staging/hello.jar nomail skiprepack > /dev/null 2>&1
-if ! grep -q "$(whoami):test-staging/hello.jar:nomail:test-staging:skiprepack:${DEFAULT_JAVA_VERSION}" "${QUEUE}"; then
- fail "Expecting '$(whoami):test-staging/hello.jar:nomail:test-staging:skiprepack:${DEFAULT_JAVA_VERSION}'"
+if ! grep -q "$(whoami):$(pwd)/test-staging/hello.jar:nomail:$(pwd)/test-staging:skiprepack:${DEFAULT_JAVA_VERSION}" "${QUEUE}"; then
+ fail "Expecting '$(whoami):$(pwd)/test-staging/hello.jar:nomail:$(pwd)/test-staging:skiprepack:${DEFAULT_JAVA_VERSION}'"
 fi
 echo -n "" > "${QUEUE}"
 
 ${SUT} test-staging/hello.jar nomail skiprepack test-staging2 > /dev/null 2>&1
-if ! grep -q "$(whoami):test-staging/hello.jar:nomail:test-staging2:skiprepack:${DEFAULT_JAVA_VERSION}" "${QUEUE}"; then
- fail "Expecting '$(whoami):test-staging/hello.jar:nomail:test-staging2:skiprepack:${DEFAULT_JAVA_VERSION}'"
+if ! grep -q "$(whoami):$(pwd)/test-staging/hello.jar:nomail:$(pwd)/test-staging2:skiprepack:${DEFAULT_JAVA_VERSION}" "${QUEUE}"; then
+ fail "Expecting '$(whoami):$(pwd)/test-staging/hello.jar:nomail:$(pwd)/test-staging2:skiprepack:${DEFAULT_JAVA_VERSION}'"
 fi
 echo -n "" > "${QUEUE}"
 
  ${SUT} test-staging/hello.jar nomail test-staging2 skiprepack > /dev/null 2>&1
-if ! grep -q "$(whoami):test-staging/hello.jar:nomail:test-staging2:skiprepack:${DEFAULT_JAVA_VERSION}" "${QUEUE}"; then
- fail "Expecting '$(whoami):test-staging/hello.jar:nomail:test-staging2:skiprepack:${DEFAULT_JAVA_VERSION}'"
+if ! grep -q "$(whoami):$(pwd)/test-staging/hello.jar:nomail:$(pwd)/test-staging2:skiprepack:${DEFAULT_JAVA_VERSION}" "${QUEUE}"; then
+ fail "Expecting '$(whoami):$(pwd)/test-staging/hello.jar:nomail:$(pwd)/test-staging2:skiprepack:${DEFAULT_JAVA_VERSION}'"
 fi
 echo -n "" > "${QUEUE}"
 
 ${SUT} test-staging/hello.jar test-staging2 nomail > /dev/null 2>&1
-if ! grep -q "$(whoami):test-staging/hello.jar:nomail:test-staging2::${DEFAULT_JAVA_VERSION}" "${QUEUE}"; then
-  fail "Expecting '$(whoami):test-staging/hello.jar:nomail:test-staging2::${DEFAULT_JAVA_VERSION}'"
+if ! grep -q "$(whoami):$(pwd)/test-staging/hello.jar:nomail:$(pwd)/test-staging2::${DEFAULT_JAVA_VERSION}" "${QUEUE}"; then
+  fail "Expecting '$(whoami):$(pwd)/test-staging/hello.jar:nomail:$(pwd)/test-staging2::${DEFAULT_JAVA_VERSION}'"
 fi
 echo -n "" > "${QUEUE}"
 
 ${SUT} test-staging/hello.jar skiprepack nomail > /dev/null 2>&1 
-if ! grep -q "$(whoami):test-staging/hello.jar:nomail:test-staging:skiprepack:${DEFAULT_JAVA_VERSION}" "${QUEUE}"; then
- fail "Expecting '$(whoami):test-staging/hello.jar:nomail:test-staging:skiprepack:${DEFAULT_JAVA_VERSION}'"
+if ! grep -q "$(whoami):$(pwd)/test-staging/hello.jar:nomail:$(pwd)/test-staging:skiprepack:${DEFAULT_JAVA_VERSION}" "${QUEUE}"; then
+ fail "Expecting '$(whoami):$(pwd)/test-staging/hello.jar:nomail:$(pwd)/test-staging:skiprepack:${DEFAULT_JAVA_VERSION}'"
 fi
 echo -n "" > "${QUEUE}"
 
 ${SUT} test-staging/hello.jar mail skiprepack > /dev/null 2>&1
-if ! grep -q "$(whoami):test-staging/hello.jar:mail:test-staging:skiprepack:${DEFAULT_JAVA_VERSION}" "${QUEUE}"; then
- fail "Expecting '$(whoami):test-staging/hello.jar:mail:test-staging:skiprepack:${DEFAULT_JAVA_VERSION}'"
+if ! grep -q "$(whoami):$(pwd)/test-staging/hello.jar:mail:$(pwd)/test-staging:skiprepack:${DEFAULT_JAVA_VERSION}" "${QUEUE}"; then
+ fail "Expecting '$(whoami):$(pwd)/test-staging/hello.jar:mail:$(pwd)/test-staging:skiprepack:${DEFAULT_JAVA_VERSION}'"
 fi
 echo -n "" > "${QUEUE}"
 
 export JAR_PROCESSOR_JAVA="java8"
 ${SUT} test-staging/hello.jar mail skiprepack > /dev/null 2>&1
-if ! grep -q "$(whoami):test-staging/hello.jar:mail:test-staging:skiprepack:java8" "${QUEUE}"; then
- fail "Expecting '$(whoami):test-staging/hello.jar:mail:test-staging:skiprepack:java8'"
+if ! grep -q "$(whoami):$(pwd)/test-staging/hello.jar:mail:$(pwd)/test-staging:skiprepack:java8" "${QUEUE}"; then
+ fail "Expecting '$(whoami):$(pwd)/test-staging/hello.jar:mail:$(pwd)/test-staging:skiprepack:java8'"
 fi
 echo -n "" > "${QUEUE}"
 unset JAR_PROCESSOR_JAVA
@@ -152,8 +152,8 @@ unset JAR_PROCESSOR_JAVA
 mkdir -p test-staging/java7/inputfile
 cp test-staging/hello.jar test-staging/java7/inputfile
 ${SUT} test-staging/java7/inputfile/hello.jar test-staging2 nomail > /dev/null 2>&1
-if ! grep -q "$(whoami):test-staging/java7/inputfile/hello.jar:nomail:test-staging2::java7" "${QUEUE}"; then
- fail "Expecting '$(whoami):test-staging/java7/inputfile/hello.jar:nomail:test-staging2::java7'"
+if ! grep -q "$(whoami):$(pwd)/test-staging/java7/inputfile/hello.jar:nomail:$(pwd)/test-staging2::java7" "${QUEUE}"; then
+ fail "Expecting '$(whoami):$(pwd)/test-staging/java7/inputfile/hello.jar:nomail:$(pwd)/test-staging2::java7'"
 fi
 echo -n "" > "${QUEUE}"
 
@@ -165,8 +165,8 @@ cp test-staging/hello.jar test-staging/plugins/a3.jar
 pushd test-staging > /dev/null && zip -q tobesigned.zip plugins/ plugins/a*.jar && popd > /dev/null
 
 ${SUT} test-staging/tobesigned.zip test-staging2 nomail > /dev/null 2>&1
-if ! grep -q "$(whoami):test-staging/tobesigned.zip:nomail:test-staging2::java6" "${QUEUE}"; then
- fail "Expecting '$(whoami):test-staging/tobesigned.zip:nomail:test-staging2::java6'"
+if ! grep -q "$(whoami):$(pwd)/test-staging/tobesigned.zip:nomail:$(pwd)/test-staging2::java6" "${QUEUE}"; then
+ fail "Expecting '$(whoami):$(pwd)/test-staging/tobesigned.zip:nomail:$(pwd)/test-staging2::java6'"
 fi
 if ! unzip -l test-staging/tobesigned.zip | grep -q pack.properties; then
   fail "Was expecting a pack.properties file in the zip tobesigned.zip"
@@ -189,8 +189,8 @@ ${SCRIPT_REALPATH}/../jar_processor_signer_java8.sh test-staging/plugins/b3.jar
 
 pushd test-staging > /dev/null && zip -q tobesigned_2.zip plugins/ plugins/b*.jar && popd > /dev/null
 ${SUT} test-staging/tobesigned_2.zip test-staging2 nomail > /dev/null 2>&1
-if ! grep -q "$(whoami):test-staging/tobesigned_2.zip:nomail:test-staging2::java6" "${QUEUE}"; then
- fail "Expecting '$(whoami):test-staging/tobesigned_2.zip:nomail:test-staging2::java6'"
+if ! grep -q "$(whoami):$(pwd)/test-staging/tobesigned_2.zip:nomail:$(pwd)/test-staging2::java6" "${QUEUE}"; then
+ fail "Expecting '$(whoami):$(pwd)/test-staging/tobesigned_2.zip:nomail:$(pwd)/test-staging2::java6'"
 fi
 if ! unzip -l test-staging/tobesigned_2.zip | grep -q pack.properties; then
   fail "Was expecting a pack.properties file in the zip tobesigned_2.zip"

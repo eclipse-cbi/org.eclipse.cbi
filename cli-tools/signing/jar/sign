@@ -84,6 +84,8 @@ if [[ -z "${FILE}" || ! -f "${FILE}" || ("${FILE}" != *.jar && "${FILE}" != *.zi
   error "File '${FILE}' not found, or not a valid file."
   error "Signing aborted."
   exit 2
+else 
+  FILE="$(absolute_path "${FILE}")"
 fi
 
 # checks that the file is a jar and is not already signed
@@ -105,6 +107,7 @@ elif [[ "${FILE}" == *.zip ]]; then
 </project>
 EOL
   ${ANT_HOME}/bin/ant -f "${FILE}.ant.xml"
+  rm -f "${FILE}.ant.xml"
 fi
 
 QUEUE_OPTION="${QUEUE_OPTION:-now}"
@@ -137,6 +140,8 @@ if [[ ! -d "${OUTPUT_DIR}" ]]; then
     error "Signing aborted."
     exit 4
   }
+else 
+  OUTPUT_DIR=$(absolute_path "${OUTPUT_DIR}")
 fi
 
 if ! is_sub_folder "${OUTPUT_DIR}" "${SAFE_WD[@]}"; then

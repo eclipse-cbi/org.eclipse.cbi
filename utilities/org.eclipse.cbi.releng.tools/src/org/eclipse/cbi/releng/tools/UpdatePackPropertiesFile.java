@@ -69,7 +69,8 @@ public class UpdatePackPropertiesFile extends Task {
     public static void main(String[] args) {
         UpdatePackPropertiesFile testInstance = new UpdatePackPropertiesFile();
         testInstance.setVerbose(true);
-        String archiveName = "/home/davidw/work/testSigning/orbit-signed-noPackProperties.zip";
+        //String archiveName = "/Users/davidw/work/testSigning/orbit-signed-noPackProperties.zip";
+        String archiveName = "/Users/davidw/work/testSigning/site_1985289617.zip";
         testInstance.setArchiveFilename(archiveName);
         //testInstance.setDebugFiles(true);
         testInstance.execute();
@@ -509,16 +510,18 @@ public class UpdatePackPropertiesFile extends Task {
         }
     }
 
+    /* 
+     * In addition to getting the java property "java.io.tmpdir", 
+     * we ensure the string ends with a slash, since the caller 
+     * will be appending 'zip file name' to it.  
+     */
     private String getTempdir() {
         if (tempdir == null) {
-
             tempdir = System.getProperty("java.io.tmpdir");
             if (!(tempdir.endsWith("/") || tempdir.endsWith("\\"))) {
                 tempdir = tempdir + FILE_SEPERATOR;
             }
-            tempdir = tempdir + FILE_SEPERATOR;
         }
-
         return tempdir;
     }
 

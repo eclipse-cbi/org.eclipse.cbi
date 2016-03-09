@@ -513,7 +513,7 @@ public class UpdatePackPropertiesFile extends Task {
             if (!(tempdir.endsWith("/") || tempdir.endsWith("\\"))) {
                 tempdir = tempdir + FILE_SEPERATOR;
             }
-            tempdir = tempdir + "tempupdatepackproperties" + FILE_SEPERATOR;
+            tempdir = tempdir + FILE_SEPERATOR;
         }
 
         return tempdir;

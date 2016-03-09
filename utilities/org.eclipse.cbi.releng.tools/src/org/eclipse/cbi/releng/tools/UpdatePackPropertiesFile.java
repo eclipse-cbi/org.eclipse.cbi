@@ -206,6 +206,9 @@ public class UpdatePackPropertiesFile extends Task {
         if (tempDestDir.exists()) {
             deleteDirectory(tempDestDir);
         }
+        if (tempnewarchive.exists()) {
+            tempnewarchive.delete();
+        }
 
     }
 

@@ -170,3 +170,4 @@ else
   info "You will receive notification when the file is signed, if you used the mail parameter."
   info "You can check signing status by tailing '${LOGFILE}'"
 fi
+exit 0

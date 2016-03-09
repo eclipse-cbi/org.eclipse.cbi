@@ -100,3 +100,5 @@ unset STOREPASS
 chmod g+w ${FILE} # TODO: is it still required?
 
 info "$(log_prefix):Finished signing '${FILE}'" >> "${LOGFILE}" 2>&1
+
+exit 0

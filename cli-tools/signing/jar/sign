@@ -106,7 +106,7 @@ elif [[ "${FILE}" == *.zip ]]; then
   </target>
 </project>
 EOL
-  ${ANT_HOME}/bin/ant -f "${FILE}.ant.xml"
+  ${ANT_HOME}/bin/ant -Dverbose="false" -f "${FILE}.ant.xml"
   rm -f "${FILE}.ant.xml"
 fi
 

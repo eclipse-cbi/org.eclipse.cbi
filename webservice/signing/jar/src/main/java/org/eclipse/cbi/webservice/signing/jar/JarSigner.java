@@ -242,7 +242,7 @@ public abstract class JarSigner {
 			command.add("-J-Dhttp.proxyHost=" + httpProxyHost()).add("-J-Dhttp.proxyPort=" + httpProxyPort());
 		}
 		
-		if (!Strings.isNullOrEmpty(httpProxyHost())) {
+		if (!Strings.isNullOrEmpty(httpsProxyHost())) {
 			command.add("-J-Dhttps.proxyHost=" + httpsProxyHost()).add("-J-Dhttps.proxyPort=" + httpsProxyPort());
 		}
 		

@@ -70,9 +70,9 @@ public class UpdatePackPropertiesFile extends Task {
         UpdatePackPropertiesFile testInstance = new UpdatePackPropertiesFile();
         testInstance.setVerbose(true);
         //String archiveName = "/Users/davidw/work/testSigning/orbit-signed-noPackProperties.zip";
-        String archiveName = "/Users/davidw/work/testSigning/site_1985289617.zip";
+        String archiveName = "/home/davidw/work/testSigning/site_1985289617.zip";
         testInstance.setArchiveFilename(archiveName);
-        //testInstance.setDebugFiles(true);
+        testInstance.setDebugFiles(true);
         testInstance.execute();
     }
 
@@ -123,9 +123,15 @@ public class UpdatePackPropertiesFile extends Task {
         destinationdirectory = getTempdir() + zipfilenameOnly + FILE_SEPERATOR;
 
         log("Finding jars already signed");
-        log("destinationdirectory: " + destinationdirectory, Project.MSG_DEBUG);
+        log("destinationdirectory before checking if exists: " + destinationdirectory, Project.MSG_DEBUG);
 
         File tempDestDir = ensureNewDirectory(destinationdirectory);
+        destinationdirectory = tempDestDir.getAbsolutePath();
+        // It is critical that this path have a trailing slash, for logic done later.
+        if (!(destinationdirectory.endsWith("/") || destinationdirectory.endsWith("\\"))) {
+            destinationdirectory = destinationdirectory + FILE_SEPERATOR;
+        }
+        log("destinationdirectory after checking if exists: " + destinationdirectory, Project.MSG_DEBUG);
 
         extractZipStream(destinationdirectory, zipfilename);
 
@@ -259,10 +265,24 @@ public class UpdatePackPropertiesFile extends Task {
     }
 
     private File ensureNewDirectory(String destinationdirectory) {
-        // delete if exists, to remove items from previous failed runs
+        // if destinationdirectory already exists, it might be due to 
+        // parallel processing on "common names" in zip file, so we will 
+        // add unique identifier based on exact current time. 
+        
         File tempDestDir = new File(destinationdirectory);
         if (tempDestDir.exists()) {
-            deleteDirectory(tempDestDir);
+            // here we do not want a trailing slash, or we end up making subdirectories.
+            if (destinationdirectory.endsWith(FILE_SEPERATOR)) {
+                destinationdirectory = destinationdirectory.substring(0, destinationdirectory.lastIndexOf(FILE_SEPERATOR));
+            }
+            while (tempDestDir.exists()) {
+                long now = System.currentTimeMillis();
+                String uniqueTime = Long.toString(now);
+                // We use 'temp' prefix here, so we just do not make longer name, 
+                // but basically "wait for the next millisecond difference".
+                String tempdestinationdirectory = destinationdirectory + uniqueTime;
+                tempDestDir = new File(tempdestinationdirectory);
+            }
         }
 
         boolean createDir = tempDestDir.mkdirs();

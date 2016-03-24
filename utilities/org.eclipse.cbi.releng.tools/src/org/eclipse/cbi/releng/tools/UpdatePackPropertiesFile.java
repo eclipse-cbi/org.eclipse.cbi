@@ -470,7 +470,14 @@ public class UpdatePackPropertiesFile extends Task {
                     newDir.mkdirs();
                 } else {
                     File newFile = new File(fullname);
-
+                    // ZipEntries need not have the "directories" as unique entries in the zip file, so we need to 
+                    // infer if the full name contains any "new" directory segments that need to be created.
+                    // If they do not exist, then "new FileOutputStream(newFile)" will throw a fit, that is, a FileNotFound exception.
+                    String potentialNewDirPath = newFile.getParent();
+                    File potentialNewDir = new File(potentialNewDirPath);
+                    if (!potentialNewDir.exists()) {
+                        potentialNewDir.mkdirs();
+                    }
                     fileoutputstream = new FileOutputStream(newFile);
 
                     while ((n = zipinputstream.read(buf, 0, 1024)) > -1) {

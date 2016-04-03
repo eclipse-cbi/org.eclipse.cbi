@@ -66,10 +66,11 @@
       name="archiveFile"
       value="data/site_1676022728.zip" />
 
-    <!-- by default, we'll make verbose true, unless overridden on command line -->
+    <!-- by default, we'll make verbose false, 
+         unless overridden on command line -->
     <property
       name="verbose"
-      value="true" />
+      value="false" />
 
     <property
       name="isInitialized"

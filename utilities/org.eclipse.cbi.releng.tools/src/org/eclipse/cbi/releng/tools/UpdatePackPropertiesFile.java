@@ -68,47 +68,55 @@ public class UpdatePackPropertiesFile extends Task {
      */
     public static void main(String[] args) {
         UpdatePackPropertiesFile testInstance = new UpdatePackPropertiesFile();
-        testInstance.setVerbose(true);
+        testInstance.setVerbose(false);
+        testInstance.setDebugFiles(false);
         //String archiveName = "/Users/davidw/work/testSigning/orbit-signed-noPackProperties.zip";
-        String archiveName = "/home/davidw/work/testSigning/site_1985289617.zip";
+        String archiveName = "/home/davidw/work/testsigning/download-staging.priv/rt/ecf/site_697425353.zip";
         testInstance.setArchiveFilename(archiveName);
-        testInstance.setDebugFiles(true);
         testInstance.execute();
     }
 
     public void execute() throws BuildException {
-
-        boolean invalidProperties = false;
+        if (isVerbose()) {
+            log("verbose logging is enabled");
+        }
         if (getArchiveFilename() == null) {
-            log("archiveFilename must be set");
-            invalidProperties = true;
+            log("ERROR: archiveFilename must be set");
+            throw new BuildException("archiveFilename must be set");
         }
         ZipFile archiveFile = null;
         // confirm the zip file exists?
         try {
-            archiveFile = new ZipFile(getArchiveFilename());
-            archiveFile.close();
+            File testFile = new File(getArchiveFilename());
+            if (testFile.exists()) {
+                archiveFile = new ZipFile(getArchiveFilename());
+                archiveFile.close();
+            } else {
+                log("ERROR: The zip file was specified but it did not exist.");
+                log("archiveFileName: " + getArchiveFilename());
+                throw new BuildException("The zip file specified did not exist. See log for more details");
+            }
+
+        } catch (IOException e) {
+            log("ERROR: The zip file was specified and existed, but could not be open. Possibly an invalid zip file?");
+            log("       archiveFileName: " + getArchiveFilename());
+            throw new BuildException("Could not open zip file. See log for more information.", e);
         }
-        catch (IOException e) {
-            invalidProperties = true;
-            log(e.getLocalizedMessage());
-        }
-        if (invalidProperties) {
-            throw new BuildException("The properties for this task are not valid. See log for more details");
-        }
-        if (isVerbose()) {
-            log("verbose logging is enabled");
-        }
+
         try {
             packPropertiesExisted = packPropertiesExists();
-            if (packPropertiesExisted) {
-                log("A 'pack.properties' file was found in the archive so we did not create one and did not modify anything.");
-            } else {
-                excludeSignedJars();
-            }
+        } catch (IOException e) {
+            throw new BuildException("ERROR: Unexpected IOException while searching for existing pack.properties", e);
         }
-        catch (IOException e) {
-            throw new BuildException(e);
+
+        if (packPropertiesExisted) {
+            log("INFO: A 'pack.properties' file was found in the archive. As designed, we did not create new one and did not modify anything.");
+        } else {
+            try {
+                excludeSignedJars();
+            } catch (IOException e) {
+                throw new BuildException("ERROR: Unexpected IOException while searching for signed jars", e);
+            }
         }
 
     }
@@ -181,11 +189,11 @@ public class UpdatePackPropertiesFile extends Task {
             wroteValue = true;
         }
         packFile.close();
-        if (! wroteValue) {
-           new File(destinationdirectory,"pack.properties").delete();
-           log ("Did not write pack.properties file, since all values were empty.");
+        if (!wroteValue) {
+            new File(destinationdirectory, "pack.properties").delete();
+            log("Did not write pack.properties file, since all values were empty.");
         } else {
-            log ("Created pack.properties file to add to archive.");
+            log("Created pack.properties file and added it to archive.");
         }
 
         // again, include zip file name to make sure unique
@@ -247,8 +255,7 @@ public class UpdatePackPropertiesFile extends Task {
             sourceChannel = sourceStream.getChannel();
             destChannel = destStream.getChannel();
             destChannel.transferFrom(sourceChannel, 0, sourceChannel.size());
-        }
-        finally {
+        } finally {
             if (sourceStream != null) {
                 sourceStream.close();
             }
@@ -268,7 +275,7 @@ public class UpdatePackPropertiesFile extends Task {
         // if destinationdirectory already exists, it might be due to 
         // parallel processing on "common names" in zip file, so we will 
         // add unique identifier based on exact current time. 
-        
+
         File tempDestDir = new File(destinationdirectory);
         if (tempDestDir.exists()) {
             // here we do not want a trailing slash, or we end up making subdirectories.
@@ -346,8 +353,7 @@ public class UpdatePackPropertiesFile extends Task {
             // Complete and close the ZIP file
             out.close();
 
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -387,13 +393,15 @@ public class UpdatePackPropertiesFile extends Task {
     }
 
     /**
-     * This method uses a simple heuristic to determine if signed. 
-     * It simple looks for "ECLIPSE.SF" and all known variants. 
+     * This method uses a simple heuristic to determine if signed. It simple
+     * looks for "ECLIPSE.SF" and all known variants.
      * 
-     * I was thinking that should be improved someday, but I looked
-     * at how Ant implements their "signed selector" and turns out that 
-     * they do the same thing (basically). See 
-     * http://grepcode.com/file/repo1.maven.org/maven2/org.apache.ant/ant/1.8.4/org/apache/tools/ant/taskdefs/condition/IsSigned.java#40
+     * I was thinking that should be improved someday, but I looked at how Ant
+     * implements their "signed selector" and turns out that they do the same
+     * thing (basically). See
+     * http://grepcode.com/file/repo1.maven.org/maven2/org
+     * .apache.ant/ant/1.8.4/org
+     * /apache/tools/ant/taskdefs/condition/IsSigned.java#40
      * 
      * @param currentresults
      * @param destinationDir
@@ -563,7 +571,7 @@ public class UpdatePackPropertiesFile extends Task {
         this.pack200args = pack200args;
     }
 
-    private boolean packPropertiesExists() {
+    private boolean packPropertiesExists() throws IOException {
         boolean result = false;
         // The file we are looking for is only valid if at "top"
         // of hierarchy. Not if in subdirectory.
@@ -584,18 +592,13 @@ public class UpdatePackPropertiesFile extends Task {
                     break;
                 }
             }
-        }
-        catch (IOException ioe) {
-            System.out.println("Error opening zip file" + ioe);
-        }
-        finally {
+        } finally {
             try {
                 if (zipFile != null) {
                     zipFile.close();
                 }
-            }
-            catch (IOException ioe) {
-                System.out.println("Error while closing zip file" + ioe);
+            } catch (IOException ioe) {
+                log("Error while closing zip file" + ioe);
             }
         }
         return result;

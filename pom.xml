@@ -73,7 +73,7 @@
     </repository>
   </repositories>
 
-  <!-- This is required by maven-checkstyle-plugin as it will look for dependencies 
+  <!-- This is required by maven-checkstyle-plugin as it will look for dependencies
     in pluginRepositories and not repositories -->
   <pluginRepositories>
     <pluginRepository>
@@ -193,10 +193,10 @@
           <version>3.4</version>
         </plugin>
         <plugin>
-          <!-- This maven-enforcer-plugin configuration to actually break 
-            the build if run with older maven. prerequisites section is kept for now 
-            as even if it doesn't break the build, it is used by other plugins like versions-maven-plugin 
-            which check and warn for using plugins with older than they require Maven 
+          <!-- This maven-enforcer-plugin configuration to actually break
+            the build if run with older maven. prerequisites section is kept for now
+            as even if it doesn't break the build, it is used by other plugins like versions-maven-plugin
+            which check and warn for using plugins with older than they require Maven
             version. -->
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
@@ -224,7 +224,7 @@
             <dependency>
               <groupId>org.eclipse.cbi</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>1.0.0</version>
+              <version>1.0.1-SNAPSHOT</version>
             </dependency>
             <!-- workaround https://issues.apache.org/jira/browse/MCHECKSTYLE-309 -->
             <dependency>
@@ -240,6 +240,7 @@
           </dependencies>
           <configuration>
             <configLocation>eclipse_checkstyle.xml</configLocation>
+            <headerLocation>EPL-LICENSE.regexp.txt</headerLocation>
             <failOnViolation>false</failOnViolation>
             <failsOnError>true</failsOnError>
             <consoleOutput>true</consoleOutput>

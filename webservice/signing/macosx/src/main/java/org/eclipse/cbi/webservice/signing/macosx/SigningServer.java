@@ -9,7 +9,7 @@
  *   Mikaël Barbero - initial implementation
  *******************************************************************************/
 package org.eclipse.cbi.webservice.signing.macosx;
- 
+
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -35,10 +35,10 @@ public class SigningServer {
 
 	@Option(name="-c",usage="configuration file")
 	private String configurationFilePath = "macosx-signing-service.properties";
-	
+
 	@Argument
 	private List<String> arguments = new ArrayList<String>();
-	
+
     public static void main(String[] args) throws Exception {
     	new SigningServer().doMain(FileSystems.getDefault(), args);
     }
@@ -59,12 +59,12 @@ public class SigningServer {
 				.securityUnlockTimeout(conf.getSecurityUnlockTimeout())
 				.processExecutor(new ProcessExecutor.BasicImpl())
 				.build();
-			
+
 			final SigningServlet codeSignServlet = SigningServlet.builder()
 				.tempFolder(tempFolder)
 				.codesigner(codesigner)
 				.build();
-			
+
 			final EmbeddedServer server = EmbeddedServer.builder()
 				.port(serverConf.getServerPort())
 				.accessLogFile(serverConf.getAccessLogFile())
@@ -98,13 +98,13 @@ public class SigningServer {
 
             return false;
         }
-        
+
         if (!Files.exists(fs.getPath(configurationFilePath))) {
         	System.err.println("Configuration file does not exist: '" + configurationFilePath + "'");
         	parser.printUsage(System.err);
             System.err.println();
         }
-        
+
         return true;
 	}
 }

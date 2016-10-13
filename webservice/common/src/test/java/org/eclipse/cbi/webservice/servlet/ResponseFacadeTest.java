@@ -40,7 +40,7 @@ public class ResponseFacadeTest {
 	@Mock private HttpServletResponse response;
 	@Mock private PrintWriter pw;
 	private ByteArrayOutputStream baos;
-	
+
 	@SuppressWarnings("resource")
 	@Before
 	public void before() throws IOException {
@@ -48,7 +48,7 @@ public class ResponseFacadeTest {
 		when(response.getOutputStream()).thenReturn(new ForwardingServletOutputStream(baos));
 		when(response.getWriter()).thenReturn(pw);
 	}
-	
+
 	@Test
 	public void testReplyWithFile() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem()) {
@@ -66,15 +66,15 @@ public class ResponseFacadeTest {
 
 	private static final class ForwardingServletOutputStream extends ServletOutputStream {
 		private final ByteArrayOutputStream baos;
-		
+
 		ForwardingServletOutputStream(ByteArrayOutputStream baos) { this.baos = baos; }
-		
+
 		@Override
 		public void write(int b) throws IOException { this.baos.write(b); }
-	
+
 		@Override
 		public void setWriteListener(WriteListener writeListener) {}
-	
+
 		@Override
 		public boolean isReady() { return false; }
 	}

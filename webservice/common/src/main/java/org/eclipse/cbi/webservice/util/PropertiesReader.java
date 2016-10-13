@@ -34,7 +34,7 @@ public class PropertiesReader {
 
 	/**
 	 * Load the file at the given path as a property file.
-	 * 
+	 *
 	 * @param path
 	 *            the file to load
 	 * @return a new {@link Properties} object.
@@ -53,11 +53,11 @@ public class PropertiesReader {
 		}
 		return new PropertiesReader(properties, path.getFileSystem());
 	}
-	
+
 	/**
 	 * Returns the property value with key {@code propertyName} or the
 	 * {@code defaultValue} if the key can not be found in the properties.
-	 * 
+	 *
 	 * @param propertyName
 	 *            the key of the property to get
 	 * @param defaultValue
@@ -80,7 +80,7 @@ public class PropertiesReader {
 	 * Returns the property value with key {@code propertyName}. If the
 	 * key can not be found in the properties, it will throw an
 	 * {@link IllegalStateException}.
-	 * 
+	 *
 	 * @param propertyName
 	 *            the key of the property to get
 	 * @return the property value with key {@code propertyName}
@@ -99,11 +99,11 @@ public class PropertiesReader {
 	public Path getPath(String propertyName, String defaultValue) {
 		return fileSystem.getPath(getString(propertyName, Objects.requireNonNull(defaultValue)).trim());
 	}
-	
+
 	public Path getPath(String propertyName) {
 		return fileSystem.getPath(getString(propertyName).trim());
 	}
-	
+
 	public long getLong(String propertyName) {
 		String propertyValue = getString(propertyName);
 		try {
@@ -112,7 +112,7 @@ public class PropertiesReader {
 			throw new IllegalStateException("Property '" + propertyName + "' must be a valid long integer (currently '" + propertyValue + "'");
 		}
 	}
-	
+
 	public long getLong(String propertyName, long defaultValue) {
 		final String propertyValue = properties.getProperty(propertyName);
 		if (propertyValue == null) {
@@ -125,7 +125,7 @@ public class PropertiesReader {
 			}
 		}
 	}
-	
+
 	public int getInt(String propertyName) {
 		String propertyValue = getString(propertyName);
 		try {
@@ -134,7 +134,7 @@ public class PropertiesReader {
 			throw new IllegalStateException("Property '" + propertyName + "' must be a valid integer (currently '" + propertyValue + "'");
 		}
 	}
-	
+
 	public int getInt(String propertyName, int defaultValue) {
 		final String propertyValue = properties.getProperty(propertyName);
 		if (propertyValue == null) {
@@ -147,12 +147,12 @@ public class PropertiesReader {
 			}
 		}
 	}
-	
+
 	/**
 	 * Returns the path from property value with key {@code propertyName}. If
 	 * the key can not be found in the properties or if the associated path
 	 * doesn't exist, it will throw an {@link IllegalStateException}.
-	 * 
+	 *
 	 * @param propertyName
 	 *            the key of the property to get
 	 * @return the property value with key {@code propertyName}
@@ -167,10 +167,10 @@ public class PropertiesReader {
 		}
 		return path;
 	}
-	
+
 	public String getFileContent(String propertyName) {
 		Path path = getRegularFile(propertyName);
-		
+
 		try {
 			byte[] fileContents = Files.readAllBytes(path);
 			return new String(fileContents, StandardCharsets.UTF_8).trim();
@@ -187,7 +187,7 @@ public class PropertiesReader {
 			return Boolean.valueOf(propertyValue);
 		}
 	}
-	
+
 	/**
 	 * Returns a copy of the all the read properties
 	 * @return

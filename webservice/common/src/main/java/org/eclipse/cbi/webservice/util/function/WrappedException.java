@@ -19,7 +19,7 @@ public class WrappedException extends RuntimeException {
 
 	/**
 	 * Default construtor
-	 * 
+	 *
 	 * @param wrapped
 	 *            the wrapped exception.
 	 */

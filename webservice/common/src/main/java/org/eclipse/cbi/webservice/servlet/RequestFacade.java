@@ -40,28 +40,28 @@ import com.google.common.base.Strings;
 public abstract class RequestFacade implements Closeable {
 
 	private final static Logger logger = LoggerFactory.getLogger(RequestFacade.class);
-	
+
 	private final Set<Part> partToDelete;
-	
+
 	RequestFacade() { //prevents subclassing and instantiation outside package
 		this.partToDelete = new LinkedHashSet<>();
-	} 
-	
+	}
+
 	/**
 	 * Returns the request being decorated
 	 * @return the request being decorated
 	 */
 	abstract HttpServletRequest request();
-	
+
 	/**
 	 * Returns the temporary folder where part files are stored.
 	 * @return the temporary folder where part files are stored.
 	 */
 	abstract Path tempFolder();
-	
+
 	/**
 	 * Creates and returns a new builder for this class.
-	 * 
+	 *
 	 * @param tempFolder
 	 *            the temporary folder to be used by this object. <strong>Must
 	 *            be the same as the one given to {@link MultipartConfig}
@@ -71,33 +71,33 @@ public abstract class RequestFacade implements Closeable {
 	public static Builder builder(Path tempFolder) {
 		return new AutoValue_RequestFacade.Builder().tempFolder(tempFolder);
 	}
-	
+
 	/**
 	 * A builder of {@link RequestFacade} objects.
 	 */
 	@AutoValue.Builder
 	public static abstract class Builder {
 		Builder() {}
-		
+
 		/**
 		 * Sets the to-be decorated request.
-		 * 
+		 *
 		 * @param request
 		 *            the request to be decorated.
 		 * @return this builder for daisy-chaining.
 		 */
 		public abstract Builder request(HttpServletRequest request);
-		
+
 		/**
 		 * Sets the temporary folder to be used by the to-be created
 		 * {@link RequestFacade}.
-		 * 
+		 *
 		 * @param path
 		 *            the temporary folder
 		 * @return this builder for daisy-chaining.
 		 */
 		abstract Builder tempFolder(Path path);
-		
+
 		abstract RequestFacade autoBuild();
 
 		public RequestFacade build() {
@@ -107,11 +107,11 @@ public abstract class RequestFacade implements Closeable {
 			return requestFacade;
 		}
 	}
-	
+
 	/**
 	 * Returns true if the decorated request has a part with the given name,
 	 * false otherwise
-	 * 
+	 *
 	 * @param partName
 	 *            the name of the part to check for existence.
 	 * @return true if the decorated request has a part with the given name,
@@ -122,11 +122,11 @@ public abstract class RequestFacade implements Closeable {
 	public boolean hasPart(String partName) throws IOException, ServletException {
 		return request().getPart(partName) != null;
 	}
-	
+
 	/**
 	 * Returns true if the decorated request has a parameter with the given name,
 	 * false otherwise
-	 * 
+	 *
 	 * @param parameterName
 	 *            the name of the parameter to check for existence.
 	 * @return true if the decorated request has a parameter with the given name,
@@ -137,11 +137,11 @@ public abstract class RequestFacade implements Closeable {
 	public boolean hasParameter(String parameterName) throws IOException, ServletException {
 		return request().getParameter(parameterName) != null;
 	}
-	
+
 	/**
 	 * Returns the file of the part with the given part name, or
 	 * {@link Optional#empty()} is no part with the given name exists.
-	 * 
+	 *
 	 * @param partName
 	 *            the name of the part with the desired file
 	 * @return the file of the part with the given part name, or
@@ -152,13 +152,13 @@ public abstract class RequestFacade implements Closeable {
 	public Optional<Path> getPartPath(String partName) throws IOException, ServletException {
 		return getPartPath(partName, null);
 	}
-	
+
 	/**
 	 * Returns the file of the part with the given part name, or
 	 * {@link Optional#empty()} is no part with the given name exists.
 	 * <p>
 	 * The file name will be prefixed with the given string.
-	 * 
+	 *
 	 * @param partName
 	 *            the name of the part with the desired file
 	 * @param prefix
@@ -171,14 +171,14 @@ public abstract class RequestFacade implements Closeable {
 	public Optional<Path> getPartPath(String partName, String prefix) throws IOException, ServletException {
 		return getPartPath(partName, prefix, null);
 	}
-	
+
 	/**
 	 * Returns the file of the part with the given part name, or
 	 * {@link Optional#empty()} is no part with the given name exists.
 	 * <p>
 	 * The file name will be prefixed with the given string and suffixed with
 	 * the other one.
-	 * 
+	 *
 	 * @param partName
 	 *            the name of the part with the desired file
 	 * @param prefix
@@ -192,7 +192,7 @@ public abstract class RequestFacade implements Closeable {
 	 */
 	public Optional<Path> getPartPath(String partName, String prefix, String suffix) throws IOException, ServletException {
 		final Path ret;
-		
+
 		Part part = request().getPart(partName);
 		if (part != null) {
 			Path generatedPath = generatePath(Strings.nullToEmpty(prefix), "-" + Strings.nullToEmpty(part.getSubmittedFileName()) + Strings.nullToEmpty(suffix));
@@ -210,12 +210,12 @@ public abstract class RequestFacade implements Closeable {
 		}
 		return Optional.ofNullable(ret);
 	}
-	
+
 	/**
 	 * Returns the submitted file name of the part with the given name. If the
 	 * decorated request has no request with the given name, it will return
 	 * {@link Optional#empty()}
-	 * 
+	 *
 	 * @param partName
 	 *            the name of the part from which the filename is desired.
 	 * @return the submitted file name of the part with the given name. If the
@@ -237,7 +237,7 @@ public abstract class RequestFacade implements Closeable {
 		} else {
 			ret = null;
 		}
-		
+
 		return Optional.ofNullable(ret);
 	}
 
@@ -245,7 +245,7 @@ public abstract class RequestFacade implements Closeable {
 	 * Returns the input stream associated with the part with the given name. If
 	 * the decorated request has no part with the given name,
 	 * {@link Optional#empty()} is returned.
-	 * 
+	 *
 	 * @param partName
 	 *            the name of the part with the desired input stream.
 	 * @return the input stream associated with the part with the given name. If
@@ -259,18 +259,18 @@ public abstract class RequestFacade implements Closeable {
 		final InputStream ret;
 		Part part = request().getPart(partName);
 		if (part != null) {
-			ret = part.getInputStream(); 
+			ret = part.getInputStream();
 		} else {
 			ret = null;
 		}
 		return Optional.ofNullable(ret);
 	}
-	
+
 	/**
 	 * Returns the value of the parameter with the given. If the the decorated
 	 * request has no parameter with the given name, {@link Optional#empty()} is
 	 * returned.
-	 * 
+	 *
 	 * @param parameterName
 	 *            the name of the desired parameter
 	 * @return the value of the parameter with the given. If the the decorated
@@ -281,7 +281,7 @@ public abstract class RequestFacade implements Closeable {
 	public Optional<String> getParameter(String parameterName) throws IOException {
 		return Optional.ofNullable(request().getParameter(parameterName));
 	}
-	
+
 	@Override
 	public void close() throws IOException {
 		partToDelete.forEach(p -> {
@@ -295,7 +295,7 @@ public abstract class RequestFacade implements Closeable {
 
 	/** Random generator for file name generation */
     private static final SecureRandom random = new SecureRandom();
-    
+
     /**
      * Generates a random string with the given prefix and suffix.
      */

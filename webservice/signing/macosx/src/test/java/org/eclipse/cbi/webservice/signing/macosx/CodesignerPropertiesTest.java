@@ -24,7 +24,7 @@ public class CodesignerPropertiesTest {
 			propertiesReader.getCertificate();
 		}
 	}
-	
+
 	@Test(expected=IllegalStateException.class)
 	public void testEmptyPropertiesGetKeychain() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -32,7 +32,7 @@ public class CodesignerPropertiesTest {
 			propertiesReader.getKeychain();
 		}
 	}
-	
+
 	@Test(expected=IllegalStateException.class)
 	public void testEmptyPropertiesGetKeychainPassword() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -40,7 +40,7 @@ public class CodesignerPropertiesTest {
 			propertiesReader.getKeychainPassword();
 		}
 	}
-	
+
 	@Test
 	public void testGetCertificate() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -48,7 +48,7 @@ public class CodesignerPropertiesTest {
 			assertEquals("Certificate Corporation, Inc.", propertiesReader.getCertificate());
 		}
 	}
-	
+
 	@Test
 	public void testGetKeychain() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -59,7 +59,7 @@ public class CodesignerPropertiesTest {
 			assertEquals(keychainPath, propertiesReader.getKeychain());
 		}
 	}
-	
+
 	@Test(expected=IllegalStateException.class)
 	public void testGetNonExistingKeychain() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -67,7 +67,7 @@ public class CodesignerPropertiesTest {
 			propertiesReader.getKeychain();
 		}
 	}
-	
+
 	@Test(expected=IllegalStateException.class)
 	public void testNonExistingGetKeychainPassword() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -75,7 +75,7 @@ public class CodesignerPropertiesTest {
 			propertiesReader.getKeychainPassword();
 		}
 	}
-	
+
 	@Test
 	public void testGetKeychainPassword() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -84,7 +84,7 @@ public class CodesignerPropertiesTest {
 			assertEquals("the.password", propertiesReader.getKeychainPassword());
 		}
 	}
-	
+
 	@Test
 	public void testGetEmptyKeychainPassword() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -93,7 +93,7 @@ public class CodesignerPropertiesTest {
 			assertEquals("", propertiesReader.getKeychainPassword());
 		}
 	}
-	
+
 	@Test
 	public void testGetTrimmedKeychainPassword() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -102,7 +102,7 @@ public class CodesignerPropertiesTest {
 			assertEquals("password", propertiesReader.getKeychainPassword());
 		}
 	}
-	
+
 	private static Properties createTestProperties() {
 		Properties properties = new Properties();
 		properties.setProperty("macosx.certificate", "Certificate Corporation, Inc.");

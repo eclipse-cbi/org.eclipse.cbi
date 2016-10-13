@@ -50,59 +50,59 @@ public abstract class EmbeddedServer {
 	private Server server;
 
 	EmbeddedServer() {} // prevents instantiation and subclassing outside the package
-	
+
 	/**
 	 * Returns the servlet that will served the single service of this server.
-	 * 
+	 *
 	 * @return the servlet that will served the single service of this server.
 	 */
 	abstract Servlet servlet();
-	
+
 	/**
 	 * Returns the port that this server will listen to.
-	 * 
+	 *
 	 * @return the port that this server will listen to.
 	 */
 	abstract int port();
-	
+
 	/**
 	 * Returns the temporary folder that this server will use.
-	 * 
+	 *
 	 * @return the temporary folder that this server will use.
 	 */
 	abstract Path tempFolder();
-	
+
 	/**
 	 * Returns the path spec that will be associated with the servlet.
-	 * 
+	 *
 	 * @return the path spec that will be associated with the servlet.
 	 */
 	abstract String servicePathSpec();
-	
+
 	/**
 	 * Returns whether the version of the servlet should be appended to the
 	 * service path spec.
-	 * 
+	 *
 	 * @return whether the version of the servlet should be appended to the
 	 *         service
 	 */
 	abstract boolean appendServiceVersionToPathSpec();
-	
+
 	/**
 	 * Returns the file where this server will log all access.
-	 * 
+	 *
 	 * @return the file where this server will log all access.
 	 */
 	abstract Path accessLogFile();
-	
+
 	/**
 	 * Returns the properties containing the log4j configuration, e.g.:
 	 * <p>
-	 * 
+	 *
 	 * <pre>
 	 * # Root logger option
 	 * log4j.rootLogger=INFO, file
-	 * 
+	 *
 	 * # Redirect log messages to a log file, support file rolling.
 	 * log4j.appender.file=org.apache.log4j.RollingFileAppender
 	 * log4j.appender.file.File=/var/log/jetty-access.log
@@ -111,14 +111,14 @@ public abstract class EmbeddedServer {
 	 * log4j.appender.file.layout=org.apache.log4j.PatternLayout
 	 * log4j.appender.file.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n
 	 * </pre>
-	 * 
+	 *
 	 * @return the properties containing the log4j configuration.
 	 */
 	abstract Properties log4jConfiguration();
-	
+
 	/**
 	 * Creates and returns a new builder for this class.
-	 * 
+	 *
 	 * @return a new builder for this class.
 	 */
 	public static Builder builder() {
@@ -126,88 +126,88 @@ public abstract class EmbeddedServer {
 			.port(DEFAULT_PORT)
 			.appendServiceVersionToPathSpec(DEFAULT_APPEND_SERVICE_VERSION_TO_PATH_SPEC);
 	}
-	
+
 	/**
 	 * A builder of {@link EmbeddedServer}.
 	 */
 	@AutoValue.Builder
 	public abstract static class Builder {
 		Builder() {}
-		
+
 		/**
 		 * Sets the servlet to be used by the to-be build server.
-		 * 
+		 *
 		 * @param servlet
 		 *            the servlet to be used by the to-be build server. Must not
 		 *            be null.
 		 * @return this builder for daisy chaining.
 		 */
 		public abstract Builder servlet(Servlet servlet);
-		
+
 		/**
 		 * Sets the port number to be used by the to-be build server.
-		 * 
+		 *
 		 * @param port
 		 *            the port number to be used by the to-be build server. Must
 		 *            not be null.
 		 * @return this builder for daisy chaining.
 		 */
 		public abstract Builder port(int port);
-		
+
 		/**
 		 * Sets the temporary folder to be used by the to-be build server.
-		 * 
+		 *
 		 * @param tempFolder
 		 *            the temporary folder to be used by the to-be build server.
 		 *            Must not be null.
 		 * @return this builder for daisy chaining.
 		 */
 		public abstract Builder tempFolder(Path tempFolder);
-		
+
 		/**
 		 * Sets the service path specification for the servlet of the to-be
 		 * build server.
-		 * 
+		 *
 		 * @param servicePathSpec
 		 *            the service path specification for the servlet. Must not
 		 *            be null.
 		 * @return this builder for daisy chaining.
 		 */
 		public abstract Builder servicePathSpec(String servicePathSpec);
-		
+
 		/**
 		 * Configure the to-be created server to append or not the version of
 		 * the offered service.
-		 * 
+		 *
 		 * @param appendServiceVersionToPathSpec
 		 *            whether the version should be appended or not.
 		 * @return this builder for daisy chaining.
 		 */
 		public abstract Builder appendServiceVersionToPathSpec(boolean appendServiceVersionToPathSpec);
-		
+
 		/**
 		 * Sets the access log file to be used by the to-be build server.
-		 * 
+		 *
 		 * @param accessLogFile
 		 *            the access log file to be used by the to-be build server.
 		 *            Must not be null.
 		 * @return this builder for daisy chaining.
 		 */
 		public abstract Builder accessLogFile(Path accessLogFile);
-		
+
 		/**
 		 * Sets the file containing the log4j configuration of the to-be build
 		 * server.
-		 * 
+		 *
 		 * @param configuration
 		 *            the file containing the log4j configuration of the to-be
 		 *            build server. Must not be null.
 		 * @return this builder for daisy chaining.
 		 */
 		public abstract Builder log4jConfiguration(Properties configuration);
-		
+
 		abstract EmbeddedServer autoBuild();
-		
+
 		/**
 		 * Creates and returns a new {@link EmbeddedServer}. The following checks are done:
 		 * <ul>
@@ -232,12 +232,12 @@ public abstract class EmbeddedServer {
 	/**
 	 * Starts and joins the embedded Jetty server. This method will block until
 	 * the server is stopped.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	public void start() throws Exception {
 		PropertyConfigurator.configure(log4jConfiguration());
-		
+
 		server = new Server(port());
 
 		ServletContextHandler contextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
@@ -284,7 +284,7 @@ public abstract class EmbeddedServer {
 				if (Strings.isNullOrEmpty(version)) {
 					version = "dev";
 				}
-				
+
 				resp.setStatus(HttpServletResponse.SC_OK);
 				resp.setContentType("text/plain");
 				resp.addHeader(HttpHeaders.CACHE_CONTROL, "max-age=0,must-revalidate,no-cache,no-store");
@@ -304,7 +304,7 @@ public abstract class EmbeddedServer {
 				doHead(req, resp);
 				resp.getWriter().println("Server is online");
 			}
-			
+
 			@Override
 			protected void doHead(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 				resp.setStatus(HttpServletResponse.SC_OK);
@@ -315,10 +315,10 @@ public abstract class EmbeddedServer {
 		});
 		return hearbeatServlet;
 	}
-	
+
 	/**
 	 * Stops the embedded Jetty server.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	public void stop() throws Exception {

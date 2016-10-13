@@ -43,7 +43,7 @@ public interface ProcessExecutor {
 	 * Execute the given command as a forked process. It will gather the
 	 * standard output and standard err in the given {@link StringBuffer}. The
 	 * process will be stopped after the given given timeout.
-	 * 
+	 *
 	 * @param command
 	 *            the command to execute
 	 * @param processOutput
@@ -60,13 +60,13 @@ public interface ProcessExecutor {
 	 *             timeout.
 	 */
 	int exec(ImmutableList<String> command, StringBuilder processOutput, long timeout, TimeUnit timeoutUnit) throws IOException;
-	
+
 	/**
 	 * Execute the given command as a forked process. The process will be
 	 * stopped after the given given timeout. The stdout and stderr will not be
 	 * retrievable with this method. If you need it, use
 	 * {@link #exec(ImmutableList, StringBuffer, long, TimeUnit)}
-	 * 
+	 *
 	 * @param command
 	 *            the command to execute
 	 * @param timeout
@@ -81,33 +81,34 @@ public interface ProcessExecutor {
 	 *             timeout.
 	 */
 	int exec(ImmutableList<String> command, long timeout, TimeUnit timeoutUnit) throws IOException;
-	
+
 	/**
 	 * A basic implementation that will use a {@link ProcessBuilder} to build and run the {@link Process}.
 	 */
 	public class BasicImpl implements ProcessExecutor {
-		
+
 		private static final Logger logger = LoggerFactory.getLogger(BasicImpl.class);
-		
+
 		private final ExecutorService executor = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("Process-Stream-Gobbler-%d").build());
 
 		private static final int STREAM_GLOBBER_GRACETIME = 3; // in seconds
-		
+
 		/**
 		 * {@inheritDoc}
 		 */
+		@Override
 		public int exec(ImmutableList<String> command, StringBuilder processOutput, long timeout, TimeUnit timeoutUnit) throws IOException {
 			Objects.requireNonNull(command);
 			Preconditions.checkArgument(!command.isEmpty(), "Command must not be empty");
 			Objects.requireNonNull(processOutput);
-			
+
 			final String arg0 = command.iterator().next();
-			
+
 			ProcessBuilder pb = new ProcessBuilder(command);
 			pb.redirectErrorStream(true);
 
 			logger.info("Process '" + arg0 + "' starts");
-			
+
 			Process p = pb.start();
 
 			// redirect output/error streams of process.
@@ -121,7 +122,7 @@ public interface ProcessExecutor {
 							"Process '" + arg0 + "' has been stopped forcibly. It did not complete in " + timeout + " " + timeoutUnit,
 							"Process '" + arg0 + "' output: " + processOutput.toString()));
 				} else {
-					gatherOutput(processOutput, streamGobbler); 
+					gatherOutput(processOutput, streamGobbler);
 				}
 			} catch (InterruptedException e) { // we've been interrupted
 				p.destroyForcibly(); // kill the subprocess
@@ -129,15 +130,15 @@ public interface ProcessExecutor {
 				logger.error("Thread '" + Thread.currentThread().getName() + "' has been interrupted while waiting for the process '" + arg0 + "' to complete.", e);
 				processOutput.append("Thread '" + Thread.currentThread().getName() + "' has been interrupted while waiting for the process '" + arg0 + "' to complete.\n");
 				printStrackTrace(e, processOutput);
-				
+
 				gatherOutput(processOutput, streamGobbler);
-				
+
 				if (!p.isAlive()) {
 					logOutput(arg0, p.exitValue(), processOutput);
-				} else { 
+				} else {
 					logger.error("Process '" + arg0 + "' output: " + processOutput.toString());
 				}
-				
+
 				// Restore the interrupted status
 				Thread.currentThread().interrupt();
 			}
@@ -201,7 +202,7 @@ public interface ProcessExecutor {
 
 			/**
 			 * Creates a
-			 * 
+			 *
 			 * @param is
 			 *            the input stream to read from (will be buffered).
 			 * @param appendable

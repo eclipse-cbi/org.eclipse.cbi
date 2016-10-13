@@ -17,13 +17,13 @@ import static com.google.common.base.Throwables.propagateIfPossible;
 /**
  * Functional interface similar to {@link Predicate} but its
  * {@link #test(Object)} method can throws exception.
- * 
+ *
  * @param <T>
  *            the type of the input to the predicate
  */
 @FunctionalInterface
 public interface UnsafePredicate<T> {
-	
+
 	/**
 	 * /**
      * Evaluates this predicate on the given argument.
@@ -31,16 +31,16 @@ public interface UnsafePredicate<T> {
      * @param t the input argument
      * @return {@code true} if the input argument matches the predicate,
      * otherwise {@code false}
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	boolean test(T t) throws Exception;
-	
+
 	/**
 	 * Convert an {@link UnsafePredicate} to a safe {@link Predicate}, i.e. that
 	 * does not throw exception. The safe {@link Predicate} will rethrow any
 	 * exception as a {@link WrappedException} (or as is if it is an
 	 * {@link Error} or a {@link RuntimeException}.
-	 * 
+	 *
 	 * @param p
 	 *            the predicate to be decorated.
 	 * @return a predicate that does not throw exception.

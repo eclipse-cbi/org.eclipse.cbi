@@ -29,9 +29,9 @@ public class CodesignerProperties {
 	private static final String KEYCHAIN_PATH = "macosx.keychain";
 	private static final String SECURITY_UNLOCK_TIMEOUT = "macosx.security.unlock.timeout";
 	private static final String CODESIGN_TIMEOUT = "macosx.codesign.timeout";
-	
+
 	private final PropertiesReader propertiesReader;
-	
+
 	public CodesignerProperties(PropertiesReader propertiesReader) {
 		this.propertiesReader = propertiesReader;
 	}
@@ -47,11 +47,11 @@ public class CodesignerProperties {
 	public String getCertificate() {
 		return propertiesReader.getString(CERTIFICATE_NAME);
 	}
-	
+
 	public long getSecurityUnlockTimeout() {
 		return propertiesReader.getLong(SECURITY_UNLOCK_TIMEOUT, DEFAULT_SECURITY_UNLOCK_TIMEOUT);
 	}
-	
+
 	public long getCodesignTimeout() {
 		return propertiesReader.getLong(CODESIGN_TIMEOUT, DEFAULT_CODESIGN_TIMEOUT);
 	}

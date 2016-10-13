@@ -34,13 +34,13 @@ public class PropertiesReaderTest {
 			assertEquals("", properties.getString("d", ""));
 		}
 	}
-	
+
 	@Test
 	public void testToMap() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem()) {
 			Path path = SampleFilesGenerators.writeFile(fs.getPath("test.properties"), "a=b\nc=d X");
 			PropertiesReader properties = PropertiesReader.create(path);
-			
+
 			assertEquals("b", properties.toMap().get("a"));
 			assertEquals("d X", properties.toMap().get("c"));
 			assertEquals(null, properties.toMap().get("d"));

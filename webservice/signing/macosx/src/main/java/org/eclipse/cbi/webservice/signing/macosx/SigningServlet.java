@@ -9,7 +9,7 @@
  *   Mikaël Barbero - initial implementation
  *******************************************************************************/
 package org.eclipse.cbi.webservice.signing.macosx;
- 
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,7 +24,7 @@ import org.eclipse.cbi.webservice.servlet.ResponseFacade;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
- 
+
 /**
  * Serves OS X code signing service through POST request. It requires a "file"
  * part which must be a ZIP file with one or more .app It will reply a new ZIP
@@ -32,18 +32,18 @@ import com.google.common.base.Preconditions;
  */
 @AutoValue
 public abstract class SigningServlet extends HttpServlet {
-	
+
 	private static final String TEMP_FILE_PREFIX = SigningServlet.class.getSimpleName() + "-";
 	private static final String SIGNED_ZIP_FILE_SUFFIX = ".signed.zip";
 
 	private static final String ZIP_CONTENT_TYPE = "application/zip";
 
 	private static final String FILE_PART_NAME = "file";
-	
+
 	private static final long serialVersionUID = 523028904959736808L;
 
 	SigningServlet() {}
-	
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -52,7 +52,7 @@ public abstract class SigningServlet extends HttpServlet {
 		final ResponseFacade responseFacade = ResponseFacade.builder()
 				.servletResponse(response)
 				.build();
-		
+
 		try(RequestFacade requestFacade = RequestFacade.builder(tempFolder()).request(req).build()) {
 			doSign(requestFacade, responseFacade);
 		}
@@ -80,13 +80,13 @@ public abstract class SigningServlet extends HttpServlet {
 			answeringMachine.replyError(HttpServletResponse.SC_BAD_REQUEST, "No '.app' folder can be found in the provided zip file");
 		}
 	}
-	
+
 	abstract Codesigner codesigner();
 
 	/**
 	 * Returns the temporary folder to use during intermediate step of
 	 * application signing.
-	 * 
+	 *
 	 * @return the temporary folder to use during intermediate step of
 	 *         application signing.
 	 */
@@ -102,27 +102,27 @@ public abstract class SigningServlet extends HttpServlet {
 	@AutoValue.Builder
 	public static abstract class Builder {
 		Builder() {}
-		
+
 		public abstract Builder codesigner(Codesigner codesigner);
-		
+
 		/**
 		 * Sets the temporary folder for intermediate step during signing.
-		 * 
+		 *
 		 * @param tempFolder
 		 *            the temporary folder for intermediate step during signing.
 		 * @return this builder for daisy chaining.
 		 */
 		public abstract Builder tempFolder(Path tempFolder);
-		
+
 		abstract SigningServlet autoBuild();
-		
+
 		/**
 		 * Creates and returns a new instance of {@link SigningServlet} as
 		 * configured by this builder. The following checks are made:
 		 * <ul>
 		 * <li>The temporary folder must exists.</li>
 		 * </ul>
-		 * 
+		 *
 		 * @return a new instance of {@link CodesignerOLD} as configured by this
 		 *         builder.
 		 */

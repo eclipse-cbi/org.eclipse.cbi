@@ -34,7 +34,7 @@ import org.eclipse.jetty.util.log.Logger;
 public class EmbeddedErrorHandler extends ErrorHandler {
 
 	private static final Logger LOG = Log.getLogger(EmbeddedErrorHandler.class);
-	
+
 	@Override
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
 		String method = request.getMethod();

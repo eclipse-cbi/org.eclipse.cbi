@@ -30,5 +30,5 @@ public class ProcessExecutorTest {
 		assertEquals(0, exitValue);
 		assertEquals("Hello World\n", output.toString());
 	}
-	
+
 }

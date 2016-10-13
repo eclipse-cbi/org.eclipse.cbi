@@ -38,7 +38,7 @@ import com.google.common.jimfs.Jimfs;
 public class CodesignerTest {
 
 	@Mock private ProcessExecutor processExecutor;
-	
+
 	@Test(expected=IllegalStateException.class)
 	public void testNonExistingTempFolder() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
@@ -64,7 +64,7 @@ public class CodesignerTest {
 					.build();
 		}
 	}
-	
+
 	@Test(expected=NullPointerException.class)
 	public void testNullSource() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
@@ -73,7 +73,7 @@ public class CodesignerTest {
 			createCodesignerUnderTest(fs, processExecutor).signZippedApplications(source, target);
 		}
 	}
-	
+
 	@Test(expected=NullPointerException.class)
 	public void testNullTarget() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
@@ -82,7 +82,7 @@ public class CodesignerTest {
 			createCodesignerUnderTest(fs, processExecutor).signZippedApplications(source, target);
 		}
 	}
-	
+
 	@Test(expected=IllegalArgumentException.class)
 	public void testSourceNotExists() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
@@ -91,7 +91,7 @@ public class CodesignerTest {
 			createCodesignerUnderTest(fs, processExecutor).signZippedApplications(source, target);
 		}
 	}
-	
+
 	@Test(expected=IllegalArgumentException.class)
 	public void testSourceNotAZip() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
@@ -100,7 +100,7 @@ public class CodesignerTest {
 			createCodesignerUnderTest(fs, processExecutor).signZippedApplications(source, target);
 		}
 	}
-	
+
 	@Test(expected=IllegalArgumentException.class)
 	public void testTargetNotAZip() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
@@ -118,7 +118,7 @@ public class CodesignerTest {
 			createCodesignerUnderTest(fs, processExecutor).signZippedApplications(source, target);
 		}
 	}
-	
+
 	@Test
 	public void testZipFileWithoutApp() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
@@ -126,93 +126,93 @@ public class CodesignerTest {
 			SampleFilesGenerators.createLoremIpsumFile(fs.getPath("folder", "t2", "t3", "Test2.java"), 10);
 			Path source = fs.getPath("testFile.zip");
 			Zips.packZip(fs.getPath("folder"), source, true);
-			
+
 			Path target = fs.getPath("signed.zip");
 			assertEquals(0, createCodesignerUnderTest(fs, processExecutor).signZippedApplications(source, target));
 			verify(processExecutor).exec(eq(ImmutableList.of("security", "unlock", "-p", "password", "/path/to/keychain")), any(), anyLong(), any());
 			verifyZeroInteractions(processExecutor);
-			
+
 			verifyCleanedTempFolder(fs);
 		}
 	}
-	
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Test
 	public void testZipFileWithOneApp() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
 			assertEquals(1, createCodesignerUnderTest(fs, processExecutor).signZippedApplications(createTestZipFile(fs), fs.getPath("signed.zip")));
-			
+
 			ArgumentCaptor<ImmutableList> listCaptor = ArgumentCaptor.forClass(ImmutableList.class);
 			verify(processExecutor, times(2)).exec(listCaptor.capture(), any(), anyLong(), any());
 			assertEquals("security", listCaptor.getAllValues().get(0).get(0));
 			assertEquals("codesign", listCaptor.getAllValues().get(1).get(0));
 			assertTrue(listCaptor.getAllValues().get(1).get(7).toString().startsWith("/tmp"));
 			assertTrue(listCaptor.getAllValues().get(1).get(7).toString().endsWith("MyApp.app"));
-			
+
 			verifyZeroInteractions(processExecutor);
-			
+
 			verifyCleanedTempFolder(fs);
 		}
 	}
-	
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Test
 	public void testSecurityTimeout() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
 			assertEquals(1, createCodesignerUnderTest(fs, processExecutor).signZippedApplications(createTestZipFile(fs), fs.getPath("signed.zip")));
-			
+
 			ArgumentCaptor<ImmutableList> listCaptor = ArgumentCaptor.forClass(ImmutableList.class);
 			verify(processExecutor).exec(listCaptor.capture(), any(), eq(10L), any());
 			assertEquals("security", listCaptor.getAllValues().get(0).get(0));
-			
+
 			listCaptor = ArgumentCaptor.forClass(ImmutableList.class);
 			verify(processExecutor).exec(listCaptor.capture(), any(), eq(20L), any());
 			assertEquals("codesign", listCaptor.getAllValues().get(0).get(0));
-			
+
 			verifyZeroInteractions(processExecutor);
-			
+
 			verifyCleanedTempFolder(fs);
 		}
 	}
-	
+
 	@Test(expected=IOException.class)
 	public void testBadSecurityUnlockExec() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
 			when(processExecutor.exec(any(), any(), anyLong(), any())).thenReturn(127);
-			
+
 			createCodesignerUnderTest(fs, processExecutor).signZippedApplications(createTestZipFile(fs), fs.getPath("signed.zip"));
 		}
 	}
-	
+
 	@Test(expected=IOException.class)
 	public void testBadCodesignExec() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
 			when(processExecutor.exec(any(), any(), anyLong(), any())).thenReturn(0).thenReturn(127);
-			
+
 			createCodesignerUnderTest(fs, processExecutor).signZippedApplications(createTestZipFile(fs), fs.getPath("signed.zip"));
 		}
 	}
-	
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Test
 	public void testZipFileWithThreeApps() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
-			assertEquals(2, 
+			assertEquals(2,
 				createCodesignerUnderTest(fs, processExecutor).signZippedApplications(createTestZipFile2(fs), fs.getPath("signed.zip")));
-			
+
 			ArgumentCaptor<ImmutableList> listCaptor = ArgumentCaptor.forClass(ImmutableList.class);
 			verify(processExecutor, times(3)).exec(listCaptor.capture(), any(), anyLong(), any());
-			assertEquals("security", listCaptor.getAllValues().get(0).get(0)); 
+			assertEquals("security", listCaptor.getAllValues().get(0).get(0));
 			listCaptor.getAllValues().subList(1, listCaptor.getAllValues().size()).forEach(args -> {
 				assertEquals("codesign", args.get(0));
 			});
 			assertTrue(listCaptor.getAllValues().get(1).get(7).toString().endsWith("MyApp.app"));
 			assertTrue(listCaptor.getAllValues().get(2).get(7).toString().endsWith("MySecondApp.app"));
-			
+
 			verifyCleanedTempFolder(fs);
 		}
 	}
-	
+
 	@Test
 	public void testZipFileNestedDotAppFolders() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
@@ -223,14 +223,14 @@ public class CodesignerTest {
 			SampleFilesGenerators.createLoremIpsumFile(fs.getPath("folder", "subFolder", "MyThirdApp.app", "t2", "t3", "Test2.java"), 10);
 			Path zip = fs.getPath("testFile.zip");
 			Zips.packZip(fs.getPath("folder"), zip, false);
-			
 
-			assertEquals(2, 
+
+			assertEquals(2,
 					createCodesignerUnderTest(fs, processExecutor).signZippedApplications(zip, fs.getPath("signed.zip")));
 			verifyCleanedTempFolder(fs);
 		}
 	}
-	
+
 	@SuppressWarnings({ "unchecked" })
 	@Test
 	public void testZipResult() throws IOException, ServletException {
@@ -250,15 +250,15 @@ public class CodesignerTest {
 
 			Path source = createTestZipFile2(fs);
 			Path target = fs.getPath("signed.zip");
-			assertEquals(2, 
+			assertEquals(2,
 				createCodesignerUnderTest(fs, processExecutor).signZippedApplications(source, target));
-			
+
 			assertEquals(2+Zips.unpackZip(source, fs.getPath("/unzipUnsigned")),
 				Zips.unpackZip(target, fs.getPath("/unzipSigned")));
-			
+
 			assertTrue(Files.exists(fs.getPath("/unzipSigned/MyApp.app/signed")));
 			assertTrue(Files.exists(fs.getPath("/unzipSigned/MySecondApp.app/signed")));
-			
+
 			verifyCleanedTempFolder(fs);
 		}
 	}
@@ -280,7 +280,7 @@ public class CodesignerTest {
 				.securityUnlockTimeout(10)
 				.build();
 	}
-	
+
 	private static Path createTestZipFile(FileSystem fs) throws IOException {
 		SampleFilesGenerators.createLoremIpsumFile(fs.getPath("MyApp.app", "t1", "Test1.java"), 3);
 		SampleFilesGenerators.createLoremIpsumFile(fs.getPath("MyApp.app", "t2", "t3", "Test2.java"), 10);
@@ -288,7 +288,7 @@ public class CodesignerTest {
 		Zips.packZip(fs.getPath("MyApp.app"), zip, true);
 		return zip;
 	}
-	
+
 	private static Path createTestZipFile2(FileSystem fs) throws IOException {
 		SampleFilesGenerators.createLoremIpsumFile(fs.getPath("folder", "MyApp.app", "t1", "Test1.java"), 3);
 		SampleFilesGenerators.createLoremIpsumFile(fs.getPath("folder", "MyApp.app", "t2", "t3", "Test2.java"), 10);

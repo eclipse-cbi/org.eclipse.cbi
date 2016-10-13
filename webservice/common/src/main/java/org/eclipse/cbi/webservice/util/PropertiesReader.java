@@ -21,6 +21,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
@@ -28,6 +31,8 @@ import com.google.common.collect.ImmutableMap.Builder;
  * Class with utilities method for {@link Properties} objects.
  */
 public class PropertiesReader {
+
+	private static final Logger LOG = LoggerFactory.getLogger(PropertiesReader.class);
 
 	private final Properties properties;
 	private final FileSystem fileSystem;
@@ -162,6 +167,12 @@ public class PropertiesReader {
 	 */
 	public Path getRegularFile(String propertyName) {
 		Path path = getPath(propertyName);
+		if(!path.isAbsolute()) {
+			if(LOG.isDebugEnabled()) {
+				LOG.debug("[{}] Resolving relative path '{}' to '{}'", propertyName, path, path.toAbsolutePath());
+			}
+			path = path.toAbsolutePath();
+		}
 		if (!Files.isRegularFile(path)) {
 			throw new IllegalStateException("Property '" + propertyName + "' does not reference an existing regular file '" + path.toString() + "'");
 		}

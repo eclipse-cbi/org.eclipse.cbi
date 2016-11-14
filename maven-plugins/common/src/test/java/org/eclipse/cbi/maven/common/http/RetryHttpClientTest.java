@@ -11,6 +11,7 @@ import org.eclipse.cbi.maven.common.test.util.NullLog;
 import org.eclipse.cbi.maven.http.CompletionListener;
 import org.eclipse.cbi.maven.http.HttpClient;
 import org.eclipse.cbi.maven.http.HttpRequest;
+import org.eclipse.cbi.maven.http.HttpRequest.Config;
 import org.eclipse.cbi.maven.http.HttpResult;
 import org.eclipse.cbi.maven.http.RetryHttpClient;
 import org.junit.Assert;
@@ -88,6 +89,12 @@ public class RetryHttpClientTest {
 		
 		@Override
 		public boolean send(HttpRequest request, CompletionListener completionListener) throws IOException {
+			return send(request, Config.defaultConfig(), completionListener);
+		}
+
+		@Override
+		public boolean send(HttpRequest request, Config config, CompletionListener completionListener)
+				throws IOException {
 			count++;
 			if (throwEx) {
 				throw new IOException();

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2015 Eclipse Foundation and others.
+ * Copyright (c) 2012, 2016 Eclipse Foundation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -261,6 +261,16 @@ public class SignMojo extends AbstractMojo {
 	private SignatureAlgorithm signatureAlgorithm;
 
 	/**
+	 * Determines the timeout in milliseconds for any communication with the signing server.
+     * 
+     * A timeout value of zero is interpreted as an infinite timeout.
+	 * 
+	 * @since 1.1.4
+	 */
+	@Parameter(property = "cbi.jarsigner.connectTimeoutMillis", defaultValue = "5000")
+	private int connectTimeoutMillis;
+	
+	/**
 	 * {@inheritDoc}
 	 */
 	@Override
@@ -294,6 +304,7 @@ public class SignMojo extends AbstractMojo {
 					Options options = Options.builder()
 							.signatureAlgorithm(signatureAlgorithm)
 							.digestAlgorithm(digestAlgorithm)
+							.connectTimeoutMillis(connectTimeoutMillis)
 							.build();
 					jarSigner.sign(artifactFile.toPath(), options);
 				}

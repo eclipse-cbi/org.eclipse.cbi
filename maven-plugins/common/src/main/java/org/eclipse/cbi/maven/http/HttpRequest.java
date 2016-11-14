@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015 Eclipse Foundation and others.
+ * Copyright (c) 2015, 2016 Eclipse Foundation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 
+import com.google.auto.value.AutoValue;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.MoreObjects.ToStringHelper;
 import com.google.common.base.Preconditions;
@@ -24,6 +25,30 @@ import com.google.common.collect.ImmutableMap;
 
 public final class HttpRequest {
 	
+	@AutoValue
+	public static abstract class Config {
+		private static final int CONNECT_TIMEOUT_MS__DEFAULT = 5000;
+		
+		Config() {
+			// prevents instantiation
+		}
+		public abstract int connectTimeoutMillis();
+		
+		public static Builder builder() {
+			return new AutoValue_HttpRequest_Config.Builder();
+		}
+		
+		public static Config defaultConfig() {
+			return builder().connectTimeoutMillis(CONNECT_TIMEOUT_MS__DEFAULT).build();
+		}
+		
+		@AutoValue.Builder
+		public static abstract class Builder {
+			public abstract Builder connectTimeoutMillis(int timeout);
+			public abstract Config build();
+		}
+	}
+
 	private final URI serverUri;
 	private final ImmutableMap<String, String> stringParams;
 	private final ImmutableMap<String, Path> pathParams;

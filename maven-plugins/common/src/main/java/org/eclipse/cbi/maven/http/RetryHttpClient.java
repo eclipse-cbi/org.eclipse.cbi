@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.cbi.maven.Logger;
+import org.eclipse.cbi.maven.http.HttpRequest.Config;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Throwables;
@@ -32,6 +33,11 @@ public abstract class RetryHttpClient implements HttpClient {
 	
 	@Override
 	public boolean send(HttpRequest request, CompletionListener completionListener) throws IOException {
+		return send(request, Config.defaultConfig(), completionListener);
+	}
+	
+	@Override
+	public boolean send(HttpRequest request, Config config, CompletionListener completionListener) throws IOException {
 		boolean sucess = false;
 		Exception lastThrownException = null;
 

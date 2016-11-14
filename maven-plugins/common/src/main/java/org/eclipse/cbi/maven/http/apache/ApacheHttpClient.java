@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2015 Eclipse Foundation and others
+ * Copyright (c) 2014, 2016 Eclipse Foundation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -21,6 +21,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
@@ -30,6 +31,7 @@ import org.eclipse.cbi.maven.Logger;
 import org.eclipse.cbi.maven.http.CompletionListener;
 import org.eclipse.cbi.maven.http.HttpClient;
 import org.eclipse.cbi.maven.http.HttpRequest;
+import org.eclipse.cbi.maven.http.HttpRequest.Config;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
@@ -52,9 +54,14 @@ public class ApacheHttpClient implements HttpClient {
 	}
 	
 	@Override
-	public boolean send(HttpRequest request, final CompletionListener completionListener) throws IOException {
+	public boolean send(HttpRequest request, CompletionListener completionListener) throws IOException {
+		return send(request, HttpRequest.Config.defaultConfig(), completionListener);
+	}
+	
+	@Override
+	public boolean send(HttpRequest request, Config config, final CompletionListener completionListener) throws IOException {
 		Objects.requireNonNull(request);
-		HttpUriRequest apacheRequest = toApacheRequest(request);
+		HttpUriRequest apacheRequest = toApacheRequest(request, config);
 		log.debug("Will send request to '" + apacheRequest.getURI() + "'");
 		
 		Stopwatch stopwatch = Stopwatch.createStarted();
@@ -89,7 +96,7 @@ public class ApacheHttpClient implements HttpClient {
 		}
 	}
 	
-	@VisibleForTesting static HttpUriRequest toApacheRequest(HttpRequest request) {
+	@VisibleForTesting static HttpUriRequest toApacheRequest(HttpRequest request, Config config) {
 		MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 		builder.setStrictMode();
 		
@@ -102,6 +109,14 @@ public class ApacheHttpClient implements HttpClient {
 		}
 		
 		HttpPost post = new HttpPost(request.serverUri());
+		
+		RequestConfig requestConfig = RequestConfig.custom()
+				.setConnectionRequestTimeout(config.connectTimeoutMillis())
+				.setSocketTimeout(config.connectTimeoutMillis())
+				.setConnectTimeout(config.connectTimeoutMillis())
+				.build();
+		
+		post.setConfig(requestConfig);
 		post.setEntity(builder.build());
 		return post;
 	}

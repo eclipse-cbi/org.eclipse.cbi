@@ -34,7 +34,7 @@ public interface JarSigner {
 	@AutoValue
 	abstract class Options {
 		
-		private static final int CONNECT_TIMEOUT_MS__DEFAULT = 5000;
+		private static final int CONNECT_TIMEOUT_MS__DEFAULT = 20000;
 
 		public abstract MessageDigestAlgorithm digestAlgorithm();
 		public abstract SignatureAlgorithm signatureAlgorithm();

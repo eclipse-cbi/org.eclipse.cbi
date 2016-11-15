@@ -27,7 +27,7 @@ public final class HttpRequest {
 	
 	@AutoValue
 	public static abstract class Config {
-		private static final int CONNECT_TIMEOUT_MS__DEFAULT = 5000;
+		private static final int CONNECT_TIMEOUT_MS__DEFAULT = 20000;
 		
 		Config() {
 			// prevents instantiation

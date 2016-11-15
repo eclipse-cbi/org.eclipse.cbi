@@ -267,7 +267,7 @@ public class SignMojo extends AbstractMojo {
 	 * 
 	 * @since 1.1.4
 	 */
-	@Parameter(property = "cbi.jarsigner.connectTimeoutMillis", defaultValue = "5000")
+	@Parameter(property = "cbi.jarsigner.connectTimeoutMillis", defaultValue = "20000")
 	private int connectTimeoutMillis;
 	
 	/**

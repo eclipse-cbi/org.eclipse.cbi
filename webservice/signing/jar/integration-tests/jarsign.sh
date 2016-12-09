@@ -103,6 +103,6 @@ if [ "$signRetCode" -ne "200" ]; then
   exit 1
 fi
 
-jarsigner -verify -strict -verbose "${SIGNED_JAR}" | grep "jar verified"
+${JAVA8_HOME}/bin/jarsigner -verify -strict -verbose "${SIGNED_JAR}" | grep "jar verified"
 
 [ "$?" -eq "0" ] || { echo "jarsigner: '${SIGNED_JAR}' is not properly signed"; exit 1; }

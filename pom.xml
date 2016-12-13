@@ -78,12 +78,12 @@
   <pluginRepositories>
     <pluginRepository>
       <id>repo.eclipse.org</id>
-      <url>https://repo.eclipse.org/content/repositories/cbi-releases/</url>
+      <url>https://repo.eclipse.org/content/repositories/cbi</url>
       <releases>
         <enabled>true</enabled>
       </releases>
       <snapshots>
-        <enabled>false</enabled>
+        <enabled>true</enabled>
       </snapshots>
     </pluginRepository>
   </pluginRepositories>

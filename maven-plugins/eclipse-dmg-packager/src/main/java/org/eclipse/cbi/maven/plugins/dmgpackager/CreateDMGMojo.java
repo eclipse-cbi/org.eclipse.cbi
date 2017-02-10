@@ -181,6 +181,7 @@ public class CreateDMGMojo extends AbstractMojo {
 		HttpClient httpClient = RetryHttpClient.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())))
 				.maxRetries(3)
 				.waitBeforeRetry(10, TimeUnit.SECONDS)
+				.log(new MavenLogger(getLog()))
 				.build();
 		
 		if (!source.exists()) {

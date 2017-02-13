@@ -184,6 +184,8 @@ public class CreateDMGMojo extends AbstractMojo {
 				.log(new MavenLogger(getLog()))
 				.build();
 		
+		Builder requestBuilder = HttpRequest.on(URI.create(serviceUrl));
+		
 		if (!source.exists()) {
 			exceptionHandler.handleError("'source' file must exist");
 			return;
@@ -192,17 +194,26 @@ public class CreateDMGMojo extends AbstractMojo {
 			exceptionHandler.handleError("'source' file name must ends with '.tar.gz' or '.zip'");
 			return;
 		}
-		if (!volumeIcon.exists()) {
-			exceptionHandler.handleError("'volumeIcon' file must exist");
-			return;
+		requestBuilder.withParam("source", source.toPath());
+		
+		if (volumeIcon != null) {
+			if (!volumeIcon.exists()) {
+				exceptionHandler.handleError("'volumeIcon' file must exist");
+				return;
+			} else {
+				requestBuilder.withParam("volumeIcon", volumeIcon.toPath());
+			}
 		}
 		
-		Builder requestBuilder = HttpRequest.on(URI.create(serviceUrl))
-			.withParam("source", source.toPath())
-			.withParam("volumeName", volumeName)
-			.withParam("volumeIcon", volumeIcon.toPath())
-			.withParam("icon", icon)
-			.withParam("iconSize", iconSize)
+		if (volumeName != null) {
+			requestBuilder.withParam("volumeName", volumeName);
+		}
+			
+		if (icon!= null) {
+			requestBuilder.withParam("icon", icon);
+		}
+		
+		requestBuilder.withParam("iconSize", iconSize)
 			.withParam("windowPosition", windowPosition)
 			.withParam("windowSize", windowSize)
 			.withParam("appDropLink", dropLinkPosition);

@@ -109,7 +109,7 @@
       <dependency>
         <groupId>org.eclipse.tycho</groupId>
         <artifactId>tycho-core</artifactId>
-        <version>0.26.0</version>
+        <version>1.0.0</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven</groupId>
@@ -151,7 +151,7 @@
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-server</artifactId>
-        <version>9.4.0.v20161208</version>
+        <version>9.4.1.v20170120</version>
         <scope>test</scope>
       </dependency>
     </dependencies>

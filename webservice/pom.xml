@@ -39,7 +39,7 @@
   </modules>
 
   <properties>
-    <jetty-version>9.4.0.v20161208</jetty-version>
+    <jetty-version>9.4.1.v20170120</jetty-version>
     <log4j-version>2.3</log4j-version>
     <cbi-common-version>1.2.1</cbi-common-version>
   </properties>

@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 
 @AutoValue
@@ -37,7 +38,7 @@ public abstract class DMGPackager {
 	public Path packageImageFile(Path appFolder, Path targetImageFile, Options options) throws IOException {
 		ImmutableList<String> command = createCommand(appFolder, targetImageFile, options);
 	
-		logger.debug("The following 'create-dmg' command will be executed: '" + Joiner.on(' ').join(command) + "'");
+		logger.info("The following 'create-dmg' command will be executed: '" + Joiner.on(' ').join(command) + "'");
 		
 		final StringBuilder output = new StringBuilder();
 		int createImageFileExitValue = processExecutor().exec(command, output , timeout(), TimeUnit.SECONDS);
@@ -55,16 +56,19 @@ public abstract class DMGPackager {
 		ImmutableList.Builder<String> command = ImmutableList.builder();
 		command.add("./create-dmg/create-dmg");
 		
+		Splitter splitter = Splitter.on(' ').trimResults().omitEmptyStrings();
 		if (options.volumeName().isPresent())
 			command.add("--volname", options.volumeName().get());
 		if (options.windowPosition().isPresent())
-			command.add("--window-pos", options.windowPosition().get());
+			command.add("--window-pos").addAll(splitter.split(options.windowPosition().get()));
+		if (options.windowSize().isPresent())
+			command.add("--window-size").addAll(splitter.split(options.windowSize().get()));
 		if (options.iconSize().isPresent())
 			command.add("--icon-size", options.iconSize().get());
 		if (options.icon().isPresent())
-			command.add("--icon", options.icon().get());
+			command.add("--icon").addAll(splitter.split(options.icon().get()));
 		if (options.appDropLink().isPresent())
-			command.add("--app-drop-link", options.appDropLink().get());
+			command.add("--app-drop-link").addAll(splitter.split(options.appDropLink().get()));
 		if (options.volumeIcon().isPresent())
 			command.add("--volicon", options.volumeIcon().get().toString());
 		if (options.backgroundImage().isPresent())

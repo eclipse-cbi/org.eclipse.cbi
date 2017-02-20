@@ -16,6 +16,8 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.cbi.webservice.util.ProcessExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Joiner;
@@ -23,6 +25,8 @@ import com.google.common.collect.ImmutableList;
 
 @AutoValue
 public abstract class DMGPackager {
+	
+	private static final Logger logger = LoggerFactory.getLogger(DMGPackager.class);
 	
 	DMGPackager() {}
 	
@@ -33,6 +37,8 @@ public abstract class DMGPackager {
 	public Path packageImageFile(Path appFolder, Path targetImageFile, Options options) throws IOException {
 		ImmutableList<String> command = createCommand(appFolder, targetImageFile, options);
 	
+		logger.debug("The following 'create-dmg' command will be executed: '" + Joiner.on(' ').join(command) + "'");
+		
 		final StringBuilder output = new StringBuilder();
 		int createImageFileExitValue = processExecutor().exec(command, output , timeout(), TimeUnit.SECONDS);
 		if (createImageFileExitValue != 0) {
@@ -59,8 +65,6 @@ public abstract class DMGPackager {
 			command.add("--icon", options.icon().get());
 		if (options.appDropLink().isPresent())
 			command.add("--app-drop-link", options.appDropLink().get());
-		if (options.windowPosition().isPresent())
-			command.add("--window-pos", options.windowPosition().get());
 		if (options.volumeIcon().isPresent())
 			command.add("--volicon", options.volumeIcon().get().toString());
 		if (options.backgroundImage().isPresent())

@@ -73,15 +73,14 @@ public abstract class DMGPackagerServletRequestParser implements Closeable {
 	
 	public Path getSource() throws RequestParserException, IOException, ServletException {
 		if (requestFacade().hasPart(SOURCE_PART_NAME)) {
+			Optional<Path> sourcePath = requestFacade().getPartPath(SOURCE_PART_NAME, TEMP_FILE_PREFIX);
 			if (requestFacade().getSubmittedFileName(SOURCE_PART_NAME).get().endsWith(DOT_TAR_GZ)) {
-				Optional<Path> sourcePath = requestFacade().getPartPath(SOURCE_PART_NAME, TEMP_FILE_PREFIX);
 				if (sourcePath.isPresent()) {
 					return extractAppFromTarGz(sourcePath.get());
 				} else {
 					throw new RequestParserException("An error occured while retrieving the content of the part named '" + SOURCE_PART_NAME + "'");
 				}
 			} else if (requestFacade().getSubmittedFileName(SOURCE_PART_NAME).get().endsWith(DOT_ZIP)) {
-				Optional<Path> sourcePath = requestFacade().getPartPath(SOURCE_PART_NAME, TEMP_FILE_PREFIX);
 				if (sourcePath.isPresent()) {
 					return extractAppFromZip(sourcePath.get());
 				} else {
@@ -171,6 +170,14 @@ public abstract class DMGPackagerServletRequestParser implements Closeable {
 	
 	public Optional<Path> getEula() throws IOException, RequestParserException, ServletException {
 		return getCommandFileOption("eula");
+	}
+	
+	public Optional<Boolean> getSign() throws IOException {
+		Optional<String> parameter = requestFacade().getParameter("sign");
+		if (parameter.isPresent()) {
+			return Optional.of(Boolean.valueOf(parameter.get()));
+		}
+		return Optional.empty();
 	}
 	
 	private Optional<Path> getCommandFileOption(String partName) throws IOException, ServletException, RequestParserException {

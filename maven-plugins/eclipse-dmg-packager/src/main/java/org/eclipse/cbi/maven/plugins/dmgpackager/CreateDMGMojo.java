@@ -161,6 +161,14 @@ public class CreateDMGMojo extends AbstractMojo {
 	 */
 	@Parameter(property = "cbi.dmgpackager.continueOnFail", defaultValue = "false")
 	private boolean continueOnFail;
+	
+	/**
+	 * Controls signing of the dmg file
+	 * 
+	 * @since 1.1.4
+	 */
+	@Parameter(property = "cbi.dmgpackager.sign", defaultValue = "false")
+	private boolean sign;
 
 	@Override
 	public void execute() throws MojoExecutionException {
@@ -216,7 +224,8 @@ public class CreateDMGMojo extends AbstractMojo {
 		requestBuilder.withParam("iconSize", iconSize)
 			.withParam("windowPosition", windowPosition)
 			.withParam("windowSize", windowSize)
-			.withParam("appDropLink", dropLinkPosition);
+			.withParam("appDropLink", dropLinkPosition)
+			.withParam("sign", Boolean.toString(sign));
 			
 		if (eulaFile != null) {
 			if (!eulaFile.exists()) {

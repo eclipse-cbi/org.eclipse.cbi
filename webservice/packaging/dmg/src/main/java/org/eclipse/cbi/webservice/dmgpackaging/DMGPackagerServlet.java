@@ -31,10 +31,9 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class DMGPackagerServlet extends HttpServlet {
 
-	private static final String DOT_TAR_GZ = ".tar.gz";
-
 	private static final String APPLE_DISKIMAGE_MEDIA_TYPE = "application/x-apple-diskimage";
 
+	private static final String DOT_APP = ".app";
 	private static final String DOT_DMG = ".dmg";
 
 	private final static Logger logger = LoggerFactory.getLogger(DMGPackagerServlet.class);
@@ -45,6 +44,7 @@ public abstract class DMGPackagerServlet extends HttpServlet {
 	
 	abstract Path tempFolder();
 	abstract DMGPackager dmgPackager();
+	abstract DMGSigner dmgSigner();
 	
 	public static Builder builder() {
 		return new AutoValue_DMGPackagerServlet.Builder();
@@ -54,6 +54,7 @@ public abstract class DMGPackagerServlet extends HttpServlet {
 	public static abstract class Builder {
 		Builder() {}
 		public abstract Builder dmgPackager(DMGPackager dmgPackager);
+		public abstract Builder dmgSigner(DMGSigner dmgSigner);
 		public abstract Builder tempFolder(Path tempFolder);
 		public abstract DMGPackagerServlet build();
 	}
@@ -81,9 +82,17 @@ public abstract class DMGPackagerServlet extends HttpServlet {
 				.build();
 			
 			Path source = parser.getSource();
-			targetImageFile = dmgPackager().packageImageFile(source, source.normalize().getParent().resolve(source.getFileName().toString() + DOT_DMG), options);
-			String filename = requestFacade.getSubmittedFileName(DMGPackagerServletRequestParser.SOURCE_PART_NAME).toString().replace(DOT_TAR_GZ, DOT_DMG);
-			responseFacade.replyWithFile(APPLE_DISKIMAGE_MEDIA_TYPE, filename, targetImageFile);
+			targetImageFile = dmgPackager().packageImageFile(source, source.normalize().getParent().resolve(source.getFileName().toString().replace(DOT_APP, DOT_DMG)), options);
+			
+			if (parser.getSign().isPresent() && parser.getSign().get().booleanValue()) { 
+				try {
+					dmgSigner().sign(targetImageFile);
+				} catch (IOException e) {
+					logger.error("Error occured while signing '"+targetImageFile.toString()+"'", e);
+				}
+			}
+			
+			responseFacade.replyWithFile(APPLE_DISKIMAGE_MEDIA_TYPE, targetImageFile.getFileName().toString(), targetImageFile);
 		} finally {
 			deleteTemporaryResource(targetImageFile);
 		}

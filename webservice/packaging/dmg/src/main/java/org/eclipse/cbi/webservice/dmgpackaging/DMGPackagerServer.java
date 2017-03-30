@@ -46,12 +46,22 @@ public class DMGPackagerServer {
 			final EmbeddedServerConfiguration serverConf = new EmbeddedServerProperties(PropertiesReader.create(confPath));
 			final Path tempFolder = serverConf.getTempFolder();
 
+			final ProcessExecutor processExecutor = new ProcessExecutor.BasicImpl();
 			final DMGPackagerProperties conf = new DMGPackagerProperties(PropertiesReader.create(confPath));
-			final DMGPackager dmgPackager = DMGPackager.builder(new ProcessExecutor.BasicImpl()).timeout(conf.getTimeout()).build();
+			final DMGPackager dmgPackager = DMGPackager.builder(processExecutor).timeout(conf.getTimeout()).build();
+			final DMGSigner dmgSigner = DMGSigner.builder()
+					.certificateName(conf.getCertificate())
+					.keychain(conf.getKeychain())
+					.keychainPassword(conf.getKeychainPassword())
+					.codesignTimeout(conf.getCodesignTimeout())
+					.securityUnlockTimeout(conf.getSecurityUnlockTimeout())
+					.processExecutor(processExecutor)
+					.build();
 			
 			final DMGPackagerServlet createDMGServlet = DMGPackagerServlet.builder()
 					.tempFolder(tempFolder)
 					.dmgPackager(dmgPackager)
+					.dmgSigner(dmgSigner)
 					.build();
 			
 			final EmbeddedServer server = EmbeddedServer.builder()

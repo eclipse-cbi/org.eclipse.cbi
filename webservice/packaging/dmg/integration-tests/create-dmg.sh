@@ -50,6 +50,12 @@ server.access.log=${REMOTE_PATH}/dmg-packaging-service-yyyy_mm_dd.request.log
 server.temp.folder=${REMOTE_PATH}/tmp/
 server.service.pathspec=/${PACKAGING_SERVICE_PATH_SPEC}
 
+macosx.keychain=${USER_HOME}/Library/Keychains/login.keychain
+macosx.keychain.password=${USER_HOME}/login.keychain.passwd
+macosx.certificate=Integration Test Certificate
+macosx.security.unlock.timeout=20
+macosx.codesign.timeout=600
+
 # Root logger option
 log4j.rootLogger=INFO, file
 
@@ -96,7 +102,7 @@ fi
 TEST_APP_SIMPLE_NAME=$(echo ${TEST_APP} | sed -e 's/\.tar\.gz//g')
 
 # invoke web service
-signRetCode=$(curl -o "${BUILD_DIR}/${TEST_APP_SIMPLE_NAME}.dmg" --write-out '%{http_code}\n' -F source=@"${BUILD_DIR}/${TEST_APP}" ${PACKAGING_SERVICE_URL})
+signRetCode=$(curl -o "${BUILD_DIR}/${TEST_APP_SIMPLE_NAME}.dmg" --write-out '%{http_code}\n' -F sign=true -F source=@"${BUILD_DIR}/${TEST_APP}" ${PACKAGING_SERVICE_URL})
 
 if [ "$signRetCode" -ne "200" ]; then
   echo "Packaging has failed:"

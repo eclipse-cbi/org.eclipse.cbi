@@ -12,8 +12,8 @@ package org.eclipse.cbi.webservice.signing.macosx;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.base.Throwables.propagateIfInstanceOf;
+import static com.google.common.base.Throwables.throwIfUnchecked;
+import static com.google.common.base.Throwables.throwIfInstanceOf;
 import static java.util.Objects.requireNonNull;
 import static org.eclipse.cbi.webservice.util.function.UnsafePredicate.safePredicate;
 
@@ -91,8 +91,9 @@ public abstract class Codesigner {
 					.filter(safePredicate(p -> signApplication(p, false)))
 					.count();
 			} catch (WrappedException e) {
-				propagateIfInstanceOf(e.getCause(), IOException.class);
-				throw propagate(e.getCause());
+				throwIfInstanceOf(e.getCause(), IOException.class);
+				throwIfUnchecked(e.getCause());
+				throw new RuntimeException(e.getCause());
 			}
 		}
 	}

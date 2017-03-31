@@ -64,8 +64,9 @@ public abstract class RetryHttpClient implements HttpClient {
 		}
 
 		if (lastThrownException != null) {
-			Throwables.propagateIfInstanceOf(lastThrownException, IOException.class);
-			throw Throwables.propagate(lastThrownException);
+			Throwables.throwIfInstanceOf(lastThrownException, IOException.class);
+			Throwables.throwIfUnchecked(lastThrownException);
+			throw new RuntimeException(lastThrownException);
 		}
 
 		return sucess;

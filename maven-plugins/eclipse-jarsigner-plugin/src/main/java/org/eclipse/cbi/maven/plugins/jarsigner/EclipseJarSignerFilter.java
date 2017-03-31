@@ -87,8 +87,7 @@ public class EclipseJarSignerFilter implements Filter {
 	 * @return true if it finds a property that excludes this file for signing.
 	 * @throws MojoExecutionException 
 	 */
-	@SuppressWarnings("static-method")
-	private boolean isDisabledInEclipseInf(final Path file) throws IOException {
+	private static boolean isDisabledInEclipseInf(final Path file) throws IOException {
 		boolean isDisabled = false;
 
 		try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(file))) {

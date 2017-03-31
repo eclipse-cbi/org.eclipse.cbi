@@ -29,7 +29,7 @@ public class RetryHttpClientTest {
 		RetryHttpClient.retryRequestOn(HttpClients.DUMMY).maxRetries(5).waitBeforeRetry(-1, TimeUnit.SECONDS).log(new NullLog()).build();
 	}
 
-	@Test(expected=IllegalStateException.class)
+	@Test(expected=NullPointerException.class)
 	public void testRetryNullUnit() throws Exception {
 		RetryHttpClient.retryRequestOn(HttpClients.DUMMY).maxRetries(3).waitBeforeRetry(1, null).log(new NullLog()).build();
 	}

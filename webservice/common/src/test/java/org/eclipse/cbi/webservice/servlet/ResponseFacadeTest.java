@@ -29,7 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import com.google.common.jimfs.Jimfs;
 import com.google.common.net.HttpHeaders;
@@ -41,12 +41,10 @@ public class ResponseFacadeTest {
 	@Mock private PrintWriter pw;
 	private ByteArrayOutputStream baos;
 
-	@SuppressWarnings("resource")
 	@Before
 	public void before() throws IOException {
 		baos = new ByteArrayOutputStream();
 		when(response.getOutputStream()).thenReturn(new ForwardingServletOutputStream(baos));
-		when(response.getWriter()).thenReturn(pw);
 	}
 
 	@Test

@@ -17,10 +17,8 @@ import static org.junit.Assert.assertNotEquals;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
-import org.eclipse.cbi.webservice.util.PropertiesReader;
 import org.junit.Test;
 
 import com.google.common.jimfs.Jimfs;

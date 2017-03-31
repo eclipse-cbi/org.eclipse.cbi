@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.cbi.webservice.servlet;
 
-import static autovalue.shaded.com.google.common.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -254,7 +254,6 @@ public abstract class RequestFacade implements Closeable {
 	 * @throws IOException
 	 * @throws ServletException
 	 */
-	@SuppressWarnings("resource")
 	public Optional<InputStream> getPartInputStream(String partName) throws IOException, ServletException {
 		final InputStream ret;
 		Part part = request().getPart(partName);

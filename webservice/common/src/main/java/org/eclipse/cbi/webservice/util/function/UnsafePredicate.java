@@ -12,7 +12,7 @@ package org.eclipse.cbi.webservice.util.function;
 
 import java.util.function.Predicate;
 
-import static com.google.common.base.Throwables.propagateIfPossible;
+import static com.google.common.base.Throwables.throwIfUnchecked;
 
 /**
  * Functional interface similar to {@link Predicate} but its
@@ -50,7 +50,7 @@ public interface UnsafePredicate<T> {
 			try {
 				return p.test(s);
 			} catch (Exception e) {
-				propagateIfPossible(e);
+				throwIfUnchecked(e);
 				throw new WrappedException(e);
 			}
 		};

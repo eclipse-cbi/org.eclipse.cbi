@@ -29,7 +29,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
 import com.google.common.jimfs.Jimfs;
@@ -40,7 +40,7 @@ public class RequestFacadeTest {
 	@Mock HttpServletRequest request;
 	@Mock Part part;
 
-	@Test(expected=IllegalStateException.class)
+	@Test(expected=NullPointerException.class)
 	public void testNullTempFolder() {
 		RequestFacade.builder(null).request(request).build();
 	}
@@ -59,7 +59,7 @@ public class RequestFacadeTest {
 		}
 	}
 
-	@Test(expected=IllegalStateException.class)
+	@Test(expected=NullPointerException.class)
 	public void testNullRequest() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem()) {
 			RequestFacade.builder(Files.createDirectory(fs.getRootDirectories().iterator().next().resolve("tmp"))).request(null).build();
@@ -85,7 +85,6 @@ public class RequestFacadeTest {
 	@Test
 	public void testNullPartInputStream() throws IOException, ServletException {
 		try (FileSystem fs = Jimfs.newFileSystem(); RequestFacade facade = createRequestFacadeUnderTest(fs)) {
-			when(request.getParameter("testPart")).thenReturn(null);
 			assertEquals(Optional.empty(), facade.getPartInputStream("testPart"));
 		}
 	}
@@ -109,7 +108,7 @@ public class RequestFacadeTest {
 			doAnswer(new Answer<Object>() {
 				@Override
 				public Object answer(InvocationOnMock invocation) throws Throwable {
-					String filename = invocation.getArgumentAt(0, String.class);
+					String filename = invocation.getArgument(0);
 					Files.createFile(fs.getRootDirectories().iterator().next().resolve("tmp").resolve(filename));
 					return null;
 				}

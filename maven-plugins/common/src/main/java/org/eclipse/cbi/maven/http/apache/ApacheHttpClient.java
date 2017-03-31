@@ -74,8 +74,9 @@ public class ApacheHttpClient implements HttpClient {
 			});
 		} catch (Exception e) {
 			log.debug("HTTP request and response handled in " + stopwatch);
-			Throwables.propagateIfInstanceOf(e, IOException.class);
-			throw Throwables.propagate(e);
+			Throwables.throwIfInstanceOf(e, IOException.class);
+			Throwables.throwIfUnchecked(e);
+			throw new RuntimeException(e);
 		}
 	}
 	

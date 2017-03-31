@@ -20,8 +20,6 @@ import org.apache.http.entity.mime.MIME;
 import org.apache.http.entity.mime.content.AbstractContentBody;
 import org.apache.http.util.Args;
 
-import com.google.common.base.Throwables;
-
 /**
  * Binary body part backed by a path.
  *
@@ -63,7 +61,7 @@ final class PathBody extends AbstractContentBody {
 		try {
 			return Files.size(path);
 		} catch (IOException e) {
-			throw Throwables.propagate(e);
+			throw new RuntimeException(e);
 		}
 	}
 

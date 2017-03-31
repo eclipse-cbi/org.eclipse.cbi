@@ -26,7 +26,6 @@ import org.kohsuke.args4j.OptionHandlerFilter;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 
 
@@ -158,7 +157,7 @@ public class TestServer {
 				try {
 					ret = Files.createTempDirectory(TestServer.class.getSimpleName() + "-");
 				} catch (IOException e) {
-					throw Throwables.propagate(e);
+					throw new RuntimeException(e);
 				}
 			} else {
 				ret = fs.getPath(directory);
@@ -168,7 +167,7 @@ public class TestServer {
 	        	try {
 					Files.createDirectories(ret);
 				} catch (IOException e) {
-					throw Throwables.propagate(e);
+					throw new RuntimeException(e);
 				}
 	        }
 			
@@ -323,7 +322,7 @@ public class TestServer {
 				try {
 					Files.createDirectories(tempFolder);
 				} catch (IOException e) {
-					throw Throwables.propagate(e);
+					throw new RuntimeException(e);
 				}
 			}
 			return tempFolder;

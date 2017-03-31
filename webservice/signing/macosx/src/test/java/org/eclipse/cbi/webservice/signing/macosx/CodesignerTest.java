@@ -2,10 +2,10 @@ package org.eclipse.cbi.webservice.signing.macosx;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -27,7 +27,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
 import com.google.common.collect.ImmutableList;
@@ -236,7 +236,7 @@ public class CodesignerTest {
 	public void testZipResult() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
 			// let's add a new file a the root of the app to simulate signing
-			when(processExecutor.exec(any(), any(), anyInt(), any())).then(new Answer<Integer>() {
+			when(processExecutor.exec(any(), any(), anyLong(), any())).then(new Answer<Integer>() {
 				@Override
 				public Integer answer(InvocationOnMock invocation) throws Throwable {
 					ImmutableList<String> command = (ImmutableList<String>) invocation.getArguments()[0];

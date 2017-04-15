@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright (c) 2013, 2014 Eclipse Foundation and others.
+  Copyright (c) 2013, 2017 Eclipse Foundation and others.
   All rights reserved. This program and the accompanying materials
   are made available under the terms of the Eclipse Distribution License v1.0
   which accompanies this distribution, and is available at
@@ -20,8 +20,8 @@
       <item name="Introduction" href="index.html" />
       <item name="Jar Signer" href="eclipse-jarsigner-plugin/plugin-info.html" />
       <item name="Windows Exe Signer" href="eclipse-winsigner-plugin/plugin-info.html" />
-      <item name="OS X App Signer" href="eclipse-macsigner-plugin/plugin-info.html" />
-      <item name="OS X DMG Packager" href="eclipse-dmg-packager/plugin-info.html" />
+      <item name="macOS App Signer" href="eclipse-macsigner-plugin/plugin-info.html" />
+      <item name="macOS DMG Packager" href="eclipse-dmg-packager/plugin-info.html" />
       <item name="Utilities" href="eclipse-cbi-plugin/plugin-info.html" />
     </menu>
   </body>

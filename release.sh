@@ -34,9 +34,9 @@ export GIT_BRANCH="${GIT_BRANCH:-master}"
 export WORKSPACE="${WORKSPACE:-$(pwd)}"
 export DRY_RUN="${DRY_RUN:+true}"
 
-export VERSIONS_MAVEN_PLUGIN="${VERSIONS_MAVEN_PLUGIN:-org.codehaus.mojo:versions-maven-plugin:2.1}"
+export VERSIONS_MAVEN_PLUGIN="${VERSIONS_MAVEN_PLUGIN:-org.codehaus.mojo:versions-maven-plugin:2.3}"
 export MAVEN_HELP_PLUGIN="${MAVEN_HELP_PLUGIN:-org.apache.maven.plugins:maven-help-plugin:2.2}"
-export MAVEN_DEPENDENCY_PLUGIN="${MAVEN_DEPENDENCY_PLUGIN:-org.apache.maven.plugins:maven-dependency-plugin:2.10}"
+export MAVEN_DEPENDENCY_PLUGIN="${MAVEN_DEPENDENCY_PLUGIN:-org.apache.maven.plugins:maven-dependency-plugin:3.0.0}"
 
 export ARTIFACT_ID=$(${M2_HOME}/bin/mvn -B ${MAVEN_HELP_PLUGIN}:evaluate -Dexpression=project.artifactId -f ${POM} | grep -Ev '(^\[)')
 export GROUP_ID=$(${M2_HOME}/bin/mvn -B ${MAVEN_HELP_PLUGIN}:evaluate -Dexpression=project.groupId -f ${POM} | grep -Ev '(^\[)')

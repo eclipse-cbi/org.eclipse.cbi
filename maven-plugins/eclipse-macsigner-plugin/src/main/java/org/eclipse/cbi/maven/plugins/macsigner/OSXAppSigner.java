@@ -65,6 +65,8 @@ public abstract class OSXAppSigner {
 	abstract HttpClient httpClient();
 	
 	abstract URI serverUri();
+	
+	abstract int connectTimeoutMillis();
 
 	public static Builder builder() {
 		return new AutoValue_OSXAppSigner.Builder();
@@ -163,9 +165,10 @@ public abstract class OSXAppSigner {
     }
     
     private boolean processOnSigningServer(final Path file) throws IOException {
+    	HttpRequest.Config requestConfig = HttpRequest.Config.builder().connectTimeoutMillis(connectTimeoutMillis()).build();
 		final HttpRequest request = HttpRequest.on(serverUri()).withParam(PART_NAME, file).build();
 		log().debug("OS X app signing request: " + request.toString());
-		boolean success = httpClient().send(request, new AbstractCompletionListener(file.getParent(), file.getFileName().toString(), OSXAppSigner.class.getSimpleName(), new MavenLogger(log())) {
+		boolean success = httpClient().send(request, requestConfig, new AbstractCompletionListener(file.getParent(), file.getFileName().toString(), OSXAppSigner.class.getSimpleName(), new MavenLogger(log())) {
 			@Override
 			public void onSuccess(HttpResult result) throws IOException {
 				if (result.contentLength() == 0) {
@@ -240,6 +243,7 @@ public abstract class OSXAppSigner {
 		 * @return this builder for chained calls.
 		 */
 		public abstract Builder log(Log log);
+		public abstract Builder connectTimeoutMillis(int connectTimeoutMillis);
 		public abstract Builder serverUri(URI uri);
 		public abstract Builder httpClient(HttpClient httpClient);
 		public abstract Builder exceptionHandler(ExceptionHandler handler);

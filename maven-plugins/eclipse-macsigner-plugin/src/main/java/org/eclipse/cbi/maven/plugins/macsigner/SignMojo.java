@@ -214,6 +214,16 @@ public class SignMojo extends AbstractMojo {
 	 */
 	@Parameter(property = "retryTimer", defaultValue = "10")
 	private int deprecatedRetryTimer;
+	
+	/**
+	 * Determines the timeout in milliseconds for any communication with the signing server.
+     * 
+     * A timeout value of zero is interpreted as an infinite timeout.
+	 * 
+	 * @since 1.1.5
+	 */
+	@Parameter(property = "cbi.dmgpackager.connectTimeoutMillis", defaultValue = "0")
+	private int connectTimeoutMillis;
 
     @Override
     public void execute() throws MojoExecutionException {
@@ -225,6 +235,7 @@ public class SignMojo extends AbstractMojo {
     	OSXAppSigner osxAppSigner = OSXAppSigner.builder()
     		.serverUri(URI.create(signerUrl))
     		.httpClient(httpClient)
+    		.connectTimeoutMillis(connectTimeoutMillis)
     		.exceptionHandler(new ExceptionHandler(getLog(), continueOnFail()))
     		.log(getLog())
     		.build();

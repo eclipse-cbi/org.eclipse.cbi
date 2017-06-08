@@ -201,6 +201,7 @@ public class WindowsExeSignerTest {
 		return WindowsExeSigner.builder()
 				.serverUri(URI.create("http://localhost"))
 				.httpClient(client)
+				.connectTimeoutMillis(0)
 				.exceptionHandler(new ExceptionHandler(log, continueOnFail))
 				.log(log)
 				.build();

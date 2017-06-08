@@ -169,6 +169,16 @@ public class CreateDMGMojo extends AbstractMojo {
 	 */
 	@Parameter(property = "cbi.dmgpackager.sign", defaultValue = "false")
 	private boolean sign;
+	
+	/**
+	 * Determines the timeout in milliseconds for any communication with the packaging/signing server.
+     * 
+     * A timeout value of zero is interpreted as an infinite timeout.
+	 * 
+	 * @since 1.1.5
+	 */
+	@Parameter(property = "cbi.dmgpackager.connectTimeoutMillis", defaultValue = "0")
+	private int connectTimeoutMillis;
 
 	@Override
 	public void execute() throws MojoExecutionException {
@@ -247,7 +257,8 @@ public class CreateDMGMojo extends AbstractMojo {
 	}
 
 	private void processOnRemoteServer(HttpClient httpClient, HttpRequest request) throws IOException {
-		httpClient.send(request, new AbstractCompletionListener(source.toPath().getParent(), source.toPath().getFileName().toString(), CreateDMGMojo.class.getSimpleName(), new MavenLogger(getLog())) {
+		HttpRequest.Config requestConfig = HttpRequest.Config.builder().connectTimeoutMillis(connectTimeoutMillis).build();
+		httpClient.send(request, requestConfig, new AbstractCompletionListener(source.toPath().getParent(), source.toPath().getFileName().toString(), CreateDMGMojo.class.getSimpleName(), new MavenLogger(getLog())) {
 			@Override
 			public void onSuccess(HttpResult result) throws IOException {
 				if (result.contentLength() == 0) {

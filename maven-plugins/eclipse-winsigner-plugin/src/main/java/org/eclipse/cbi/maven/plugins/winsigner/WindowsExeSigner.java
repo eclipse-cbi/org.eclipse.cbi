@@ -50,6 +50,7 @@ public abstract class WindowsExeSigner {
 	abstract Log log();
 	abstract ExceptionHandler exceptionHandler();
 	abstract URI serverUri();
+	abstract int connectTimeoutMillis();
 	
 	WindowsExeSigner() {
 		
@@ -115,8 +116,9 @@ public abstract class WindowsExeSigner {
     
     private boolean processOnSigningServer(final Path file) throws IOException {
 		final HttpRequest request = HttpRequest.on(serverUri()).withParam(PART_NAME, file).build();
+		HttpRequest.Config requestConfig = HttpRequest.Config.builder().connectTimeoutMillis(connectTimeoutMillis()).build();
 		log().debug("Windows exe signing request: " + request.toString());
-		boolean success = httpClient().send(request, new AbstractCompletionListener(file.getParent(), file.getFileName().toString(), WindowsExeSigner.class.getSimpleName(), new MavenLogger(log())) {
+		boolean success = httpClient().send(request, requestConfig, new AbstractCompletionListener(file.getParent(), file.getFileName().toString(), WindowsExeSigner.class.getSimpleName(), new MavenLogger(log())) {
 			@Override
 			public void onSuccess(HttpResult result) throws IOException {
 				if (result.contentLength() == 0) {
@@ -199,6 +201,7 @@ public abstract class WindowsExeSigner {
 
 		public abstract Builder serverUri(URI uri);
 		public abstract Builder httpClient(HttpClient httpClient);
+		public abstract Builder connectTimeoutMillis(int timeoutMillis);
 
 		/**
 		 * Creates and returns a new WindowsExeSigner configured with the options

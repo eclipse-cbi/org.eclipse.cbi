@@ -61,6 +61,7 @@ public abstract class ResponseFacade {
 
 		/**
 		 * Creates and returns a new {@link ResponseFacade}.
+		 * @return a new {@link ResponseFacade}.
 		 */
 		public abstract ResponseFacade build();
 	}
@@ -96,7 +97,9 @@ public abstract class ResponseFacade {
 	 * Sets the {@link HttpServletResponse} with the appropriate headers to
 	 * notify an error during the processing of the request. It will dump the
 	 * reason as the body of the response.
-	 *
+	 * 
+	 * @param statusCode
+	 *            the error status code
 	 * @param reason
 	 *            additional messages
 	 * @throws IOException

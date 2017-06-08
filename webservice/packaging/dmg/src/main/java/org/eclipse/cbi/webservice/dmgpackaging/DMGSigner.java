@@ -52,6 +52,8 @@ public abstract class DMGSigner {
 	 * @return the name of the certificate to use to sign OS X applications.
 	 */
 	abstract String certificateName();
+	
+	abstract String timeStampAuthority();
 
 	abstract ProcessExecutor processExecutor();
 
@@ -135,6 +137,9 @@ public abstract class DMGSigner {
 		 */
 		public abstract Builder certificateName(String certificateName);
 		abstract String certificateName();
+		
+		public abstract Builder timeStampAuthority(String timeStampAuthority);
+		abstract String timeStampAuthority();
 
 		public abstract Builder processExecutor(ProcessExecutor executor);
 
@@ -149,7 +154,7 @@ public abstract class DMGSigner {
 		abstract DMGSigner autoBuild();
 
 		/**
-		 * Creates and returns a new instance of {@link CodesignerOLD} as
+		 * Creates and returns a new instance of {@link DMGSigner} as
 		 * configured by this builder. The following checks are made:
 		 * <ul>
 		 * <li>The temporary folder must exists.</li>
@@ -157,13 +162,20 @@ public abstract class DMGSigner {
 		 * <li>The certificate name must not be empty.</li>
 		 * </ul>
 		 *
-		 * @return a new instance of {@link CodesignerOLD} as configured by this
+		 * @return a new instance of {@link DMGSigner} as configured by this
 		 *         builder.
 		 */
 		public DMGSigner build() {
 			checkState(!certificateName().isEmpty(), "Certificate name must not be empty");
 			checkState(Files.exists(keychain()) && Files.isRegularFile(keychain()), "Keychain file must exists");
-			codesignCommandPrefix(ImmutableList.of("codesign", "-s", certificateName(), "-f", "--verbose=4",  "--keychain", keychain().toString()));
+			ImmutableList.Builder<String> commandPrefix = ImmutableList.builder();
+			commandPrefix.add("codesign", "-s", certificateName(), "-f", "--verbose=4",  "--keychain", keychain().toString());
+			if (!timeStampAuthority().trim().isEmpty()) {
+				commandPrefix.add("--timestamp=\""+timeStampAuthority().trim()+"\"");
+			} else {
+				commandPrefix.add("--timestamp");
+			}
+			codesignCommandPrefix(commandPrefix.build());
 			securityUnlockCommand(ImmutableList.of("security", "unlock", "-p", keychainPassword(), keychain().toString()));
 
 			DMGSigner dmgSigner = autoBuild();

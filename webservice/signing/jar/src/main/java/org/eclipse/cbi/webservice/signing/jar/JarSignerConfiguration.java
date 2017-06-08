@@ -16,21 +16,21 @@ import java.nio.file.Path;
 public interface JarSignerConfiguration {
 
 	/**
-	 * Reads and returns the path to the jarsigner executable.
+	 * Returns the path to the jarsigner executable.
 	 * 
 	 * @return the path to the jarsigner executable.
 	 */
 	Path getJarSigner();
 
 	/**
-	 * Reads and returns the path to the keystore file.
+	 * Returns the path to the keystore file.
 	 * 
 	 * @return the path to the keystore file.
 	 */
 	Path getKeystore();
 
 	/**
-	 * Reads and returns the name of the alias of the key to be used in the
+	 * Returns the name of the alias of the key to be used in the
 	 * keystore.
 	 * 
 	 * @return the name of the alias of the key to be used in the keystore.
@@ -38,7 +38,7 @@ public interface JarSignerConfiguration {
 	String getKeystoreAlias();
 
 	/**
-	 * Reads and returns the path to the file containing the password of the
+	 * Returns the path to the file containing the password of the
 	 * keystore.
 	 * 
 	 * @return the path to the file containing the password of the keystore.
@@ -46,7 +46,7 @@ public interface JarSignerConfiguration {
 	String getKeystorePassword();
 
 	/**
-	 * Reads and returns the URI of the timestamping authority to be used by the
+	 * Returns the URI of the timestamping authority to be used by the
 	 * jarsigner command
 	 * 
 	 * @return the URI of the timestamping authority to be used by the jarsigner
@@ -55,9 +55,9 @@ public interface JarSignerConfiguration {
 	URI getTimeStampingAuthority();
 
 	/**
-	 * Reads and returns the timeout of the jarsigner command. If no 
-	 * {@value #JARSIGNER_TIMEOUT} property can be found returns the default
-	 * value '120' seconds.
+	 * Returns the timeout of the jarsigner command.
+	 * 
+	 * @return the timeout of the jarsigner command.
 	 */
 	long getTimeout();
 

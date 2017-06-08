@@ -56,7 +56,7 @@ jarsigner.bin=${JAVA8_HOME}/bin/jarsigner
 jarsigner.keystore=${KEYSTORE}
 jarsigner.keystore.password=${KEYSTORE_PASSWD_FILE}
 jarsigner.keystore.alias=example.org
-jarsigner.tsa=https://timestamp.geotrust.com/tsa
+jarsigner.tsa=http://sha256timestamp.ws.symantec.com/sha256/timestamp
 jarsigner.timeout=120
 
 jarsigner.http.proxy.host=proxy.eclipse.org

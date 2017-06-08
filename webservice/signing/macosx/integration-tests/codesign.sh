@@ -57,6 +57,7 @@ macosx.keychain.password=${USER_HOME}/login.keychain.passwd
 macosx.certificate=Integration Test Certificate
 macosx.security.unlock.timeout=20
 macosx.codesign.timeout=600
+#macosx.codesign.timestamp=http://sha256timestamp.ws.symantec.com/sha256/timestamp
 
 # Root logger option
 log4j.rootLogger=INFO, file

@@ -146,8 +146,8 @@ public class CodesignerTest {
 			verify(processExecutor, times(2)).exec(listCaptor.capture(), any(), anyLong(), any());
 			assertEquals("security", listCaptor.getAllValues().get(0).get(0));
 			assertEquals("codesign", listCaptor.getAllValues().get(1).get(0));
-			assertTrue(listCaptor.getAllValues().get(1).get(7).toString().startsWith("/tmp"));
-			assertTrue(listCaptor.getAllValues().get(1).get(7).toString().endsWith("MyApp.app"));
+			assertTrue(listCaptor.getAllValues().get(1).get(8).toString().startsWith("/tmp"));
+			assertTrue(listCaptor.getAllValues().get(1).get(8).toString().endsWith("MyApp.app"));
 
 			verifyZeroInteractions(processExecutor);
 
@@ -206,8 +206,8 @@ public class CodesignerTest {
 			listCaptor.getAllValues().subList(1, listCaptor.getAllValues().size()).forEach(args -> {
 				assertEquals("codesign", args.get(0));
 			});
-			assertTrue(listCaptor.getAllValues().get(1).get(7).toString().endsWith("MyApp.app"));
-			assertTrue(listCaptor.getAllValues().get(2).get(7).toString().endsWith("MySecondApp.app"));
+			assertTrue(listCaptor.getAllValues().get(1).get(8).toString().endsWith("MyApp.app"));
+			assertTrue(listCaptor.getAllValues().get(2).get(8).toString().endsWith("MySecondApp.app"));
 
 			verifyCleanedTempFolder(fs);
 		}
@@ -241,7 +241,7 @@ public class CodesignerTest {
 				public Integer answer(InvocationOnMock invocation) throws Throwable {
 					ImmutableList<String> command = (ImmutableList<String>) invocation.getArguments()[0];
 					if ("codesign".equals(command.get(0))) {
-						Path app = fs.getPath(command.get(7).toString());
+						Path app = fs.getPath(command.get(8).toString());
 						Files.createFile(app.resolve("signed"));
 					}
 					return 0;
@@ -277,6 +277,7 @@ public class CodesignerTest {
 				.tempFolder(Files.createDirectory(fs.getPath("/tmp")))
 				.processExecutor(processExecutor)
 				.codesignTimeout(20)
+				.timeStampAuthority("")
 				.securityUnlockTimeout(10)
 				.build();
 	}

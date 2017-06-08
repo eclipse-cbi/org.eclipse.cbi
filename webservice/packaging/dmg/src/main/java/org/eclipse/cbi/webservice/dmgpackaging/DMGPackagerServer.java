@@ -54,6 +54,7 @@ public class DMGPackagerServer {
 					.keychain(conf.getKeychain())
 					.keychainPassword(conf.getKeychainPassword())
 					.codesignTimeout(conf.getCodesignTimeout())
+					.timeStampAuthority(conf.getTimeStampAuthority())
 					.securityUnlockTimeout(conf.getSecurityUnlockTimeout())
 					.processExecutor(processExecutor)
 					.build();

@@ -24,11 +24,13 @@ public class CodesignerProperties {
 
 	private static final long DEFAULT_SECURITY_UNLOCK_TIMEOUT = 20;
 	private static final long DEFAULT_CODESIGN_TIMEOUT = TimeUnit.MINUTES.toSeconds(10);
+	private static final String DEFAULT_CODESIGN_TIMESTAMP_AUTHORITY = "";
 	private static final String CERTIFICATE_NAME = "macosx.certificate";
 	private static final String KEYCHAIN_PASSWORD_FILE = "macosx.keychain.password";
 	private static final String KEYCHAIN_PATH = "macosx.keychain";
 	private static final String SECURITY_UNLOCK_TIMEOUT = "macosx.security.unlock.timeout";
 	private static final String CODESIGN_TIMEOUT = "macosx.codesign.timeout";
+	private static final String CODESIGN_TIMESTAMP_AUTHORITY = "macosx.codesign.timestamp";
 
 	private final PropertiesReader propertiesReader;
 
@@ -54,5 +56,9 @@ public class CodesignerProperties {
 
 	public long getCodesignTimeout() {
 		return propertiesReader.getLong(CODESIGN_TIMEOUT, DEFAULT_CODESIGN_TIMEOUT);
+	}
+	
+	public String getTimeStampAuthority() {
+		return propertiesReader.getString(CODESIGN_TIMESTAMP_AUTHORITY, DEFAULT_CODESIGN_TIMESTAMP_AUTHORITY);
 	}
 }

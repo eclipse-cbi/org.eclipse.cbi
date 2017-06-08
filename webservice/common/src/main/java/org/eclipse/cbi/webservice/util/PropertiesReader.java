@@ -40,13 +40,14 @@ public class PropertiesReader {
 	/**
 	 * Load the file at the given path as a property file.
 	 *
-	 * @param path
-	 *            the file to load
-	 * @return a new {@link Properties} object.
-	 * @throws IOException
-	 *             if path can not be read or properties can not be loaded.
+	 * @param properties
+	 *            the properties from which value will be read.
+	 * @param fs
+	 *            the filesystem to be used for creating {@link Path} in
+	 *            {@link #getPath(String)} and {@link #getPath(String, String)}
+	 *            methods.
 	 */
-	public PropertiesReader(Properties properties, FileSystem fs) throws IOException {
+	public PropertiesReader(Properties properties, FileSystem fs) {
 		this.properties = properties;
 		this.fileSystem = fs;
 	}
@@ -200,8 +201,8 @@ public class PropertiesReader {
 	}
 
 	/**
-	 * Returns a copy of the all the read properties
-	 * @return
+	 * Returns a copy of the all the read properties.
+	 * @return a copy of the all the read properties as a {@link Map}.
 	 */
 	public Map<String, String> toMap() {
 		Builder<String, String> ret = ImmutableMap.builder();

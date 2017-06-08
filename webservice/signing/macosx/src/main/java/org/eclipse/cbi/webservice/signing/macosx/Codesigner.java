@@ -74,7 +74,7 @@ public abstract class Codesigner {
 	 *
 	 * @return true if all found apps has been signed properly, false if no apps
 	 *         is signed or an error occured with at least one.
-	 * @throws IOException
+	 * @throws IOException  if an I/O error occurs when signing
 	 */
 	public long signApplications(Path directory) throws IOException {
 		requireNonNull(directory);
@@ -191,6 +191,8 @@ public abstract class Codesigner {
 	abstract ProcessExecutor processExecutor();
 
 	abstract long codesignTimeout();
+	
+	abstract String timeStampAuthority();
 
 	abstract long securityUnlockTimeout();
 
@@ -250,6 +252,9 @@ public abstract class Codesigner {
 		public abstract Builder processExecutor(ProcessExecutor executor);
 
 		public abstract Builder codesignTimeout(long codesignTimeout);
+		
+		public abstract Builder timeStampAuthority(String timeStampAuthority);
+		abstract String timeStampAuthority();
 
 		public abstract Builder securityUnlockTimeout(long securityUnlockTimeout);
 
@@ -260,7 +265,7 @@ public abstract class Codesigner {
 		abstract Codesigner autoBuild();
 
 		/**
-		 * Creates and returns a new instance of {@link CodesignerOLD} as
+		 * Creates and returns a new instance of {@link Codesigner} as
 		 * configured by this builder. The following checks are made:
 		 * <ul>
 		 * <li>The temporary folder must exists.</li>
@@ -268,13 +273,20 @@ public abstract class Codesigner {
 		 * <li>The certificate name must not be empty.</li>
 		 * </ul>
 		 *
-		 * @return a new instance of {@link CodesignerOLD} as configured by this
+		 * @return a new instance of {@link Codesigner} as configured by this
 		 *         builder.
 		 */
 		public Codesigner build() {
 			checkState(!certificateName().isEmpty(), "Certificate name must not be empty");
 			checkState(Files.exists(keychain()) && Files.isRegularFile(keychain()), "Keychain file must exists");
-			codesignCommandPrefix(ImmutableList.of("codesign", "-s", certificateName(), "-f", "--verbose=4",  "--keychain", keychain().toString()));
+			ImmutableList.Builder<String> commandPrefix = ImmutableList.builder();
+			commandPrefix.add("codesign", "-s", certificateName(), "-f", "--verbose=4",  "--keychain", keychain().toString());
+			if (!timeStampAuthority().trim().isEmpty()) {
+				commandPrefix.add("--timestamp=\""+timeStampAuthority().trim()+"\"");
+			} else {
+				commandPrefix.add("--timestamp");
+			}
+			codesignCommandPrefix(commandPrefix.build());
 			securityUnlockCommand(ImmutableList.of("security", "unlock", "-p", keychainPassword(), keychain().toString()));
 
 			Codesigner codesigner = autoBuild();

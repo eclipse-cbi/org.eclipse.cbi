@@ -116,8 +116,8 @@ public abstract class RequestFacade implements Closeable {
 	 *            the name of the part to check for existence.
 	 * @return true if the decorated request has a part with the given name,
 	 *         false otherwise
-	 * @throws IOException
-	 * @throws ServletException
+	 * @throws IOException if an I/O error occurred during the retrieval of the requested Part
+	 * @throws ServletException if this request is not of type multipart/form-data
 	 */
 	public boolean hasPart(String partName) throws IOException, ServletException {
 		return request().getPart(partName) != null;
@@ -131,8 +131,8 @@ public abstract class RequestFacade implements Closeable {
 	 *            the name of the parameter to check for existence.
 	 * @return true if the decorated request has a parameter with the given name,
 	 *         false otherwise
-	 * @throws IOException
-	 * @throws ServletException
+	 * @throws IOException if an I/O error occurred during the retrieval of the requested Part
+	 * @throws ServletException if this request is not of type multipart/form-data
 	 */
 	public boolean hasParameter(String parameterName) throws IOException, ServletException {
 		return request().getParameter(parameterName) != null;
@@ -146,8 +146,8 @@ public abstract class RequestFacade implements Closeable {
 	 *            the name of the part with the desired file
 	 * @return the file of the part with the given part name, or
 	 *         {@link Optional#empty()} is no part with the given name exists.
-	 * @throws IOException
-	 * @throws ServletException
+	 * @throws IOException if an I/O error occurred during the retrieval of the requested Part
+	 * @throws ServletException if this request is not of type multipart/form-data
 	 */
 	public Optional<Path> getPartPath(String partName) throws IOException, ServletException {
 		return getPartPath(partName, null);
@@ -165,8 +165,8 @@ public abstract class RequestFacade implements Closeable {
 	 *            the prefix to be prepended to the file name
 	 * @return the file of the part with the given part name, or
 	 *         {@link Optional#empty()} is no part with the given name exists.
-	 * @throws IOException
-	 * @throws ServletException
+	 * @throws IOException if an I/O error occurred during the retrieval of the requested Part
+	 * @throws ServletException if this request is not of type multipart/form-data
 	 */
 	public Optional<Path> getPartPath(String partName, String prefix) throws IOException, ServletException {
 		return getPartPath(partName, prefix, null);
@@ -187,8 +187,8 @@ public abstract class RequestFacade implements Closeable {
 	 *            the suffix to be appended to the file name
 	 * @return the file of the part with the given part name, or
 	 *         {@link Optional#empty()} is no part with the given name exists.
-	 * @throws IOException
-	 * @throws ServletException
+	 * @throws IOException if an I/O error occurred during the retrieval of the requested Part
+	 * @throws ServletException if this request is not of type multipart/form-data
 	 */
 	public Optional<Path> getPartPath(String partName, String prefix, String suffix) throws IOException, ServletException {
 		final Path ret;
@@ -221,8 +221,8 @@ public abstract class RequestFacade implements Closeable {
 	 * @return the submitted file name of the part with the given name. If the
 	 *         decorated request has no request with the given name, it will
 	 *         return {@link Optional#empty()}
-	 * @throws IOException
-	 * @throws ServletException
+	 * @throws IOException if an I/O error occurred during the retrieval of the requested Part
+	 * @throws ServletException if this request is not of type multipart/form-data
 	 */
 	public Optional<String> getSubmittedFileName(String partName) throws IOException, ServletException {
 		final String ret;
@@ -251,8 +251,8 @@ public abstract class RequestFacade implements Closeable {
 	 * @return the input stream associated with the part with the given name. If
 	 *         the decorated request has no part with the given name,
 	 *         {@link Optional#empty()} is returned.
-	 * @throws IOException
-	 * @throws ServletException
+	 * @throws IOException if an I/O error occurred during the retrieval of the requested Part
+	 * @throws ServletException if this request is not of type multipart/form-data
 	 */
 	public Optional<InputStream> getPartInputStream(String partName) throws IOException, ServletException {
 		final InputStream ret;
@@ -275,9 +275,8 @@ public abstract class RequestFacade implements Closeable {
 	 * @return the value of the parameter with the given. If the the decorated
 	 *         request has no parameter with the given name,
 	 *         {@link Optional#empty()} is returned.
-	 * @throws IOException
 	 */
-	public Optional<String> getParameter(String parameterName) throws IOException {
+	public Optional<String> getParameter(String parameterName) {
 		return Optional.ofNullable(request().getParameter(parameterName));
 	}
 

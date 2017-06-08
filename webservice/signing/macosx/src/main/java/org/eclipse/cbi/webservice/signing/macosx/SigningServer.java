@@ -56,6 +56,7 @@ public class SigningServer {
 				.keychainPassword(conf.getKeychainPassword())
 				.tempFolder(tempFolder)
 				.codesignTimeout(conf.getCodesignTimeout())
+				.timeStampAuthority(conf.getTimeStampAuthority())
 				.securityUnlockTimeout(conf.getSecurityUnlockTimeout())
 				.processExecutor(new ProcessExecutor.BasicImpl())
 				.build();

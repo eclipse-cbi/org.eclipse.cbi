@@ -233,7 +233,7 @@ public abstract class EmbeddedServer {
 	 * Starts and joins the embedded Jetty server. This method will block until
 	 * the server is stopped.
 	 *
-	 * @throws Exception
+	 * @throws Exception if the server fails to start.
 	 */
 	public void start() throws Exception {
 		PropertyConfigurator.configure(log4jConfiguration());
@@ -319,7 +319,7 @@ public abstract class EmbeddedServer {
 	/**
 	 * Stops the embedded Jetty server.
 	 *
-	 * @throws Exception
+	 * @throws Exception if the server fails to stop.
 	 */
 	public void stop() throws Exception {
 		server.stop();

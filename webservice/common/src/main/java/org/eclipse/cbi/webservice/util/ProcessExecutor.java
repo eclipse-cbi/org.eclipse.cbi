@@ -64,8 +64,8 @@ public interface ProcessExecutor {
 	/**
 	 * Execute the given command as a forked process. The process will be
 	 * stopped after the given given timeout. The stdout and stderr will not be
-	 * retrievable with this method. If you need it, use
-	 * {@link #exec(ImmutableList, StringBuffer, long, TimeUnit)}
+	 * retrievable with this method. If you need it, use 
+	 * {@link #exec(ImmutableList, StringBuilder, long, TimeUnit)}
 	 *
 	 * @param command
 	 *            the command to execute
@@ -193,7 +193,6 @@ public interface ProcessExecutor {
 
 		/**
 		 * A runnable that will continuously read from an {@link InputStream}
-		 * and write the result in an {@link Appendable}.
 		 */
 		private static final class StreamRedirection implements Callable<String> {
 
@@ -205,9 +204,6 @@ public interface ProcessExecutor {
 			 *
 			 * @param is
 			 *            the input stream to read from (will be buffered).
-			 * @param appendable
-			 *            where the read characters will be written to. Should
-			 *            be a thread safe implementation.
 			 */
 			StreamRedirection(InputStream is) {
 				this.is = is;;

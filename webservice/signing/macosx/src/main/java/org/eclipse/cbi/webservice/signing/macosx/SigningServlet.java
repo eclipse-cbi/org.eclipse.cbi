@@ -123,7 +123,7 @@ public abstract class SigningServlet extends HttpServlet {
 		 * <li>The temporary folder must exists.</li>
 		 * </ul>
 		 *
-		 * @return a new instance of {@link CodesignerOLD} as configured by this
+		 * @return a new instance of {@link Codesigner} as configured by this
 		 *         builder.
 		 */
 		public SigningServlet build() {

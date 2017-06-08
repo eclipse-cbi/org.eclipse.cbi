@@ -25,13 +25,12 @@ import static com.google.common.base.Throwables.throwIfUnchecked;
 public interface UnsafePredicate<T> {
 
 	/**
-	 * /**
      * Evaluates this predicate on the given argument.
      *
      * @param t the input argument
      * @return {@code true} if the input argument matches the predicate,
      * otherwise {@code false}
-	 * @throws Exception
+	 * @throws Exception if the given test throws exception. 
 	 */
 	boolean test(T t) throws Exception;
 
@@ -40,6 +39,9 @@ public interface UnsafePredicate<T> {
 	 * does not throw exception. The safe {@link Predicate} will rethrow any
 	 * exception as a {@link WrappedException} (or as is if it is an
 	 * {@link Error} or a {@link RuntimeException}.
+	 * 
+	 * @param <T>
+	 *            the type of the input to the predicate
 	 *
 	 * @param p
 	 *            the predicate to be decorated.

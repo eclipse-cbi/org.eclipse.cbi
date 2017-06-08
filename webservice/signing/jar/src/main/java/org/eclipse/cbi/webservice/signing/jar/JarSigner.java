@@ -226,7 +226,7 @@ public abstract class JarSigner {
 	 * 
 	 * @param jar
 	 *            the path of the file to be signed.
-	 * @param digestAlg
+	 * @param sigAlg
 	 *            the signature algorithm to use when digesting the entries
 	 *            of a JAR file. Must not be <code>null</code>.
 	 * @param digestAlg

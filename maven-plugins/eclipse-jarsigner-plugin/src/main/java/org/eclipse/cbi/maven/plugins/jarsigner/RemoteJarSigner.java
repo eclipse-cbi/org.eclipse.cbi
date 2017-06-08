@@ -55,8 +55,9 @@ public abstract class RemoteJarSigner extends FilteredJarSigner {
 				.build();
 		log().debug("Jar signing request: " + request.toString());
 		
+		HttpRequest.Config requestConfig = HttpRequest.Config.builder().connectTimeoutMillis(options.connectTimeoutMillis()).build();
 		OverwriteJarOnSuccess completionListener = new OverwriteJarOnSuccess(jar.getParent(), jar.getFileName().toString(), RemoteJarSigner.class.getSimpleName(), new MavenLogger(log()), jar);
-		if (httpClient().send(request, completionListener)) {
+		if (httpClient().send(request, requestConfig, completionListener)) {
 			return 1;
 		} else {
 			return 0;

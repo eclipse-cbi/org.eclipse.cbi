@@ -227,29 +227,29 @@ public class SignMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-    	HttpClient httpClient = RetryHttpClient.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())))
+	    	HttpClient httpClient = RetryHttpClient.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())))
     			.maxRetries(retryLimit())
     			.waitBeforeRetry(retryTimer(), TimeUnit.SECONDS)
     			.log(new MavenLogger(getLog()))
     			.build();
-    	OSXAppSigner osxAppSigner = OSXAppSigner.builder()
-    		.serverUri(URI.create(signerUrl))
-    		.httpClient(httpClient)
-    		.connectTimeoutMillis(connectTimeoutMillis)
-    		.exceptionHandler(new ExceptionHandler(getLog(), continueOnFail()))
-    		.log(getLog())
-    		.build();
-
+	    	OSXAppSigner osxAppSigner = OSXAppSigner.builder()
+	    		.serverUri(URI.create(signerUrl))
+	    		.httpClient(httpClient)
+	    		.connectTimeoutMillis(connectTimeoutMillis)
+	    		.exceptionHandler(new ExceptionHandler(getLog(), continueOnFail()))
+	    		.log(getLog())
+	    		.build();
+	
         if (signFiles() != null && !signFiles().isEmpty()) {
-        	//app paths are configured
-        	Set<Path> filesToSign = new LinkedHashSet<>();
-        	for (String pathString : signFiles()) {
+	        	//app paths are configured
+	        	Set<Path> filesToSign = new LinkedHashSet<>();
+	        	for (String pathString : signFiles()) {
 				filesToSign.add(FileSystems.getDefault().getPath(pathString));
 			}
-            osxAppSigner.signApplications(filesToSign);
+	        	osxAppSigner.signApplications(filesToSign);
         } else {
-        	//perform search
-        	osxAppSigner.signApplications(FileSystems.getDefault().getPath(baseSearchDir()), getPathMatchers(FileSystems.getDefault(), fileNames(), getLog()));
+	        	//perform search
+	        	osxAppSigner.signApplications(FileSystems.getDefault().getPath(baseSearchDir()), getPathMatchers(FileSystems.getDefault(), fileNames(), getLog()));
         }
     }
 

@@ -59,7 +59,7 @@ public abstract class RetryHttpClient implements HttpClient {
 			}
 
 			try {
-				sucess = delegate().send(request, completionListener);
+				sucess = delegate().send(request, config, completionListener);
 			} catch (Exception e) {
 				lastThrownException = e;
 			}

@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.maven.plugin.AbstractMojo;
@@ -253,6 +254,11 @@ public class CreateDMGMojo extends AbstractMojo {
 			requestBuilder.withParam("backgroundImage", backgroundImage.toPath());
 		}
 		
+		if (sign) {
+			getLog().info("[" + new Date() + "] Creating and signing DMG file from '" + source + "'...");
+		} else {
+			getLog().info("[" + new Date() + "] Creating DMG file from '" + source + "'...");
+		}
 		processOnRemoteServer(httpClient, requestBuilder.build());
 	}
 

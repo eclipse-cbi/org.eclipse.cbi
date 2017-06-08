@@ -62,7 +62,8 @@ public class ApacheHttpClient implements HttpClient {
 	public boolean send(HttpRequest request, Config config, final CompletionListener completionListener) throws IOException {
 		Objects.requireNonNull(request);
 		HttpUriRequest apacheRequest = toApacheRequest(request, config);
-		log.debug("Will send request to '" + apacheRequest.getURI() + "'");
+		log.debug("Will send HTTP request " + request);
+		log.debug("HTTP request configuration is " + config);
 		
 		Stopwatch stopwatch = Stopwatch.createStarted();
 		try (CloseableHttpClient apacheHttpClient = HttpClientBuilder.create().build()) {
@@ -85,6 +86,8 @@ public class ApacheHttpClient implements HttpClient {
 		final HttpEntity entity = response.getEntity();
 		if (statusLine != null) {
 			final int statusCode = statusLine.getStatusCode();
+			log.debug("HTTP status code = " + statusCode);
+			log.debug("HTTP reason phrase = '" + statusLine.getReasonPhrase() + "'");
 			if (statusCode >= HttpStatus.SC_OK && statusCode < HttpStatus.SC_MULTIPLE_CHOICES && entity != null) {
 				completionListener.onSuccess(new BasicHttpResult(statusCode, Strings.nullToEmpty(statusLine.getReasonPhrase()), entity));
 				return true;

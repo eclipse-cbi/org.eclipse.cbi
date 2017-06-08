@@ -45,8 +45,10 @@ public abstract class RetryHttpClient implements HttpClient {
 			if (!sucess && attemptCount > 0) {
 				try {
 					if (lastThrownException != null) {
-						log().warn("An exception has been thrown, but the request will be retried", lastThrownException);
+						log().warn("An exception has been thrown, but the request will be retried (attempt " + attemptCount + " / " + maxRetries() + ")", lastThrownException);
 						lastThrownException = null;
+					} else {
+						log().debug("The previous request did not complete sucessfully, but it will be retried (attempt " + attemptCount + " / " + maxRetries() + ")");
 					}
 					retryIntervalUnit().sleep(retryInterval());
 				} catch (InterruptedException e) {

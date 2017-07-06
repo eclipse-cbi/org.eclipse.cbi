@@ -39,7 +39,7 @@
   </modules>
 
   <properties>
-    <jetty-version>9.4.3.v20170317</jetty-version>
+    <jetty-version>9.4.6.v20170531</jetty-version>
     <cbi-common-version>1.2.1</cbi-common-version>
   </properties>
 

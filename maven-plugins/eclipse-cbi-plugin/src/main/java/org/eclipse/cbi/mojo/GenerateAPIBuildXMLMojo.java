@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Red Hat, Inc. and others 
+ * Copyright (c) 2013, 2017 Red Hat, Inc. and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -54,7 +54,7 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
 
 	@Component(role=TychoProject.class)
     private Map<String, TychoProject> projectTypes;
-    
+	
 	@Override
 	public void execute() throws MojoExecutionException {
 		File dotProject = new File(project.getBasedir(), ".project");
@@ -114,7 +114,9 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
 			bw.write("      	project=\"" + project.getBasedir() + "\"\n");
 			bw.write("      	binary=\"" + getOutputFoldersAsPath() + "\"\n");
 			bw.write("      	target=\"" + targetDir + "\"\n");
-			bw.write("      	debug=\"true\"\n");
+			if (getLog().isDebugEnabled()) {
+				bw.write("      	debug=\"true\"\n");
+			}
 			bw.write("      \n");
 			bw.write("      />\n");
 			bw.write("  </target>\n");

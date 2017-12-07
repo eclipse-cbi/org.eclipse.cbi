@@ -52,7 +52,7 @@ server.access.log=${REMOTE_PATH}/macosx-signing-service-yyyy_mm_dd.request.log
 server.temp.folder=${REMOTE_PATH}/tmp/
 server.service.pathspec=/${SIGNING_SERVICE_PATH_SPEC}
 
-macosx.keychain=${USER_HOME}/Library/Keychains/login.keychain
+macosx.keychain=${USER_HOME}/Library/Keychains/login.keychain-db
 macosx.keychain.password=${USER_HOME}/login.keychain.passwd
 macosx.certificate=Integration Test Certificate
 macosx.security.unlock.timeout=20

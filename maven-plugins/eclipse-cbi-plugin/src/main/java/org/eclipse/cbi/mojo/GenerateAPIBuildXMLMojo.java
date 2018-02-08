@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -40,8 +41,6 @@ import org.eclipse.tycho.core.osgitools.project.EclipsePluginProject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import com.google.common.base.Charsets;
 
 @Mojo( name = "generate-api-build-xml", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 public class GenerateAPIBuildXMLMojo extends AbstractMojo {
@@ -105,7 +104,7 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
 			targetDir.mkdirs();
 		}
 		File dotApiBuildXML = new File(targetDir, API_BUILD_XML_FILE);
-		try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dotApiBuildXML), Charsets.UTF_8))) {
+		try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dotApiBuildXML), StandardCharsets.UTF_8))) {
 			bw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 			bw.write("<project name=\"apigen\" default=\"apigen\">\n");
 			bw.write("  <target name=\"apigen\">\n");

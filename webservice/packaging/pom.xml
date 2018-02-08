@@ -20,6 +20,7 @@
 
   <modules>
     <module>dmg</module>
+    <module>flatpak</module>
   </modules>
 
   <build>

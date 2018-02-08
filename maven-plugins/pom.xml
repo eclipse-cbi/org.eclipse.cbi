@@ -59,6 +59,7 @@
     <module>eclipse-macsigner-plugin</module>
     <module>eclipse-winsigner-plugin</module>
     <module>eclipse-dmg-packager</module>
+    <module>eclipse-flatpak-packager</module>
   </modules>
 
   <reporting>

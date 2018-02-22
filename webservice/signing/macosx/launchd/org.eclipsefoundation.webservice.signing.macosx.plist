@@ -13,10 +13,10 @@
 
 
                 <key>UserName</key>
-                <string>genie</string>
+                <string>_www</string>
                 <key>GroupName</key>
                 <string>_www</string>
-                <key>InitGroups</key>
+                <key>SessionCreate</key>
                 <true/>
 
 

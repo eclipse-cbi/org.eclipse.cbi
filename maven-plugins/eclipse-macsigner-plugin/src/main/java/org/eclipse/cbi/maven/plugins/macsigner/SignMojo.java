@@ -222,7 +222,7 @@ public class SignMojo extends AbstractMojo {
 	 * 
 	 * @since 1.1.5
 	 */
-	@Parameter(property = "cbi.dmgpackager.connectTimeoutMillis", defaultValue = "0")
+	@Parameter(property = "cbi.macsigner.connectTimeoutMillis", defaultValue = "0")
 	private int connectTimeoutMillis;
 
     @Override

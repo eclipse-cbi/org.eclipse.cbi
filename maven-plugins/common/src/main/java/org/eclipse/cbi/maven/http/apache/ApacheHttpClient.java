@@ -12,6 +12,9 @@ package org.eclipse.cbi.maven.http.apache;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.security.GeneralSecurityException;
+import java.security.PrivateKey;
+import java.security.Signature;
 import java.util.Map;
 import java.util.Objects;
 
@@ -37,6 +40,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+
+import tech.barbero.http.message.signing.HttpMessageSigner;
 
 public class ApacheHttpClient implements HttpClient {
 
@@ -122,6 +127,27 @@ public class ApacheHttpClient implements HttpClient {
 		
 		post.setConfig(requestConfig);
 		post.setEntity(builder.build());
+
+		if (request.privateKey() != null) {
+			post = signRequest(post, request.privateKey());
+		}
+
 		return post;
+	}
+
+	private static HttpPost signRequest(HttpPost post, PrivateKey privateKey) {
+		try {
+			Signature signature = Signature.getInstance("SHA256withRSA");
+			signature.initSign(privateKey);
+			return HttpMessageSigner.builder(signature)
+				.addHeaderToSign(HttpMessageSigner.REQUEST_TARGET)
+				.addHeaderToSign("Host")
+				.addHeaderToSign("Date")
+				.addHeaderToSign("Digest")
+				.addHeaderToSign("Content-Length")
+				.build().sign(AHCRequest.from(post)).delegate();
+		} catch (GeneralSecurityException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

@@ -11,11 +11,21 @@
  *******************************************************************************/
 package org.eclipse.cbi.maven.plugins.macsigner;
 
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.PrivateKey;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -23,15 +33,21 @@ import java.util.concurrent.TimeUnit;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.settings.Server;
+import org.apache.maven.settings.Settings;
 import org.eclipse.cbi.maven.ExceptionHandler;
 import org.eclipse.cbi.maven.MavenLogger;
 import org.eclipse.cbi.maven.http.HttpClient;
 import org.eclipse.cbi.maven.http.RetryHttpClient;
 import org.eclipse.cbi.maven.http.apache.ApacheHttpClient;
+import org.sonatype.plexus.components.sec.dispatcher.SecDispatcher;
+import org.sonatype.plexus.components.sec.dispatcher.SecDispatcherException;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 
 /**
@@ -225,6 +241,57 @@ public class SignMojo extends AbstractMojo {
 	@Parameter(property = "cbi.dmgpackager.connectTimeoutMillis", defaultValue = "0")
 	private int connectTimeoutMillis;
 
+	@Parameter(defaultValue = "${settings}", readonly = true)
+	private Settings settings;
+	
+	/**
+	 * @since 1.1.5
+	 */
+	@Parameter(property = "cbi.macsigner.keystore.type", defaultValue="jks")
+	private String keystoreType;
+	
+	/**
+	 * @since 1.1.5
+	 */
+	@Parameter(property = "cbi.macsigner.keystore.path", defaultValue="${user.home}/.m2/cbi.macsigner.keystore")
+	private String keystorePath;
+
+	/**
+	 * @since 1.1.5
+	 */
+	@Parameter(property = "cbi.macsigner.keystore.passwordServerId", defaultValue="cbi.macsigner.keystore.passphrase")
+	private String keystorePasswordServerId;
+
+	/**
+	 * @since 1.1.5
+	 */
+	@Parameter(property = "cbi.macsigner.keystore.password")
+	private String keystorePassword;
+	
+	/**
+	 * @since 1.1.5
+	 */
+	@Parameter(property = "cbi.macsigner.keystore.key.passwordServerId", defaultValue="cbi.macsigner.keystore.key.passphrase")
+	private String keyPasswordServerId;
+	
+	/**
+	 * @since 1.1.5
+	 */
+	@Parameter(property = "cbi.macsigner.keystore.key.alias")
+	private String keyAlias;
+	
+	/**
+	 * @since 1.1.5
+	 */
+	@Parameter(property = "cbi.macsigner.keystore.key.password")
+	private String keyPassword;
+	
+	/**
+	 * @since 1.1.5
+	 */
+	@Component(hint = "mng-4384")
+	private SecDispatcher securityDispatcher;
+	
     @Override
     public void execute() throws MojoExecutionException {
 	    	HttpClient httpClient = RetryHttpClient.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())))
@@ -236,6 +303,7 @@ public class SignMojo extends AbstractMojo {
 	    		.serverUri(URI.create(signerUrl))
 	    		.httpClient(httpClient)
 	    		.connectTimeoutMillis(connectTimeoutMillis)
+	    		.signingKey(loadPrivateKey())
 	    		.exceptionHandler(new ExceptionHandler(getLog(), continueOnFail()))
 	    		.log(getLog())
 	    		.build();
@@ -253,7 +321,49 @@ public class SignMojo extends AbstractMojo {
         }
     }
 
-    private Set<String> fileNames() {
+	private PrivateKey loadPrivateKey() throws MojoExecutionException {
+		try {
+			return (PrivateKey) loadKeystore().getKey(keyAlias, userOrSettingsPassphrase(keyPassword, keyPasswordServerId));
+		} catch (GeneralSecurityException e) {
+			throw new MojoExecutionException("Unable to read key '" + keyAlias + "' + from keystore '" + keystorePath + "'", e);
+		}
+	}
+
+	private KeyStore loadKeystore() throws MojoExecutionException {
+		KeyStore keyStore;
+		try {
+			keyStore = KeyStore.getInstance(keystoreType);
+		} catch (KeyStoreException e) {
+			throw new MojoExecutionException("Unknown keystore type '"+keystoreType+"'", e);
+		}
+		
+		try(InputStream is = new BufferedInputStream(Files.newInputStream(Paths.get(keystorePath), StandardOpenOption.READ))) {
+			keyStore.load(is, userOrSettingsPassphrase(keystorePassword, keystorePasswordServerId));
+		} catch (IOException | GeneralSecurityException e) {
+			throw new MojoExecutionException("Unable to read keystore file '"+keystorePath+"'", e);
+		}
+		
+		return keyStore;
+	}
+    
+    private char[] userOrSettingsPassphrase(final String userPassphrase, String serverId) throws MojoExecutionException {
+    		String passphrase = userPassphrase;
+    		if (Strings.isNullOrEmpty(passphrase)) {
+			Server server = settings.getServer(serverId);
+			if (server != null) {
+				if (!Strings.isNullOrEmpty(server.getPassphrase())) {
+					try {
+						passphrase = securityDispatcher.decrypt(server.getPassphrase());
+					} catch (SecDispatcherException e) {
+						throw new MojoExecutionException("Unable to decrypt passphrase of server '"+serverId+"'", e);
+					}
+				}
+			}
+		}
+		return Strings.isNullOrEmpty(passphrase) ? null : passphrase.toCharArray();
+    }
+
+	private Set<String> fileNames() {
 		return Sets.union(fileNames, deprecatedFileNames);
 	}
     

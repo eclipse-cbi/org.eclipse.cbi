@@ -13,6 +13,7 @@ package org.eclipse.cbi.maven.http;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.PrivateKey;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -52,11 +53,13 @@ public final class HttpRequest {
 	private final URI serverUri;
 	private final ImmutableMap<String, String> stringParams;
 	private final ImmutableMap<String, Path> pathParams;
+	private final PrivateKey pkey;
 
-	HttpRequest(URI serverUri, ImmutableMap<String, String> stringParams, ImmutableMap<String, Path> pathParams) {
+	HttpRequest(URI serverUri, ImmutableMap<String, String> stringParams, ImmutableMap<String, Path> pathParams, PrivateKey pkey) {
 		this.serverUri = Objects.requireNonNull(serverUri);
 		this.stringParams = Objects.requireNonNull(stringParams);
 		this.pathParams = Objects.requireNonNull(pathParams);
+		this.pkey = Objects.requireNonNull(pkey);
 	}
 	
 	public Map<String, Path> pathParameters() {
@@ -71,10 +74,15 @@ public final class HttpRequest {
 		return serverUri;
 	}
 	
+	public PrivateKey privateKey() {
+		return pkey;
+	}
+	
 	@Override
 	public String toString() {
 		final ToStringHelper toStringHelper = MoreObjects.toStringHelper(this)
-				.add("serverUri", serverUri());
+				.add("serverUri", serverUri())
+				.add("signed", pkey != null);
 		
 		for (Map.Entry<String, Path> e : pathParameters().entrySet()) {
 			toStringHelper.add(e.getKey(), "@" + e.getValue().toString());
@@ -98,6 +106,8 @@ public final class HttpRequest {
 		
 		private final ImmutableMap.Builder<String, Path> pathParams;
 
+		private PrivateKey pkey;
+
 		Builder() {
 			stringParams = ImmutableMap.builder();
 			pathParams = ImmutableMap.builder();
@@ -108,6 +118,11 @@ public final class HttpRequest {
 			return this;
 		}
 
+		public Builder signRequest(PrivateKey pkey) {
+			this.pkey = Objects.requireNonNull(pkey);
+			return this;
+		}
+		
 		public Builder withParam(String name, Path path) {
 			Preconditions.checkArgument(!Objects.requireNonNull(name).isEmpty());
 			Preconditions.checkArgument(Files.isRegularFile(path));
@@ -122,7 +137,8 @@ public final class HttpRequest {
 		}
 		
 		public HttpRequest build() {
-			return new HttpRequest(serverUri, stringParams.build(), pathParams.build());
+			return new HttpRequest(serverUri, stringParams.build(), pathParams.build(), pkey);
 		}
+
 	}
 }

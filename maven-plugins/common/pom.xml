@@ -28,6 +28,10 @@
       <artifactId>maven-plugin-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-settings</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.eclipse.cbi</groupId>
       <artifactId>cbi-common</artifactId>
     </dependency>
@@ -38,6 +42,10 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpmime</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>tech.barbero.http-messages-signing</groupId>
+      <artifactId>http-messages-signing-ahc4</artifactId>
     </dependency>
     <dependency>
       <groupId>com.google.auto.value</groupId>

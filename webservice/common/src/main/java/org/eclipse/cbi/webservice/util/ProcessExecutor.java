@@ -109,7 +109,7 @@ public interface ProcessExecutor {
 			ProcessBuilder pb = new ProcessBuilder(command);
 			pb.redirectErrorStream(true);
 
-			logger.info("Process '" + arg0 + "' starts");
+			logger.debug("Process '" + arg0 + "' starts");
 
 			Process p = pb.start();
 
@@ -123,9 +123,8 @@ public interface ProcessExecutor {
 					throw new IOException(Joiner.on('\n').join(
 							"Process '" + arg0 + "' has been stopped forcibly. It did not complete in " + timeout + " " + timeoutUnit,
 							"Process '" + arg0 + "' output: " + processOutput.toString()));
-				} else {
-					gatherOutput(processOutput, streamGobbler);
 				}
+				gatherOutput(processOutput, streamGobbler);
 			} catch (InterruptedException e) { // we've been interrupted
 				p.destroyForcibly(); // kill the subprocess
 
@@ -133,7 +132,11 @@ public interface ProcessExecutor {
 				processOutput.append("Thread '" + Thread.currentThread().getName() + "' has been interrupted while waiting for the process '" + arg0 + "' to complete.\n");
 				printStrackTrace(e, processOutput);
 
-				gatherOutput(processOutput, streamGobbler);
+				try {
+					gatherOutput(processOutput, streamGobbler);
+				} catch (@SuppressWarnings("unused") InterruptedException e1) {
+					// we will restore the interrupted status soon.
+				}
 
 				if (!p.isAlive()) {
 					logOutput(arg0, p.exitValue(), processOutput);
@@ -148,13 +151,13 @@ public interface ProcessExecutor {
 			return logOutput(arg0, p.exitValue(), processOutput);
 		}
 
-		private void printStrackTrace(Exception e, StringBuilder output) {
+		private static void printStrackTrace(Exception e, StringBuilder output) {
 			StringWriter stackTrace = new StringWriter();
 			e.printStackTrace(new PrintWriter(stackTrace));
 			output.append(stackTrace.getBuffer().toString());
 		}
 
-		private void gatherOutput(StringBuilder processOutput, Future<String> streamGobbler) {
+		private static void gatherOutput(StringBuilder processOutput, Future<String> streamGobbler) throws InterruptedException {
 			try {
 				// give 3sec to the stream gobbler to gather all the output.
 				processOutput.append(streamGobbler.get(STREAM_GLOBBER_GRACETIME, TimeUnit.SECONDS));
@@ -162,20 +165,23 @@ public interface ProcessExecutor {
 				processOutput.append("Process output can not be gathered'");
 				printStrackTrace(e, processOutput);
 				streamGobbler.cancel(true);
+				if (e instanceof InterruptedException) {
+					throw new InterruptedException();
+				}
 			}
 		}
 
-		private int logOutput(String arg0, final int exitValue, StringBuilder processOutput) {
+		private static int logOutput(String arg0, final int exitValue, StringBuilder processOutput) {
 			String output = processOutput.toString();
 			if (exitValue == 0) {
-				logger.info("Process '" + arg0 + "' exited with value '" + exitValue +"'");
+				logger.debug("Process '" + arg0 + "' exited with value '" + exitValue + "'");
 				if (!output.isEmpty()) {
-					logger.info("Process '" + arg0 + "' output:\n" + output);
+					logger.debug("Process '" + arg0 + "' output:\n" + output);
 				} else {
-					logger.info("Process '" + arg0 + "' exited with no output");
+					logger.debug("Process '" + arg0 + "' exited with no output");
 				}
 			} else {
-				logger.error("Process '" + arg0 + "' exited with value '" + exitValue +"'");
+				logger.error("Process '" + arg0 + "' exited with value '" + exitValue + "'");
 				if (!output.isEmpty()) {
 					logger.error("Process '" + arg0 + "' output:\n" + output);
 				} else {
@@ -208,7 +214,7 @@ public interface ProcessExecutor {
 			 *            the input stream to read from (will be buffered).
 			 */
 			StreamRedirection(InputStream is) {
-				this.is = is;;
+				this.is = is;
 			}
 
 			@Override

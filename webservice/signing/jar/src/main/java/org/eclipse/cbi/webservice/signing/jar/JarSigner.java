@@ -48,6 +48,13 @@ public abstract class JarSigner {
 	 * @return the path to the keystore file
 	 */
 	abstract Path keystore();
+	
+	/**
+	 * Returns the type of keystore.
+	 * @return the type of keystore.
+	 */
+	@Nullable
+	abstract String storetype();
 
 	/**
 	 * Returns the path to the file storing the keystore password
@@ -107,6 +114,7 @@ public abstract class JarSigner {
 			.httpProxyPort(0)
 			.httpsProxyHost("")
 			.httpsProxyPort(0)
+			.storetype(null)
 			.digestAlgorithm(null);
 	}
 	
@@ -129,6 +137,13 @@ public abstract class JarSigner {
 		 * @return this builder for daisy-chaining.
 		 */
 		public abstract Builder keystore(Path keystore);
+		
+		/**
+		 * Sets the typeto of keystore to use.
+		 * 
+		 * @return this builder for daisy-chaining.
+		 */
+		public abstract Builder storetype(String storetype);
 		
 		/**
 		 * Sets the path to the file storing the password of the keystore.
@@ -259,6 +274,10 @@ public abstract class JarSigner {
 			command.add("-tsa", tsa);
 		}
 
+		if (!Strings.isNullOrEmpty(storetype())) {
+			command.add("-storetype", storetype());
+		}
+		
 		command.add("-keystore", keystore().toString())
 			.add("-storepass", keystorePassword())
 			.add(jar.toString())

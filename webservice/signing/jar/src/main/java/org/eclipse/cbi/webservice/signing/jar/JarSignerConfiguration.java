@@ -28,6 +28,13 @@ public interface JarSignerConfiguration {
 	 * @return the path to the keystore file.
 	 */
 	Path getKeystore();
+	
+	/**
+	 * Returns the type of keystore.
+	 * 
+	 * @return the type of keystore.
+	 */
+	String getStoreType();
 
 	/**
 	 * Returns the name of the alias of the key to be used in the

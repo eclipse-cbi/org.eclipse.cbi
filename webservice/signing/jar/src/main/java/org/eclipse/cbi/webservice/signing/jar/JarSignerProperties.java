@@ -28,6 +28,7 @@ public class JarSignerProperties implements JarSignerConfiguration {
 	private static final String JARSIGNER_KEYSTORE_PASSWORD = "jarsigner.keystore.password";
 	private static final String JARSIGNER_KEYSTORE_ALIAS = "jarsigner.keystore.alias";
 	private static final String JARSIGNER_KEYSTORE = "jarsigner.keystore";
+	private static final String JARSIGNER_STORETYPE = "jarsigner.storetype";
 	private static final String JARSIGNER_BIN = "jarsigner.bin";
 	
 	private static final String JARSIGNER_HTTP_PROXY_HOST = "jarsigner.http.proxy.host";
@@ -69,6 +70,11 @@ public class JarSignerProperties implements JarSignerConfiguration {
 		return propertiesReader.getRegularFile(JARSIGNER_KEYSTORE);
 	}
 
+	@Override
+	public String getStoreType() {
+		return propertiesReader.getString(JARSIGNER_STORETYPE, "");
+	}
+	
 	/**
 	 * Reads and returns the name of the alias of the key to be used in the
 	 * keystore.

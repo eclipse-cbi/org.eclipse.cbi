@@ -202,6 +202,11 @@ public class TestServer {
 		public Path getKeystore() {
 			return keystore;
 		}
+		
+		@Override
+		public String getStoreType() {
+			return null;
+		}
 
 		@Override
 		public String getKeystoreAlias() {

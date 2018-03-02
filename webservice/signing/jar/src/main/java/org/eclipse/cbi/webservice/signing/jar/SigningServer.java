@@ -58,6 +58,7 @@ public class SigningServer {
 		final JarSigner jarSigner = JarSigner.builder()
 			.jarSigner(jarSignerConf.getJarSigner())
 			.keystore(jarSignerConf.getKeystore())
+			.storetype(jarSignerConf.getStoreType())
 			.keystoreAlias(jarSignerConf.getKeystoreAlias())
 			.keystorePassword(jarSignerConf.getKeystorePassword())
 			.timestampingAuthority(jarSignerConf.getTimeStampingAuthority())

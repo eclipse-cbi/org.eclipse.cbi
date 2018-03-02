@@ -25,6 +25,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,6 +103,7 @@ public interface ProcessExecutor {
 			Preconditions.checkArgument(!command.isEmpty(), "Command must not be empty");
 			Objects.requireNonNull(processOutput);
 
+			logger.debug("Will execute '" + command.stream().collect(Collectors.joining(" ")) + "'");
 			final String arg0 = command.iterator().next();
 
 			ProcessBuilder pb = new ProcessBuilder(command);

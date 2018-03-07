@@ -41,6 +41,8 @@ import org.eclipse.cbi.maven.plugins.jarsigner.JarSigner.Options;
 import org.eclipse.cbi.maven.plugins.jarsigner.RecursiveJarSigner;
 import org.eclipse.cbi.maven.plugins.jarsigner.RemoteJarSigner;
 
+import com.google.common.base.Strings;
+
 /**
  * Signs project main and attached artifacts using the Eclipse jarsigner
  * webservice. Only artifacts with {@code .jar} extension are signed, other
@@ -311,7 +313,7 @@ public class SignMojo extends AbstractMojo {
 							.signatureAlgorithm(signatureAlgorithm)
 							.digestAlgorithm(digestAlgorithm)
 							.connectTimeoutMillis(connectTimeoutMillis)
-							.sigFile(sigFile)
+							.sigFile(Strings.nullToEmpty(sigFile))
 							.build();
 					jarSigner.sign(artifactFile.toPath(), options);
 				}

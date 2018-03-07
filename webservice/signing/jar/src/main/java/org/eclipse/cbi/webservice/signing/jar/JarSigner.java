@@ -280,14 +280,14 @@ public abstract class JarSigner {
 			command.add("-storetype", storetype());
 		}
 		
+		if (!Strings.isNullOrEmpty(sigFile)) {
+			command.add("-sigfile", sigFile);
+		}
+		
 		command.add("-keystore", keystore().toString())
 			.add("-storepass", keystorePassword())
 			.add(jar.toString())
 			.add(keystoreAlias());
-		
-		if (!Strings.isNullOrEmpty(sigFile)) {
-			command.add("-sigfile", sigFile);
-		}
 		
 		return command.build();
 	}

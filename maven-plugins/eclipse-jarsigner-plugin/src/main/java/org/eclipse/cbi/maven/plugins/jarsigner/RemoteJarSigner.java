@@ -52,6 +52,7 @@ public abstract class RemoteJarSigner extends FilteredJarSigner {
 				.withParam(PART_NAME, jar)
 				.withParam("digestalg", options.digestAlgorithm().standardName())
 				.withParam("sigalg", options.signatureAlgorithm().standardName())
+				.withParam("sigfile", options.sigFile())
 				.build();
 		log().debug("Jar signing request: " + request.toString());
 		

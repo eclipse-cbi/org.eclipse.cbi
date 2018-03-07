@@ -219,14 +219,14 @@ public abstract class JarSigner {
 	 *             if the execution of the command did not end properly.
 	 */
 	public Path signJar(Path jar) throws IOException {
-		return signJar(jar, SignatureAlgorithm.DEFAULT, MessageDigestAlgorithm.DEFAULT);
+		return signJar(jar, SignatureAlgorithm.DEFAULT, MessageDigestAlgorithm.DEFAULT, "");
 	}
 	
-	public Path signJar(Path jar, SignatureAlgorithm sigAlg, MessageDigestAlgorithm digestAlg) throws IOException {
+	public Path signJar(Path jar, SignatureAlgorithm sigAlg, MessageDigestAlgorithm digestAlg, String sigFile) throws IOException {
 		Preconditions.checkNotNull(sigAlg);
 		Preconditions.checkNotNull(digestAlg);
 		final StringBuilder output = new StringBuilder();
-		int jarSignerExitValue = processExecutor().exec(createCommand(jar, sigAlg, digestAlg), output , timeout(), TimeUnit.SECONDS);
+		int jarSignerExitValue = processExecutor().exec(createCommand(jar, sigAlg, digestAlg, sigFile), output , timeout(), TimeUnit.SECONDS);
 		if (jarSignerExitValue != 0) {
 			throw new IOException(Joiner.on('\n').join(
 					"The '" + jarSigner().toString() + "' command exited with value '" + jarSignerExitValue + "'",
@@ -247,10 +247,12 @@ public abstract class JarSigner {
 	 * @param digestAlg
 	 *            the message digest algorithm to use when digesting the entries
 	 *            of a JAR file. Must not be <code>null</code>.
+	 * @param sigFile 
+	 *            then the base file name for the signatures files.
 	 * @return a list of string composing the command (see
 	 *         {@link ProcessBuilder} for format).
 	 */
-	private ImmutableList<String> createCommand(Path jar, SignatureAlgorithm sigAlg, MessageDigestAlgorithm digestAlg) {
+	private ImmutableList<String> createCommand(Path jar, SignatureAlgorithm sigAlg, MessageDigestAlgorithm digestAlg, String sigFile) {
 		ImmutableList.Builder<String> command = ImmutableList.<String>builder().add(jarSigner().toString());
 		
 		if (!Strings.isNullOrEmpty(httpProxyHost())) {
@@ -282,6 +284,10 @@ public abstract class JarSigner {
 			.add("-storepass", keystorePassword())
 			.add(jar.toString())
 			.add(keystoreAlias());
+		
+		if (!Strings.isNullOrEmpty(sigFile)) {
+			command.add("-sigfile", sigFile);
+		}
 		
 		return command.build();
 	}

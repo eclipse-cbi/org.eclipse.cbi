@@ -271,6 +271,12 @@ public class SignMojo extends AbstractMojo {
 	private int connectTimeoutMillis;
 	
 	/**
+	 * @since 1.1.5
+	 */
+	@Parameter(property = "cbi.jarsigner.sigFile", defaultValue = "")
+	private String sigFile;
+	
+	/**
 	 * {@inheritDoc}
 	 */
 	@Override
@@ -305,6 +311,7 @@ public class SignMojo extends AbstractMojo {
 							.signatureAlgorithm(signatureAlgorithm)
 							.digestAlgorithm(digestAlgorithm)
 							.connectTimeoutMillis(connectTimeoutMillis)
+							.sigFile(sigFile)
 							.build();
 					jarSigner.sign(artifactFile.toPath(), options);
 				}

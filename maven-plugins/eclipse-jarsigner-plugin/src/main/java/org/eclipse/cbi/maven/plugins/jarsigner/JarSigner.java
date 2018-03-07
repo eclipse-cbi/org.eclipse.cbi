@@ -35,23 +35,27 @@ public interface JarSigner {
 	abstract class Options {
 		
 		private static final int CONNECT_TIMEOUT_MS__DEFAULT = 20000;
+		private static final String SIGFILE__DEFAULT = "";
 
 		public abstract MessageDigestAlgorithm digestAlgorithm();
 		public abstract SignatureAlgorithm signatureAlgorithm();
 		public abstract int connectTimeoutMillis();
+		public abstract String sigFile();
 		
 		public static Builder builder() {
 			return new AutoValue_JarSigner_Options.Builder()
 					.signatureAlgorithm(SignatureAlgorithm.DEFAULT)
 					.digestAlgorithm(MessageDigestAlgorithm.DEFAULT)
-					.connectTimeoutMillis(CONNECT_TIMEOUT_MS__DEFAULT);
+					.connectTimeoutMillis(CONNECT_TIMEOUT_MS__DEFAULT)
+					.sigFile(SIGFILE__DEFAULT);
 		}
 		
 		public static Builder copy(Options option) {
 			return builder()
 					.digestAlgorithm(option.digestAlgorithm())
 					.signatureAlgorithm(option.signatureAlgorithm())
-					.connectTimeoutMillis(option.connectTimeoutMillis());
+					.connectTimeoutMillis(option.connectTimeoutMillis())
+					.sigFile(option.sigFile());
 		}
 		
 		@AutoValue.Builder
@@ -59,6 +63,7 @@ public interface JarSigner {
 			public abstract Builder digestAlgorithm(MessageDigestAlgorithm digestAlgorithm);
 			public abstract Builder signatureAlgorithm(SignatureAlgorithm signatureAlgorithm);
 			public abstract Builder connectTimeoutMillis(int connectTimeoutMillis);
+			public abstract Builder sigFile(String sigFile);
 			public abstract Options build();
 		}
 	}

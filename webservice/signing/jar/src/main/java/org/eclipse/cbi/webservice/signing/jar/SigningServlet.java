@@ -39,6 +39,7 @@ public abstract class SigningServlet extends HttpServlet {
 	private static final String FILE_PART_NAME = "file";
 	private static final String DIGEST_ALG_PARAMETER = "digestalg";
 	private static final String SIGNATURE_ALG_PARAMETER = "sigalg";
+	private static final String SIGFILE_PARAMETER = "sigfile";
 
 	/**
 	 * {@inheritDoc}
@@ -61,7 +62,8 @@ public abstract class SigningServlet extends HttpServlet {
 				Path unsignedJar = requestFacade.getPartPath(FILE_PART_NAME, TEMP_FILE_PREFIX).get();
 				SignatureAlgorithm signatureAlgorithm = getSignatureAlgorithm(requestFacade);
 				MessageDigestAlgorithm digestAlgorithm = getDigestAlgorithm(requestFacade);
-				Path signedJar = jarSigner().signJar(unsignedJar, signatureAlgorithm, digestAlgorithm);
+				Optional<String> sigfile = requestFacade.getParameter(SIGFILE_PARAMETER);
+				Path signedJar = jarSigner().signJar(unsignedJar, signatureAlgorithm, digestAlgorithm, sigfile.orElse(null));
 				responseFacade.replyWithFile(JAR_CONTENT_TYPE, submittedFileName, signedJar);
 			} else {
 				responseFacade.replyError(HttpServletResponse.SC_BAD_REQUEST, "Submitted '" + FILE_PART_NAME + "' '" + submittedFileName + "' must ends with '.jar' ");

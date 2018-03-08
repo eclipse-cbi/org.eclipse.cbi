@@ -84,7 +84,7 @@ public abstract class DMGPackagerServlet extends HttpServlet {
 			Path source = parser.getSource();
 			targetImageFile = dmgPackager().packageImageFile(source, source.normalize().getParent().resolve(source.getFileName().toString().replace(DOT_APP, DOT_DMG)), options);
 			
-			if (parser.getSign().isPresent() && parser.getSign().get().booleanValue()) { 
+			if (requestFacade.getBooleanParameter("sign")) {
 				try {
 					dmgSigner().sign(targetImageFile);
 				} catch (IOException e) {

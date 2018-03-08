@@ -266,18 +266,31 @@ public abstract class RequestFacade implements Closeable {
 	}
 
 	/**
-	 * Returns the value of the parameter with the given. If the the decorated
-	 * request has no parameter with the given name, {@link Optional#empty()} is
-	 * returned.
+	 * Returns the value of the parameter with the given name.
 	 *
 	 * @param parameterName
 	 *            the name of the desired parameter
-	 * @return the value of the parameter with the given. If the the decorated
-	 *         request has no parameter with the given name,
-	 *         {@link Optional#empty()} is returned.
+	 * @return the value of the requested parameter, if the decorated request has no
+	 *         parameter with the given name, {@link Optional#empty()} is returned.
 	 */
 	public Optional<String> getParameter(String parameterName) {
 		return Optional.ofNullable(request().getParameter(parameterName));
+	}
+
+	/**
+	 * Returns the boolean value of the parameter with the given name.
+	 *
+	 * @param parameterName
+	 *            the name of the desired parameter
+	 * @return the value of the requested parameter, if the decorated request has no
+	 *         parameter with the given name, a value of false is returned
+	 */
+	public boolean getBooleanParameter(String parameterName) {
+		Optional<String> parameter = getParameter(parameterName);
+		if (parameter.isPresent()) {
+			return Boolean.valueOf(parameter.get());
+		}
+		return false;
 	}
 
 	@Override

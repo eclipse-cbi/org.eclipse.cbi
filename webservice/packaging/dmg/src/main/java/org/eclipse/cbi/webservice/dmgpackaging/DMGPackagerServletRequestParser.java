@@ -172,14 +172,6 @@ public abstract class DMGPackagerServletRequestParser implements Closeable {
 		return getCommandFileOption("eula");
 	}
 	
-	public Optional<Boolean> getSign() throws IOException {
-		Optional<String> parameter = requestFacade().getParameter("sign");
-		if (parameter.isPresent()) {
-			return Optional.of(Boolean.valueOf(parameter.get()));
-		}
-		return Optional.empty();
-	}
-	
 	private Optional<Path> getCommandFileOption(String partName) throws IOException, ServletException, RequestParserException {
 		final Optional<Path> ret;
 		if (requestFacade().hasPart(partName)) {

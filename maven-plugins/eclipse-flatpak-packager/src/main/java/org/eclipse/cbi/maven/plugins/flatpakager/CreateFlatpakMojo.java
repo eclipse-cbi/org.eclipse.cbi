@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Iterator;
@@ -280,14 +281,14 @@ public class CreateFlatpakMojo extends AbstractMojo {
 	private String serviceUrl;
 
 	/**
-	 * Determines the timeout in milliseconds for any communication with the
+	 * Defines the timeout in milliseconds for any communication with the
 	 * packaging web service. Defaults to zero, which is interpreted as an infinite
 	 * timeout. This only means something if a {@link #serviceUrl} is specified.
 	 *
 	 * @since 1.1.5
 	 */
-	@Parameter(property = "cbi.flatpakager.connectTimeoutMillis", defaultValue = "0")
-	private int connectTimeoutMillis;
+	@Parameter(property = "cbi.flatpakager.timeoutMillis", defaultValue = "0")
+	private int timeoutMillis;
 
 	@Parameter(defaultValue = "${project}", required = true, readonly = true)
 	private MavenProject project;
@@ -620,7 +621,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 
 	private void executeProcessOnRemoteServer(HttpClient httpClient, HttpRequest request) throws IOException {
 		getLog().debug("Executing remotely: " + request.toString());
-		final HttpRequest.Config config = HttpRequest.Config.builder().connectTimeoutMillis(connectTimeoutMillis)
+		final HttpRequest.Config config = HttpRequest.Config.builder().timeout(Duration.ofMillis(timeoutMillis))
 				.build();
 		httpClient.send(request, config,
 				new AbstractCompletionListener(source.toPath().getParent(), source.toPath().getFileName().toString(),

@@ -12,6 +12,7 @@ package org.eclipse.cbi.maven.plugins.jarsigner;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.eclipse.cbi.common.security.MessageDigestAlgorithm;
@@ -34,19 +35,23 @@ public interface JarSigner {
 	@AutoValue
 	abstract class Options {
 		
-		private static final int CONNECT_TIMEOUT_MS__DEFAULT = 20000;
+		private static final Duration CONNECT_TIMEOUT__DEFAULT = Duration.ofSeconds(5);
+		private static final Duration TIMEOUT__DEFAULT = Duration.ZERO;
 		private static final String SIGFILE__DEFAULT = "";
 
 		public abstract MessageDigestAlgorithm digestAlgorithm();
 		public abstract SignatureAlgorithm signatureAlgorithm();
-		public abstract int connectTimeoutMillis();
+		@Deprecated
+		public abstract Duration connectTimeout();
+		public abstract Duration timeout();
 		public abstract String sigFile();
 		
 		public static Builder builder() {
 			return new AutoValue_JarSigner_Options.Builder()
 					.signatureAlgorithm(SignatureAlgorithm.DEFAULT)
 					.digestAlgorithm(MessageDigestAlgorithm.DEFAULT)
-					.connectTimeoutMillis(CONNECT_TIMEOUT_MS__DEFAULT)
+					.connectTimeout(CONNECT_TIMEOUT__DEFAULT)
+					.timeout(TIMEOUT__DEFAULT)
 					.sigFile(SIGFILE__DEFAULT);
 		}
 		
@@ -54,7 +59,8 @@ public interface JarSigner {
 			return builder()
 					.digestAlgorithm(option.digestAlgorithm())
 					.signatureAlgorithm(option.signatureAlgorithm())
-					.connectTimeoutMillis(option.connectTimeoutMillis())
+					.connectTimeout(option.connectTimeout())
+					.timeout(option.timeout())
 					.sigFile(option.sigFile());
 		}
 		
@@ -62,7 +68,9 @@ public interface JarSigner {
 		public static abstract class Builder {
 			public abstract Builder digestAlgorithm(MessageDigestAlgorithm digestAlgorithm);
 			public abstract Builder signatureAlgorithm(SignatureAlgorithm signatureAlgorithm);
-			public abstract Builder connectTimeoutMillis(int connectTimeoutMillis);
+			@Deprecated
+			public abstract Builder connectTimeout(Duration connectTimeout);
+			public abstract Builder timeout(Duration timeout);
 			public abstract Builder sigFile(String sigFile);
 			public abstract Options build();
 		}

@@ -13,8 +13,10 @@ package org.eclipse.cbi.maven.http;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.util.Objects;
 
 import com.google.auto.value.AutoValue;
@@ -27,24 +29,45 @@ public final class HttpRequest {
 	
 	@AutoValue
 	public static abstract class Config {
-		private static final int CONNECT_TIMEOUT_MS__DEFAULT = 0;
+		private static final Duration CONNECT_TIMEOUT__DEFAULT = Duration.ofSeconds(5);
+		private static final Duration TIMEOUT__DEFAULT = Duration.ZERO;
+		private static final Duration READ_TIMEOUT__DEFAULT = TIMEOUT__DEFAULT;
 		
 		Config() {
 			// prevents instantiation
 		}
-		public abstract int connectTimeoutMillis();
+		/**
+		 * The timeout for establishing a TCP connection with remote server
+		 * @return
+		 */
+		public abstract Duration connectTimeout();
+		/**
+		 * The max time between two packets exchange
+		 * @return
+		 */
+		public abstract Duration readTimeout();
+		/**
+		 * The wall time-out for the request, from establishing the connection to closing it.
+		 * @return
+		 */
+		public abstract Duration timeout();
 		
 		public static Builder builder() {
-			return new AutoValue_HttpRequest_Config.Builder();
+			return new AutoValue_HttpRequest_Config.Builder()
+					.connectTimeout(CONNECT_TIMEOUT__DEFAULT)
+					.readTimeout(READ_TIMEOUT__DEFAULT)
+					.timeout(TIMEOUT__DEFAULT);
 		}
 		
 		public static Config defaultConfig() {
-			return builder().connectTimeoutMillis(CONNECT_TIMEOUT_MS__DEFAULT).build();
+			return builder().build();
 		}
 		
 		@AutoValue.Builder
 		public static abstract class Builder {
-			public abstract Builder connectTimeoutMillis(int timeout);
+			public abstract Builder connectTimeout(Duration timeout);
+			public abstract Builder readTimeout(Duration timeout);
+			public abstract Builder timeout(Duration timeout);
 			public abstract Config build();
 		}
 	}

@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -178,8 +179,8 @@ public class CreateDMGMojo extends AbstractMojo {
 	 * 
 	 * @since 1.1.5
 	 */
-	@Parameter(property = "cbi.dmgpackager.connectTimeoutMillis", defaultValue = "0")
-	private int connectTimeoutMillis;
+	@Parameter(property = "cbi.dmgpackager.timeoutMillis", defaultValue = "0")
+	private int timeoutMillis;
 
 	@Override
 	public void execute() throws MojoExecutionException {
@@ -263,7 +264,7 @@ public class CreateDMGMojo extends AbstractMojo {
 	}
 
 	private void processOnRemoteServer(HttpClient httpClient, HttpRequest request) throws IOException {
-		HttpRequest.Config requestConfig = HttpRequest.Config.builder().connectTimeoutMillis(connectTimeoutMillis).build();
+		HttpRequest.Config requestConfig = HttpRequest.Config.builder().timeout(Duration.ofMillis(timeoutMillis)).build();
 		httpClient.send(request, requestConfig, new AbstractCompletionListener(source.toPath().getParent(), source.toPath().getFileName().toString(), CreateDMGMojo.class.getSimpleName(), new MavenLogger(getLog())) {
 			@Override
 			public void onSuccess(HttpResult result) throws IOException {

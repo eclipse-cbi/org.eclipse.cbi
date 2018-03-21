@@ -12,14 +12,20 @@ package org.eclipse.cbi.maven.http.apache;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
@@ -38,6 +44,9 @@ import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 
+/**
+ * An HttpClient implementation based on Apache HttpClient.
+ */
 public class ApacheHttpClient implements HttpClient {
 
 	/**
@@ -62,42 +71,59 @@ public class ApacheHttpClient implements HttpClient {
 	public boolean send(HttpRequest request, Config config, final CompletionListener completionListener) throws IOException {
 		Objects.requireNonNull(request);
 		HttpUriRequest apacheRequest = toApacheRequest(request, config);
-		log.debug("Will send HTTP request " + request);
-		log.debug("HTTP request configuration is " + config);
+		this.log.debug("Will send HTTP request " + request);
+		this.log.debug("HTTP request configuration is " + config);
 		
 		Stopwatch stopwatch = Stopwatch.createStarted();
+		ExecutorService executor = Executors.newSingleThreadExecutor();
 		try (CloseableHttpClient apacheHttpClient = HttpClientBuilder.create().build()) {
-			return apacheHttpClient.execute(apacheRequest, new ResponseHandler<Boolean>() {
-				@Override
-				public Boolean handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-					return doHandleResponse(completionListener, response);
-				}
-			});
-		} catch (Exception e) {
-			log.debug("HTTP request and response handled in " + stopwatch);
-			Throwables.throwIfInstanceOf(e, IOException.class);
-			Throwables.throwIfUnchecked(e);
+			ResponseHandler<? extends Boolean> responseHandler = response -> doHandleResponse(completionListener, response);
+			Future<Boolean> requestExec = executor.submit(() -> apacheHttpClient.execute(apacheRequest, responseHandler));
+			final boolean ret;
+			if (Duration.ZERO.equals(config.timeout())) {
+				ret = requestExec.get().booleanValue();
+			} else {
+				ret = requestExec.get(config.timeout().toMillis(), TimeUnit.MILLISECONDS).booleanValue();
+			}
+			return ret;
+		} catch (@SuppressWarnings("unused") InterruptedException e) {
+			apacheRequest.abort();
+			executor.shutdownNow();
+			// restore interrupted status
+			Thread.currentThread().interrupt();
+			return false;
+		} catch (TimeoutException e) {
+			apacheRequest.abort();
+			executor.shutdownNow();
+			this.log.debug("HTTP request and response handled in " + stopwatch);
 			throw new RuntimeException(e);
+		} catch (ExecutionException e) {
+			apacheRequest.abort();
+			executor.shutdownNow();
+			this.log.debug("HTTP request and response handled in " + stopwatch);
+			Throwables.throwIfInstanceOf(e.getCause(), IOException.class);
+			Throwables.throwIfUnchecked(e.getCause());
+			throw new RuntimeException(e.getCause());
 		}
 	}
 	
-	private boolean doHandleResponse(final CompletionListener completionListener, HttpResponse response) throws IOException {
-		final StatusLine statusLine = response.getStatusLine();
+	private Boolean doHandleResponse(final CompletionListener completionListener, HttpResponse response) throws IOException {
+		final StatusLine statusLine = Objects.requireNonNull(response.getStatusLine(), "Can't retrieve status line of the HttpResponse");
+		final int statusCode = statusLine.getStatusCode();
+		
+		this.log.debug("HTTP status code = " + statusCode);
+		this.log.debug("HTTP reason phrase = '" + statusLine.getReasonPhrase() + "'");
+		
 		final HttpEntity entity = response.getEntity();
-		if (statusLine != null) {
-			final int statusCode = statusLine.getStatusCode();
-			log.debug("HTTP status code = " + statusCode);
-			log.debug("HTTP reason phrase = '" + statusLine.getReasonPhrase() + "'");
-			if (statusCode >= HttpStatus.SC_OK && statusCode < HttpStatus.SC_MULTIPLE_CHOICES && entity != null) {
-				completionListener.onSuccess(new BasicHttpResult(statusCode, Strings.nullToEmpty(statusLine.getReasonPhrase()), entity));
-				return true;
-			} else {
-				completionListener.onError(new BasicHttpResult(statusCode, Strings.nullToEmpty(statusLine.getReasonPhrase()), entity));
-				return false;
-			}
+		boolean success = statusCode >= HttpStatus.SC_OK && statusCode < HttpStatus.SC_MULTIPLE_CHOICES && entity != null;
+		BasicHttpResult httpResult = new BasicHttpResult(statusCode, Strings.nullToEmpty(statusLine.getReasonPhrase()), entity);
+		if (success) {
+			completionListener.onSuccess(httpResult);
 		} else {
-			throw new IllegalStateException("Can't retrieve status line of the HttpResponse");
+			completionListener.onError(httpResult);
 		}
+		
+		return Boolean.valueOf(success);
 	}
 	
 	@VisibleForTesting static HttpUriRequest toApacheRequest(HttpRequest request, Config config) {
@@ -115,9 +141,12 @@ public class ApacheHttpClient implements HttpClient {
 		HttpPost post = new HttpPost(request.serverUri());
 		
 		RequestConfig requestConfig = RequestConfig.custom()
-				.setConnectionRequestTimeout(config.connectTimeoutMillis())
-				.setSocketTimeout(config.connectTimeoutMillis())
-				.setConnectTimeout(config.connectTimeoutMillis())
+				// use same timeout for connection request as for connect
+				.setConnectionRequestTimeout((int) config.readTimeout().toMillis())
+				.setSocketTimeout((int) config.readTimeout().toMillis())
+				.setConnectTimeout((int) config.connectTimeout().toMillis())
+				// TODO: try expect continue after 1.1.5 release
+				//.setExpectContinueEnabled(true)
 				.build();
 		
 		post.setConfig(requestConfig);

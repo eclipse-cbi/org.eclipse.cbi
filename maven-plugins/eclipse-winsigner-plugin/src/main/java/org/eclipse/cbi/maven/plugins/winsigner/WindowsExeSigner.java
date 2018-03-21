@@ -19,6 +19,7 @@ import java.nio.file.PathMatcher;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Set;
@@ -50,7 +51,7 @@ public abstract class WindowsExeSigner {
 	abstract Log log();
 	abstract ExceptionHandler exceptionHandler();
 	abstract URI serverUri();
-	abstract int connectTimeoutMillis();
+	abstract Duration timeout();
 	
 	WindowsExeSigner() {
 		
@@ -116,7 +117,7 @@ public abstract class WindowsExeSigner {
     
     private boolean processOnSigningServer(final Path file) throws IOException {
 		final HttpRequest request = HttpRequest.on(serverUri()).withParam(PART_NAME, file).build();
-		HttpRequest.Config requestConfig = HttpRequest.Config.builder().connectTimeoutMillis(connectTimeoutMillis()).build();
+		HttpRequest.Config requestConfig = HttpRequest.Config.builder().timeout(timeout()).build();
 		log().debug("Windows exe signing request: " + request.toString());
 		boolean success = httpClient().send(request, requestConfig, new AbstractCompletionListener(file.getParent(), file.getFileName().toString(), WindowsExeSigner.class.getSimpleName(), new MavenLogger(log())) {
 			@Override
@@ -201,7 +202,7 @@ public abstract class WindowsExeSigner {
 
 		public abstract Builder serverUri(URI uri);
 		public abstract Builder httpClient(HttpClient httpClient);
-		public abstract Builder connectTimeoutMillis(int timeoutMillis);
+		public abstract Builder timeout(Duration timeout);
 
 		/**
 		 * Creates and returns a new WindowsExeSigner configured with the options

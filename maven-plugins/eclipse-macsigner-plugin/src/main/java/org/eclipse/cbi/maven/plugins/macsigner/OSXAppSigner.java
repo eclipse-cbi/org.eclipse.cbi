@@ -19,6 +19,7 @@ import java.nio.file.PathMatcher;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Set;
@@ -66,7 +67,7 @@ public abstract class OSXAppSigner {
 	
 	abstract URI serverUri();
 	
-	abstract int connectTimeoutMillis();
+	abstract Duration timeout();
 
 	public static Builder builder() {
 		return new AutoValue_OSXAppSigner.Builder();
@@ -165,7 +166,7 @@ public abstract class OSXAppSigner {
     }
     
     private boolean processOnSigningServer(final Path file) throws IOException {
-    		HttpRequest.Config requestConfig = HttpRequest.Config.builder().connectTimeoutMillis(connectTimeoutMillis()).build();
+    		HttpRequest.Config requestConfig = HttpRequest.Config.builder().timeout(timeout()).build();
 		final HttpRequest request = HttpRequest.on(serverUri()).withParam(PART_NAME, file).build();
 		log().debug("OS X app signing request: " + request.toString());
 		boolean success = httpClient().send(request, requestConfig, new AbstractCompletionListener(file.getParent(), file.getFileName().toString(), OSXAppSigner.class.getSimpleName(), new MavenLogger(log())) {
@@ -243,7 +244,7 @@ public abstract class OSXAppSigner {
 		 * @return this builder for chained calls.
 		 */
 		public abstract Builder log(Log log);
-		public abstract Builder connectTimeoutMillis(int connectTimeoutMillis);
+		public abstract Builder timeout(Duration timeout);
 		public abstract Builder serverUri(URI uri);
 		public abstract Builder httpClient(HttpClient httpClient);
 		public abstract Builder exceptionHandler(ExceptionHandler handler);

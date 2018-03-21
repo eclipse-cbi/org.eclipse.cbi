@@ -15,6 +15,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 
 import org.apache.maven.plugin.logging.Log;
 import org.eclipse.cbi.maven.Logger;
@@ -56,7 +57,7 @@ public abstract class RemoteJarSigner extends FilteredJarSigner {
 				.build();
 		log().debug("Jar signing request: " + request.toString());
 		
-		HttpRequest.Config requestConfig = HttpRequest.Config.builder().connectTimeoutMillis(options.connectTimeoutMillis()).build();
+		HttpRequest.Config requestConfig = HttpRequest.Config.builder().connectTimeout(options.connectTimeout()).timeout(options.timeout()).build();
 		OverwriteJarOnSuccess completionListener = new OverwriteJarOnSuccess(jar.getParent(), jar.getFileName().toString(), RemoteJarSigner.class.getSimpleName(), new MavenLogger(log()), jar);
 		if (httpClient().send(request, requestConfig, completionListener)) {
 			return 1;

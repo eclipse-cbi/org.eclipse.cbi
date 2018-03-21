@@ -15,6 +15,7 @@ package org.eclipse.cbi.maven.plugins.jarsigner.mojo;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -263,14 +264,27 @@ public class SignMojo extends AbstractMojo {
 	private SignatureAlgorithm signatureAlgorithm;
 
 	/**
-	 * Determines the timeout in milliseconds for any communication with the signing server.
-     * 
-     * A timeout value of zero is interpreted as an infinite timeout.
+	 * Defines the timeout in milliseconds for establishing a TCP connection with the signing server.
+   * 
+   * A timeout value of zero is interpreted as an infinite timeout.
 	 * 
 	 * @since 1.1.4
+	 * @deprecated Use timeoutMillis instead. This one is for establishing the TCP connection only, you may 
+	 * be looking for a wall timeout instead.
 	 */
-	@Parameter(property = "cbi.jarsigner.connectTimeoutMillis", defaultValue = "20000")
+	@Deprecated
+	@Parameter(property = "cbi.jarsigner.connectTimeoutMillis", defaultValue = "5000")
 	private int connectTimeoutMillis;
+	
+	/**
+	 * Defines the wall timeout in milliseconds for performing the remote request.
+   * 
+   * A timeout value of zero is interpreted as an infinite timeout.
+	 * 
+	 * @since 1.1.5
+	 */
+	@Parameter(property = "cbi.jarsigner.timeoutMillis", defaultValue = "0")
+	private int timeoutMillis;
 	
 	/**
 	 * @since 1.1.5
@@ -312,7 +326,8 @@ public class SignMojo extends AbstractMojo {
 					Options options = Options.builder()
 							.signatureAlgorithm(signatureAlgorithm)
 							.digestAlgorithm(digestAlgorithm)
-							.connectTimeoutMillis(connectTimeoutMillis)
+							.connectTimeout(Duration.ofMillis(connectTimeoutMillis))
+							.timeout(Duration.ofMillis(timeoutMillis))
 							.sigFile(Strings.nullToEmpty(sigFile))
 							.build();
 					jarSigner.sign(artifactFile.toPath(), options);

@@ -16,6 +16,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.time.Duration;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -228,14 +229,14 @@ public class SignMojo extends AbstractMojo {
 	private int deprecatedRetryTimer;
 	
 	/**
-	 * Determines the timeout in milliseconds for any communication with the signing server.
-     * 
-     * A timeout value of zero is interpreted as an infinite timeout.
+	 * Defines the wall timeout in milliseconds for performing the remote request.
+	 * 
+	 * A timeout value of zero is interpreted as an infinite timeout.
 	 * 
 	 * @since 1.1.5
 	 */
-	@Parameter(property = "cbi.dmgpackager.connectTimeoutMillis", defaultValue = "0")
-	private int connectTimeoutMillis;
+	@Parameter(property = "cbi.winsigner.timeoutMillis", defaultValue = "0")
+	private int timeoutMillis;
 
 	@Override
 	public void execute() throws MojoExecutionException {
@@ -247,7 +248,7 @@ public class SignMojo extends AbstractMojo {
 		WindowsExeSigner exeSigner = WindowsExeSigner.builder()
 				.serverUri(URI.create(signerUrl))
 				.httpClient(httpClient)
-				.connectTimeoutMillis(connectTimeoutMillis)
+				.timeout(Duration.ofMillis(timeoutMillis))
 				.exceptionHandler(new ExceptionHandler(getLog(), continueOnFail()))
 				.log(getLog())
 				.build();

@@ -10,6 +10,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -201,7 +202,7 @@ public class WindowsExeSignerTest {
 		return WindowsExeSigner.builder()
 				.serverUri(URI.create("http://localhost"))
 				.httpClient(client)
-				.connectTimeoutMillis(0)
+				.timeout(Duration.ZERO)
 				.exceptionHandler(new ExceptionHandler(log, continueOnFail))
 				.log(log)
 				.build();

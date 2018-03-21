@@ -5,6 +5,7 @@ import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 
 import org.eclipse.cbi.maven.http.HttpRequest;
 import org.eclipse.cbi.maven.http.HttpRequest.Config;
@@ -69,13 +70,14 @@ public class HttpRequestTest {
 	@Test
 	public void testRequestConfigDefault() {
 		Config requestConfig = HttpRequest.Config.defaultConfig();
-		Assert.assertEquals(0, requestConfig.connectTimeoutMillis());
+		Assert.assertEquals(Duration.ZERO, requestConfig.timeout());
 	}
 	
 	@Test
-	public void testRequestConfigDefaultConnectTimeout() {
-		Config requestConfig = HttpRequest.Config.builder().connectTimeoutMillis(500).build();
-		Assert.assertEquals(500, requestConfig.connectTimeoutMillis());
+	public void testRequestConfigDefaultTimeout() {
+		Duration duration = Duration.ofMillis(500);
+		Config requestConfig = HttpRequest.Config.builder().timeout(duration).build();
+		Assert.assertEquals(duration, requestConfig.timeout());
 	}
 	
 	@Test(expected=NullPointerException.class)

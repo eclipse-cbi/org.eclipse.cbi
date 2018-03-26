@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
+import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -316,7 +317,7 @@ public class Zips {
 	}
 
 	private static void putFileEntry(Path file, ZipArchiveOutputStream zos, Path entryPath) throws IOException {
-		ZipArchiveEntry zipEntry = new ZipArchiveEntry(entryNameFrom(entryPath, false));
+		ZipArchiveEntry zipEntry = createArchiveEntry(zos, entryNameFrom(entryPath, false));
 		zipEntry.setTime(Files.getLastModifiedTime(file).toMillis());
 		zipEntry.setSize(Files.size(file));
 		
@@ -332,7 +333,7 @@ public class Zips {
 	}
 	
 	private static void putDirectoryEntry(Path dir, ZipArchiveOutputStream zos, Path entryPath) throws IOException {
-		ZipArchiveEntry zipEntry = new ZipArchiveEntry(entryNameFrom(entryPath, true));
+		ZipArchiveEntry zipEntry = createArchiveEntry(zos, entryNameFrom(entryPath, true));
 		zipEntry.setTime(Files.getLastModifiedTime(dir).toMillis());
 		
 		PosixFileAttributeView posixFileAttributeView = Files.getFileAttributeView(dir, PosixFileAttributeView.class);
@@ -343,6 +344,13 @@ public class Zips {
 		
 		zos.putArchiveEntry(zipEntry);
 		zos.closeArchiveEntry();
+	}
+	
+	private static ZipArchiveEntry createArchiveEntry(ZipArchiveOutputStream zos, String entryName) {
+		if (zos instanceof JarArchiveOutputStream) {
+			return new JarArchiveEntry(entryName);
+		}
+		return new ZipArchiveEntry(entryName);
 	}
 
 	private static interface PathMapper {

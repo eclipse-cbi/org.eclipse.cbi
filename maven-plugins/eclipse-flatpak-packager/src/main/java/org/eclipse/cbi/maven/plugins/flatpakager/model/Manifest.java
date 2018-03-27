@@ -18,16 +18,16 @@ import com.google.common.collect.ImmutableSet;
 public abstract class Manifest {
 	public static final String DEFAULT_BRANCH = "master";
 	public static final String DEFAULT_RUNTIME = "org.gnome.Platform";
-	public static final String DEFAULT_RUNTIMEVERSION = "3.26";
+	public static final String DEFAULT_RUNTIMEVERSION = "3.28";
 	public static final String DEFAULT_SDK = "org.gnome.Sdk";
 	public static final String DEFAULT_COMMAND = "eclipse";
 
 	// Probably always want JDK
 	public static final String[] DEFAULT_SDK_EXTENSIONS = { "org.freedesktop.Sdk.Extension.openjdk9" };
 
-	// Fairly liberal: Access to user's home, windowing system and Internet. Allow
-	// communication with the Flatpak DBus API.
-	public static final String[] DEFAULT_FINISH_ARGS = { "--env=PATH=/app/bin:/usr/bin", "--filesystem=home",
+	// Fairly liberal by default: Access to host file system, windowing system and
+	// network connection. Allow communication with the Flatpak DBus API.
+	public static final String[] DEFAULT_FINISH_ARGS = { "--env=PATH=/app/bin:/usr/bin", "--filesystem=host",
 			"--share=ipc", "--socket=x11", "--socket=wayland", "--share=network", "--allow=devel",
 			"--talk-name=org.freedesktop.Flatpak" };
 

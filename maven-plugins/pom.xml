@@ -50,6 +50,7 @@
     <apache-httpclient-version>4.5.3</apache-httpclient-version>
     <cbi-common-version>1.2.2</cbi-common-version>
     <maven-api-version>3.1.0</maven-api-version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
   <modules>

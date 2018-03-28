@@ -10,18 +10,25 @@
  *******************************************************************************/
 package org.eclipse.cbi.maven.plugins.jarsigner;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.nio.file.FileVisitOption;
-import java.nio.file.FileVisitResult;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.apache.maven.plugin.logging.Log;
 import org.eclipse.cbi.common.security.MessageDigestAlgorithm;
@@ -31,10 +38,10 @@ import org.eclipse.cbi.common.util.Zips;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 
 public abstract class JarResigner implements JarSigner {
+
+	private static final String DIGEST_ATTRIBUTE_SUFFIX = "-Digest";
 
 	public static enum Strategy {
 		DO_NOT_RESIGN,
@@ -106,19 +113,26 @@ public abstract class JarResigner implements JarSigner {
 		try (JarInputStream jis = new JarInputStream(Files.newInputStream(jar))) {
 			JarEntry nextJarEntry = jis.getNextJarEntry();
 			while (nextJarEntry != null && !alreadySigned) {
-				Attributes attributes = nextJarEntry.getAttributes();
-				if (attributes != null) {
-					alreadySigned = Iterables.any(attributes.keySet(), new Predicate<Object>() {
-						@Override
-						public boolean apply(Object k) {
-							return k.toString().endsWith("-Digest");
-						}
-					});
-				}
+				alreadySigned = isBlockOrSF(nextJarEntry.getName()) || hasManifestDigest(nextJarEntry.getAttributes());
 				nextJarEntry = jis.getNextJarEntry();
 			}
 		}
 		return alreadySigned;
+	}
+
+	static boolean hasManifestDigest(Attributes entryAttributes) {
+		if (entryAttributes != null) {
+			return entryAttributes.keySet().stream().anyMatch(k -> k.toString().endsWith(DIGEST_ATTRIBUTE_SUFFIX));
+		}
+		return false;
+	}
+
+	private static boolean isBlockOrSF(String entryName) {
+		String uname = entryName.toUpperCase(Locale.ENGLISH);
+		if ((uname.startsWith("META-INF/") || uname.startsWith("/META-INF/"))) {
+			return uname.endsWith(".SF") || uname.endsWith(".DSA") || uname.endsWith(".RSA") || uname.endsWith(".EC");
+		}
+		return false;
 	}
 	
 	public static JarSigner doNotResign(JarSigner jarSigner, Log log) {
@@ -192,30 +206,82 @@ public abstract class JarResigner implements JarSigner {
 
 		@Override
 		protected int resign(Path jar, Options options) throws IOException {
-			Path unpackedJar = Files.createTempDirectory(Paths.getParent(jar), "overwriteSignature-");
+			Path unpackedJar = Files.createTempDirectory(Paths.getParent(jar), "overwriteSignature-" + jar.getFileName() + "-");
 			try {
 				Zips.unpackJar(jar, unpackedJar);
 				Path metaInf = unpackedJar.resolve("META-INF");
-				if (Files.exists(metaInf)) {
-					Files.walkFileTree(metaInf, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<Path>() {
-						@Override
-						public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-							String filename = file.getFileName().toString();
-							if (filename.endsWith(".SF") || filename.endsWith(".DSA") || filename.endsWith(".RSA") || filename.endsWith(".EC")) {
-								Paths.delete(file);
-							}
-							return FileVisitResult.CONTINUE;
-						}
-					});
+				boolean signatureFilesFound = removeSignatureFilesIfAny(metaInf);
+				boolean manifestDigestsFound = removeManifestDigestsIfAny(metaInf.resolve("MANIFEST.MF"));
+				if (signatureFilesFound || manifestDigestsFound) {
+					log().info("Jar '" + jar.toString() + "' is already signed. The signature will be overwritten.");
+					Zips.packJar(unpackedJar, jar, false);	
 				} else {
-					throw new IOException("'META-INF' folder does not exist in Jar file '" + jar + "'");
+					log().info("No signature was found in Jar '" + jar.toString() + "', it will be signed without touching it. Signature would have been overwritten otherwise.");
 				}
-				Zips.packJar(unpackedJar, jar, false);
-				log().info("Jar '" + jar.toString() + "' is already signed. The signature will be overwritten.");
 				return delegate().sign(jar, options);
 			} finally {
 				Paths.deleteQuietly(unpackedJar);
 			}
+		}
+
+		private boolean removeSignatureFilesIfAny(Path metaInf) throws IOException {
+			if (Files.exists(metaInf)) {
+				try (DirectoryStream<Path> content = Files.newDirectoryStream(metaInf, "*.{SF,DSA,RSA,EC}")) {
+					List<Path> signatureFiles = StreamSupport.stream(content.spliterator(), false).collect(Collectors.toList());
+					for (Path f : signatureFiles) {
+						log().debug("Deleting signature file '" + f + "'");
+						Paths.delete(f);
+					}
+					return !signatureFiles.isEmpty();	
+				}
+			} 
+			return false;
+		}
+
+		private boolean removeManifestDigestsIfAny(Path manifestPath) throws IOException {
+			if (Files.exists(manifestPath)) {
+				Manifest manifest = readManifest(manifestPath);
+				List<String> keysOfRemovedDigests = removeDigestAttributes(manifest);
+				if (!keysOfRemovedDigests.isEmpty()) {
+					pruneEmptyEntries(manifest, keysOfRemovedDigests);
+					writeManifest(manifest, manifestPath);
+				}
+				return !keysOfRemovedDigests.isEmpty();
+			}
+			return false;
+		}
+
+		private List<String> removeDigestAttributes(Manifest manifest) {
+			return manifest.getEntries().entrySet().stream().map(e -> {
+				if (e.getValue().keySet().removeIf(k -> k.toString().endsWith(DIGEST_ATTRIBUTE_SUFFIX))) {
+					log().debug("Deleting digest attribute(s) of entry '"+e.getKey()+"'");
+					return e.getKey();
+				}
+				return null;
+			}).filter(Objects::nonNull).collect(Collectors.toList());
+		}
+
+		private void pruneEmptyEntries(Manifest manifest, List<String> keysOfRemovedDigests) {
+			keysOfRemovedDigests.forEach(k -> {
+				if (manifest.getAttributes(k).isEmpty()) {
+					log().debug("Deleting manifest entry for '"+k+"' as it has no attribute anymore");
+					manifest.getEntries().remove(k);
+				}
+			});
+		}
+
+		private static void writeManifest(Manifest manifest, Path path) throws IOException {
+			try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+				manifest.write(os);
+			}
+		}
+
+		private static Manifest readManifest(Path manifestPath) throws IOException {
+			Manifest manifest = new Manifest();
+			try(InputStream is = Files.newInputStream(manifestPath, StandardOpenOption.READ)) {
+				manifest.read(is);
+			}
+			return manifest;
 		}
 	}
 
@@ -227,8 +293,8 @@ public abstract class JarResigner implements JarSigner {
 				Attributes attributes = jarEntry.getAttributes();
 				if (attributes != null) {
 					for (Object k : attributes.keySet()) {
-						if (k.toString().endsWith("-Digest")) {
-							String digestAlgName = k.toString().substring(0, k.toString().length() - "-Digest".length());
+						if (k.toString().endsWith(DIGEST_ATTRIBUTE_SUFFIX)) {
+							String digestAlgName = k.toString().substring(0, k.toString().length() - DIGEST_ATTRIBUTE_SUFFIX.length());
 							usedDigestAlg.add(MessageDigestAlgorithm.fromStandardName(digestAlgName));
 						}
 					}

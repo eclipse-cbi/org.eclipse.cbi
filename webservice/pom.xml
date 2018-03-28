@@ -40,7 +40,7 @@
 
   <properties>
     <jetty-version>9.4.8.v20171121</jetty-version>
-    <cbi-common-version>1.2.1</cbi-common-version>
+    <cbi-common-version>1.2.2-SNAPSHOT</cbi-common-version>
   </properties>
 
   <dependencyManagement>

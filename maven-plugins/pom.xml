@@ -48,7 +48,7 @@
 
   <properties>
     <apache-httpclient-version>4.5.3</apache-httpclient-version>
-    <cbi-common-version>1.2.1</cbi-common-version>
+    <cbi-common-version>1.2.2-SNAPSHOT</cbi-common-version>
     <maven-api-version>3.1.0</maven-api-version>
   </properties>
 

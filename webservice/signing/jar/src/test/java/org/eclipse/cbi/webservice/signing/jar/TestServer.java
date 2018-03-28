@@ -141,7 +141,7 @@ public class TestServer {
 					.add("-dname", "CN=localhost, O=acme.org")
 					.build();
 			
-			processExecutor.exec(command, 2L, TimeUnit.SECONDS);
+			processExecutor.exec(command, 20L, TimeUnit.SECONDS);
 			
 			return keystore;
 		}

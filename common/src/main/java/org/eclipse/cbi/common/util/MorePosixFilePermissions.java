@@ -47,7 +47,7 @@ final class MorePosixFilePermissions {
 
 	public static Set<PosixFilePermission> fromFileMode(final long filemode) {
 		if ((filemode & MAX_MODE) != filemode) {
-			throw new IllegalStateException("File mode must be between 0 and " + MAX_MODE + " ("+Integer.toOctalString(MAX_MODE)+" in octal)");
+			throw new IllegalStateException("Invalid file mode '"+Integer.toOctalString((int)filemode)+"'. File mode must be between 0 and " + MAX_MODE + " ("+Integer.toOctalString(MAX_MODE)+" in octal)");
 		}
 
 		final Set<PosixFilePermission> ret = EnumSet.noneOf(PosixFilePermission.class);

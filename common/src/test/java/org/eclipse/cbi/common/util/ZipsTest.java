@@ -12,6 +12,7 @@ package org.eclipse.cbi.common.util;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -21,17 +22,21 @@ import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
 import org.junit.Test;
 import org.junit.experimental.theories.DataPoints;
@@ -223,6 +228,47 @@ public class ZipsTest {
 			assertTrue(Files.size(fs.getPath("unzipFolder/folder/t1/Test1.java")) > 0);
 			assertTrue(Files.exists(fs.getPath("unzipFolder/folder/t2/t3/Test2.java")));
 			assertTrue(Files.size(fs.getPath("unzipFolder/folder/t2/t3/Test2.java")) > 0);
+		}
+	}
+	
+	@Theory
+	public void testUnpackRepackOverwriteZip(Configuration conf) throws IOException {
+		try (FileSystem fs = Jimfs.newFileSystem(conf)) {
+			Path unpackPath = fs.getPath("unpack");
+			Path zip = fs.getPath("file.zip");
+			
+			try (InputStream is = this.getClass().getResource("/folder.zip").openStream()) {
+				Files.copy(is, zip);
+			}
+			
+			checkZip(zip);
+			assertEquals(Zips.unpackZip(zip, unpackPath), Zips.packZip(unpackPath, zip, false));
+			checkZip(zip);
+		}
+	}
+	
+	@Theory
+	public void testUnpackRepackOverwriteJar(Configuration conf) throws IOException {
+		try (FileSystem fs = Jimfs.newFileSystem(conf)) {
+			Path unpackPath = fs.getPath("unpack");
+			Path zip = fs.getPath("file.zip");
+			
+			try (InputStream is = this.getClass().getResource("/folder.zip").openStream()) {
+				Files.copy(is, zip);
+			}
+			
+			checkZip(zip);
+			assertEquals(Zips.unpackJar(zip, unpackPath), Zips.packJar(unpackPath, zip, false));
+			checkZip(zip);
+		}
+	}
+
+	private static void checkZip(Path zip) throws IOException {
+		try (ZipFile zipFile = new ZipFile(Files.newByteChannel(zip, StandardOpenOption.READ))) {
+			Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
+			while (entries.hasMoreElements()) {
+				assertFalse(entries.nextElement().getName().isEmpty());
+			}
 		}
 	}
 	

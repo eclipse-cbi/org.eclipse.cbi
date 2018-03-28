@@ -278,7 +278,7 @@ public class Zips {
 	}
 
 	private static BufferedOutputStream newBufferedOutputStream(Path path) throws IOException {
-		return new BufferedOutputStream(Files.newOutputStream(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE));
+		return new BufferedOutputStream(Files.newOutputStream(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 	}
 
 	private static int packEntries(Path source, ZipArchiveOutputStream zos, boolean preserveRoot, Set<Path> pathToExcludes) throws IOException {

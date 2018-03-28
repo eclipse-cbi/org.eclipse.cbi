@@ -10,10 +10,8 @@
  *******************************************************************************/
 package org.eclipse.cbi.common.util;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.nio.channels.SeekableByteChannel;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,20 +22,22 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
-import java.nio.file.attribute.PosixFilePermission;
+import java.util.Enumeration;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipException;
 
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.UnixStat;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.eclipse.cbi.common.util.ZipPosixPermissionFixer.ZipReader;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -65,61 +65,48 @@ public class Zips {
 	 */
 	public static int unpackZip(Path source, final Path outputDir) throws IOException {
 		checkPathExists(source, "'source' path must exists");
-		int unpack = 0;
-		try (ZipArchiveInputStream zis = new ZipArchiveInputStream(newBufferedInputStream(source))) {
-			unpack = unpack(zis, outputDir);
+		try (ZipFile zipFile = new ZipFile(Files.newByteChannel(source))) {
+			return unpack(zipFile, outputDir, Zips::fixPosixPermissions);
 		}
-		
-		if (Files.getFileAttributeView(outputDir, PosixFileAttributeView.class) != null) {
-			// we can't do it during the unpack as the posix permissions are stored at the end of the zais
-			fixZipPosixPermissions(source, outputDir);
+	}
+
+	private static void fixPosixPermissions(ZipArchiveEntry entry, Path entryPath) {
+		PosixFileAttributeView attributes = Files.getFileAttributeView(entryPath, PosixFileAttributeView.class);
+		if (attributes != null) {
+			try {
+				Files.setPosixFilePermissions(entryPath, MorePosixFilePermissions.fromFileMode(entry.getUnixMode() & UnixStat.PERM_MASK));
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
+	private static int unpack(ZipFile zipFile, final Path outputDir, BiConsumer<ZipArchiveEntry, Path> entryFixer) throws IOException, ZipException {
+		int unpack = 0;
+		Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
+		while (entries.hasMoreElements()) {
+			ZipArchiveEntry entry = entries.nextElement();
+			final Path entryPath = unpackZipEntry(zipFile, entry, outputDir);
+			if (entryFixer != null) {
+				entryFixer.accept(entry, entryPath);
+			}
+			unpack++;
 		}
 		return unpack;
 	}
 
-	private static void fixZipPosixPermissions(Path source, final Path outputDir) throws IOException {
-		try (SeekableByteChannel ch = Files.newByteChannel(source)) {
-			new ZipPosixPermissionFixer(new ZipReader(new SeekableByteChannelRecordReader(ch), ch.size())) {
-				@Override
-				protected void fixEntry(String entryName, Set<PosixFilePermission> posixPermissions) throws IOException {
-					Path entryPath = outputDir.resolve(entryName);
-					PosixFileAttributeView attributes = Files.getFileAttributeView(entryPath, PosixFileAttributeView.class);
-					if (attributes != null) {
-						attributes.setPermissions(posixPermissions);
-					}
-				}
-			}.fixEntries();
+	private static Path unpackZipEntry(ZipFile zipFile, ZipArchiveEntry entry, final Path outputDir) throws IOException, ZipException {
+		final Path entryPath = outputDir.resolve(entry.getName());
+		if (entry.isDirectory()) {
+			Files.createDirectories(entryPath);
+		} else {
+			Path parentPath = entryPath.normalize().getParent();
+			Files.createDirectories(parentPath);
+			Files.copy(zipFile.getInputStream(entry), entryPath, StandardCopyOption.REPLACE_EXISTING);
 		}
-	}
 
-	/**
-	 * Unzip the given {@code zis} Zip input stream file in the {@code outputDir}.
-	 * 
-	 * @param source
-	 *            the file to unzip.
-	 * @param outputDir
-	 *            the output directory where the Jar will be unpacked. It does
-	 *            not have to exist beforehand.
-	 * @return the number of unpacked entries
-	 * @throws IOException
-	 */
-	private static int unpack(ZipArchiveInputStream zis, Path outputDir) throws IOException {
-		int unpackedEntries = 0;
-		for(ZipArchiveEntry entry = zis.getNextZipEntry(); entry != null; entry = zis.getNextZipEntry()) {
-			final Path entryPath = outputDir.resolve(entry.getName());
-			if (entry.isDirectory()) {
-				Files.createDirectories(entryPath);
-			} else {
-				Path parentPath = entryPath.normalize().getParent();
-				Files.createDirectories(parentPath);
-				Files.copy(zis, entryPath, StandardCopyOption.REPLACE_EXISTING);
-			}
-
-			Files.setLastModifiedTime(entryPath, FileTime.from(entry.getTime(), TimeUnit.MILLISECONDS));
-			
-			unpackedEntries++;
-		}
-		return unpackedEntries;
+		Files.setLastModifiedTime(entryPath, FileTime.from(entry.getTime(), TimeUnit.MILLISECONDS));
+		return entryPath;
 	}
 
 	/**
@@ -135,8 +122,8 @@ public class Zips {
 	 */
 	public static int unpackJar(Path source, Path outputDir) throws IOException {
 		checkPathExists(source, "'source' path must exists");
-		try (ZipArchiveInputStream jis = new ZipArchiveInputStream(newBufferedInputStream(source))) {
-			return unpack(jis, outputDir);  
+		try (ZipFile zipFile = new ZipFile(Files.newByteChannel(source))) {
+			return unpack(zipFile, outputDir, null);
 		}
 	}
 
@@ -268,15 +255,10 @@ public class Zips {
 	private static Path checkPathExists(Path source, String msg) {
 		if (!Files.exists(source)) {
 			throw new IllegalArgumentException(msg);
-		} else {
-			return source;
 		}
+		return source;
 	}
 	
-	private static BufferedInputStream newBufferedInputStream(Path source) throws IOException {
-		return new BufferedInputStream(Files.newInputStream(source, StandardOpenOption.READ));
-	}
-
 	private static BufferedOutputStream newBufferedOutputStream(Path path) throws IOException {
 		return new BufferedOutputStream(Files.newOutputStream(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 	}

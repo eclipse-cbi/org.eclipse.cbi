@@ -78,7 +78,6 @@ public abstract class RecursiveJarSigner extends FilteredJarSigner {
 	private int signNestedJars(Path file, Options options, int currentDepth) throws IOException {
 		int numberOfSignedNestedJar = 0;
 		Path jarUnpackFolder = null;
-		Path tmpSignedJar = null;
 		try {
 			jarUnpackFolder = Files.createTempDirectory(Paths.getParent(file), file.getFileName().toString() + "_unpacked_");
 			Zips.unpackJar(file, jarUnpackFolder);
@@ -94,10 +93,6 @@ public abstract class RecursiveJarSigner extends FilteredJarSigner {
 		} finally {
 			if (jarUnpackFolder != null) {
 				Paths.deleteQuietly(jarUnpackFolder);
-			}
-
-			if (tmpSignedJar != null) {
-				Paths.deleteQuietly(tmpSignedJar);
 			}
 		}
 		return numberOfSignedNestedJar;

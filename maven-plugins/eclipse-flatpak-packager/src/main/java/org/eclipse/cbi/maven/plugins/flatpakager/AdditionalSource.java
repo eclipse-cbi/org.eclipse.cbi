@@ -15,9 +15,17 @@ import java.io.File;
 public class AdditionalSource {
 	private File source;
 	private File destination;
+	private String permissions = "644";
 
 	public AdditionalSource() {
 		// Default constructor is needed by maven
+	}
+
+	public AdditionalSource(File source, File destination, String permissions) {
+		this(source, destination);
+		if (permissions != null && !permissions.isEmpty()) {
+			setPermissions(permissions);
+		}
 	}
 
 	public AdditionalSource(File source, File destination) {
@@ -43,5 +51,13 @@ public class AdditionalSource {
 
 	public void setDestination(File destination) {
 		this.destination = destination;
+	}
+
+	public String getPermissions() {
+		return permissions;
+	}
+
+	public void setPermissions(String permissions) {
+		this.permissions = permissions;
 	}
 }

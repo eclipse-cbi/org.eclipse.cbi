@@ -470,6 +470,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 			for (AdditionalSource addSource : additionalSources) {
 				bw.write("	mkdir -p $(shell dirname \"" + addSource.getDestination() + "\")\n");
 				bw.write("	mv " + addSource.getDestination().getName() + " " + addSource.getDestination() + "\n");
+				bw.write("	chmod " + addSource.getPermissions() + " " + addSource.getDestination() + "\n");
 			}
 			bw.write("	@mkdir -p /app/bin\n");
 			bw.write("	@for bin in /app/eclipse/java/bin/* /app/eclipse/" + command

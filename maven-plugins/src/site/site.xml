@@ -12,7 +12,7 @@
 <project name="Eclipse CBI Plugins">
   <bannerLeft>
     <name>Eclipse</name>
-    <src>https://eclipse.org/eclipse.org-common/themes/Nova/images/eclipse.png</src>
+    <src>https://www.eclipse.org/eclipse.org-common/themes/solstice/public/images/logo/eclipse.png</src>
     <href>https://eclipse.org</href>
   </bannerLeft>
   <body>
@@ -22,12 +22,13 @@
       <item name="Windows Exe Signer" href="eclipse-winsigner-plugin/plugin-info.html" />
       <item name="macOS App Signer" href="eclipse-macsigner-plugin/plugin-info.html" />
       <item name="macOS DMG Packager" href="eclipse-dmg-packager/plugin-info.html" />
+      <item name="Linux Flatpak Packager" href="eclipse-flatpak-packager/plugin-info.html" />
       <item name="Utilities" href="eclipse-cbi-plugin/plugin-info.html" />
     </menu>
   </body>
   <skin>
     <groupId>org.apache.maven.skins</groupId>
     <artifactId>maven-fluido-skin</artifactId>
-    <version>1.6</version>
+    <version>1.7</version>
   </skin>
 </project>

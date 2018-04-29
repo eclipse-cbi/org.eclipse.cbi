@@ -26,10 +26,10 @@ public abstract class Manifest {
 	public static final String[] DEFAULT_SDK_EXTENSIONS = { "org.freedesktop.Sdk.Extension.openjdk9" };
 
 	// Fairly liberal by default: Access to host file system, windowing system and
-	// network connection. Allow communication with the Flatpak DBus API.
+	// network connection. Allow communication with the necessary DBus APIs.
 	public static final String[] DEFAULT_FINISH_ARGS = { "--env=PATH=/app/bin:/usr/bin", "--filesystem=host",
 			"--share=ipc", "--socket=x11", "--socket=wayland", "--share=network", "--allow=devel",
-			"--talk-name=org.freedesktop.Flatpak" };
+			"--talk-name=org.freedesktop.Flatpak", "--talk-name=org.freedesktop.secrets"};
 
 	@JsonProperty("id")
 	public abstract String id();

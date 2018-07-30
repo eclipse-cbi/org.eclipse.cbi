@@ -376,10 +376,6 @@ public class CreateFlatpakMojo extends AbstractMojo {
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.enable(SerializationFeature.INDENT_OUTPUT);
 
-		// TODO: Remove this when flatpak SDK images are fixed upstream
-		File cacertsFile = new File(System.getProperty("java.home"), "lib/security/cacerts");
-		additionalSources.add(new AdditionalSource(cacertsFile, new File("/app/eclipse/java/lib/security/cacerts")));
-
 		// Copy all sources into the target directory
 		Files.copy(source.toPath(), Paths.get(targetDir.getAbsolutePath(), source.getName()));
 		for (AdditionalSource addSource : additionalSources) {
@@ -464,8 +460,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 			bw.write("	true\n");
 			bw.write("\n");
 			bw.write("install:\n");
-			bw.write("	cp -pr /usr/lib/sdk/openjdk9/jvm/openjdk-9 eclipse/java\n");
-			bw.write("	rm -rf eclipse/java/man eclipse/java/demo\n");
+			bw.write("	sh /usr/lib/sdk/openjdk10/installjdk.sh\n");
 			bw.write("	mv eclipse /app\n");
 			for (AdditionalSource addSource : additionalSources) {
 				bw.write("	mkdir -p $(shell dirname \"" + addSource.getDestination() + "\")\n");
@@ -473,7 +468,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 				bw.write("	chmod " + addSource.getPermissions() + " " + addSource.getDestination() + "\n");
 			}
 			bw.write("	@mkdir -p /app/bin\n");
-			bw.write("	@for bin in /app/eclipse/java/bin/* /app/eclipse/" + command
+			bw.write("	@for bin in /app/jdk/bin/* /app/eclipse/" + command
 					+ " ; do ln -s $$bin /app/bin ; done\n");
 			bw.write("	for px in 32 48 64 128 256 512 1024 ; do \\\n");
 			bw.write("		mkdir -p /app/share/icons/hicolor/$${px}x$${px}/apps ; \\\n");

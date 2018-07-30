@@ -23,7 +23,7 @@ public abstract class Manifest {
 	public static final String DEFAULT_COMMAND = "eclipse";
 
 	// Probably always want JDK
-	public static final String[] DEFAULT_SDK_EXTENSIONS = { "org.freedesktop.Sdk.Extension.openjdk9" };
+	public static final String[] DEFAULT_SDK_EXTENSIONS = { "org.freedesktop.Sdk.Extension.openjdk10" };
 
 	// Fairly liberal by default: Access to host file system, windowing system and
 	// network connection. Allow communication with the necessary DBus APIs.

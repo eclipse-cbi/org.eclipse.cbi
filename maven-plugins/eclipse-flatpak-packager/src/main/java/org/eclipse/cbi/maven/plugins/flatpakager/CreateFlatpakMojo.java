@@ -145,12 +145,21 @@ public class CreateFlatpakMojo extends AbstractMojo {
 
 	/**
 	 * The version of the Gnome runtime on which to build the Flatpak application.
-	 * Defaults to "3.28"
+	 * Defaults to "3.30"
 	 * 
 	 * @since 1.1.5
 	 */
 	@Parameter(required = true, defaultValue = Manifest.DEFAULT_RUNTIMEVERSION)
 	private String runtimeVersion;
+
+	/**
+	 * The minimum version of Flatpak needed at runtime, that this application will
+	 * support. Defaults to "1.0.2" (the version available on RHEL 7.6)
+	 *
+	 * @since 1.1.5
+	 */
+	@Parameter(required = true, defaultValue = Manifest.DEFAULT_FLATPAKVERSION)
+	private String minFlatpakVersion;
 
 	/**
 	 * An {@code .tar.gz} or {@code .zip} file containing a Linux product from which
@@ -179,15 +188,6 @@ public class CreateFlatpakMojo extends AbstractMojo {
 	 */
 	@Parameter
 	private final List<AdditionalSource> additionalSources = new ArrayList<>();
-
-	/**
-	 * The minimum version of Flatpak needed at runtime, that this application will
-	 * support. Defaults to "0.8.8" (the version available on RHEL 7.5)
-	 *
-	 * @since 1.1.5
-	 */
-	@Parameter(required = true, defaultValue = "0.8.8")
-	private String minFlatpakVersion;
 
 	/**
 	 * The license that the Flatpak application is distributed under. It should be a
@@ -281,9 +281,9 @@ public class CreateFlatpakMojo extends AbstractMojo {
 	private String serviceUrl;
 
 	/**
-	 * Defines the timeout in milliseconds for any communication with the
-	 * packaging web service. Defaults to zero, which is interpreted as an infinite
-	 * timeout. This only means something if a {@link #serviceUrl} is specified.
+	 * Defines the timeout in milliseconds for any communication with the packaging
+	 * web service. Defaults to zero, which is interpreted as an infinite timeout.
+	 * This only means something if a {@link #serviceUrl} is specified.
 	 *
 	 * @since 1.1.5
 	 */
@@ -460,7 +460,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 			bw.write("	true\n");
 			bw.write("\n");
 			bw.write("install:\n");
-			bw.write("	sh /usr/lib/sdk/openjdk10/installjdk.sh\n");
+			bw.write("	sh /usr/lib/sdk/openjdk11/installjdk.sh\n");
 			bw.write("	mv eclipse /app\n");
 			for (AdditionalSource addSource : additionalSources) {
 				bw.write("	mkdir -p $(shell dirname \"" + addSource.getDestination() + "\")\n");

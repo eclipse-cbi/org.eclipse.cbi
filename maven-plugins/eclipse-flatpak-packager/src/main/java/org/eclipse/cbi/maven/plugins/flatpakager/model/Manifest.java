@@ -18,18 +18,18 @@ import com.google.common.collect.ImmutableSet;
 public abstract class Manifest {
 	public static final String DEFAULT_BRANCH = "master";
 	public static final String DEFAULT_RUNTIME = "org.gnome.Platform";
-	public static final String DEFAULT_RUNTIMEVERSION = "3.28";
+	public static final String DEFAULT_RUNTIMEVERSION = "3.30";
 	public static final String DEFAULT_SDK = "org.gnome.Sdk";
 	public static final String DEFAULT_COMMAND = "eclipse";
+	public static final String DEFAULT_FLATPAKVERSION = "1.0.2";
 
 	// Probably always want JDK
-	public static final String[] DEFAULT_SDK_EXTENSIONS = { "org.freedesktop.Sdk.Extension.openjdk10" };
+	public static final String[] DEFAULT_SDK_EXTENSIONS = { "org.freedesktop.Sdk.Extension.openjdk11" };
 
 	// Fairly liberal by default: Access to host file system, windowing system and
-	// network connection. Allow communication with the necessary DBus APIs.
-	public static final String[] DEFAULT_FINISH_ARGS = { "--env=PATH=/app/bin:/usr/bin", "--filesystem=host",
-			"--share=ipc", "--socket=x11", "--socket=wayland", "--share=network", "--allow=devel",
-			"--talk-name=org.freedesktop.Flatpak", "--talk-name=org.freedesktop.secrets"};
+	// network connection. Allow communication with the host DBus session bus.
+	public static final String[] DEFAULT_FINISH_ARGS = { "--filesystem=host", "--share=network", "--share=ipc",
+			"--socket=x11", "--socket=wayland", "--allow=devel", "--socket=session-bus" };
 
 	@JsonProperty("id")
 	public abstract String id();

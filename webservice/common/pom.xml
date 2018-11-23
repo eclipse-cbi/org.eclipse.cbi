@@ -8,6 +8,7 @@
     <groupId>org.eclipse.cbi</groupId>
     <artifactId>webservice-parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <scm>
@@ -52,6 +53,7 @@
     <dependency>
       <groupId>org.eclipse.cbi</groupId>
       <artifactId>cbi-common</artifactId>
+      <version>1.2.3-SNAPSHOT</version>
       <type>test-jar</type>
     </dependency>
     <dependency>

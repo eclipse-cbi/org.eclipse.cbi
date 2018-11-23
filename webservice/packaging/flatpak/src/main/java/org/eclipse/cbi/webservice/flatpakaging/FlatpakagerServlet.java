@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.cbi.webservice.flatpakaging;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015 Eclipse Foundation and others
+ * Copyright (c) 2015, 2018 Eclipse Foundation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,7 +15,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.time.Duration;
 
 import org.apache.maven.plugin.logging.Log;
 import org.eclipse.cbi.maven.Logger;
@@ -34,21 +33,21 @@ public abstract class RemoteJarSigner extends FilteredJarSigner {
 	 * The name of the part as it will be send to the signing server.
 	 */
 	private static final String PART_NAME = "file";
-	
+
 	abstract URI serverUri();
-	
+
 	abstract HttpClient httpClient();
-	
+
 	/**
 	 * The log on which feedback will be provided.
 	 */
 	abstract Log log();
-	
+
 	@Override
 	public int doSignJar(final Path jar, Options options) throws IOException {
 		log().info("Signing jar: " + jar.toString());
 		log().debug("Jar signing options: " + options.toString());
-		
+
 		final HttpRequest request = HttpRequest.on(serverUri())
 				.withParam(PART_NAME, jar)
 				.withParam("digestalg", options.digestAlgorithm().standardName())
@@ -56,7 +55,7 @@ public abstract class RemoteJarSigner extends FilteredJarSigner {
 				.withParam("sigfile", options.sigFile())
 				.build();
 		log().debug("Jar signing request: " + request.toString());
-		
+
 		HttpRequest.Config requestConfig = HttpRequest.Config.builder().connectTimeout(options.connectTimeout()).timeout(options.timeout()).build();
 		OverwriteJarOnSuccess completionListener = new OverwriteJarOnSuccess(jar.getParent(), jar.getFileName().toString(), RemoteJarSigner.class.getSimpleName(), new MavenLogger(log()), jar);
 		if (httpClient().send(request, requestConfig, completionListener)) {
@@ -85,11 +84,11 @@ public abstract class RemoteJarSigner extends FilteredJarSigner {
 			}
 		}
 	}
-	
+
 	public static Builder builder() {
 		return new AutoValue_RemoteJarSigner.Builder().filter(Filters.ALWAYS_SIGN);
 	}
-	
+
 	@AutoValue.Builder
 	public static abstract class Builder {
 		public abstract Builder filter(Filter filter);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 Eclipse Foundation and others 
+ * Copyright (c) 2012, 2018 Eclipse Foundation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -38,7 +38,7 @@ import de.pdark.decentxml.Element;
 import de.pdark.decentxml.XMLIOSource;
 import de.pdark.decentxml.XMLParser;
 
-@Mojo(name="test-properties")
+@Mojo(name="test-properties", threadSafe=true)
 public class TestPropertiesMojo
     extends AbstractPluginScannerMojo
 {
@@ -70,8 +70,6 @@ public class TestPropertiesMojo
         }
     }
 
-    private static XMLParser parser = new XMLParser();
-
     @Parameter(defaultValue="${project.build.directory}/test.properties")
     protected File destination;
 
@@ -85,7 +83,7 @@ public class TestPropertiesMojo
     protected void processPlugins( Properties properties, Map<File, OsgiManifest> plugins )
         throws Exception
     {
-        Map<String, Plugin> model = new HashMap<String, Plugin>();
+        Map<String, Plugin> model = new HashMap<>();
 
         for ( Map.Entry<File, OsgiManifest> entry : plugins.entrySet() )
         {
@@ -111,7 +109,7 @@ public class TestPropertiesMojo
                 properties.put( manifest.getBundleSymbolicName() + ".has.performance.target", "true" );
             }
 
-            List<Plugin> dependencies = new ArrayList<Plugin>();
+            List<Plugin> dependencies = new ArrayList<>();
             collectRequiredBundles( plugin, model, dependencies, new HashSet<ArtifactKey>() );
             StringBuilder sb = new StringBuilder();
             for ( Plugin dependency : dependencies )
@@ -189,7 +187,7 @@ public class TestPropertiesMojo
             Document document;
             try (InputStream is = jar.getInputStream( entry ))
             {
-                document = parser.parse( new XMLIOSource( is ) );
+                document = new XMLParser().parse( new XMLIOSource( is ) );
             }
 
             for ( Element element : document.getRootElement().getChildren( "target" ) )

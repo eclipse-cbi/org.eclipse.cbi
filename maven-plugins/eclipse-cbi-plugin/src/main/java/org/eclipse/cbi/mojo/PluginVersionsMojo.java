@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 Eclipse Foundation and others 
+ * Copyright (c) 2012, 2018 Eclipse Foundation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,7 +18,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.eclipse.tycho.core.osgitools.OsgiManifest;
 
-@Mojo(name="plugin-versions")
+@Mojo(name="plugin-versions", threadSafe=true)
 public class PluginVersionsMojo
     extends AbstractPluginScannerMojo
 {

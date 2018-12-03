@@ -49,6 +49,7 @@ import com.google.common.primitives.UnsignedInteger;
  */
 public class Zips {
 	
+	private static final int PERM_MASK = 0777;
 	private static final String ZIP_ENTRY_NAME_SEPARATOR = "/";
 	private static final String BACKSLASH_ESCAPE_REPLACEMENT = "\\\\\\\\";
 	private static final Pattern BACKSLASH_PATTERN = Pattern.compile("\\\\");
@@ -74,7 +75,7 @@ public class Zips {
 		PosixFileAttributeView attributes = Files.getFileAttributeView(entryPath, PosixFileAttributeView.class);
 		if (attributes != null) {
 			try {
-				Files.setPosixFilePermissions(entryPath, MorePosixFilePermissions.fromFileMode(entry.getUnixMode() & UnixStat.PERM_MASK));
+				Files.setPosixFilePermissions(entryPath, MorePosixFilePermissions.fromFileMode(entry.getUnixMode() & PERM_MASK));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

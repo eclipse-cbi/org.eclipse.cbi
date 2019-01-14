@@ -27,65 +27,51 @@ import org.eclipse.tycho.core.osgitools.BundleReader;
 import org.eclipse.tycho.core.osgitools.OsgiManifest;
 import org.eclipse.tycho.core.osgitools.OsgiManifestParserException;
 
-abstract class AbstractPluginScannerMojo
-    extends AbstractMojo
-{
-    /**
-     * igorf: as of 2012-01-05, generated repository location is hardcoded to target/repository in tycho
-     **/
-	@Parameter(defaultValue="${project.build.directory}/repository")
-    protected File repository;
+abstract class AbstractPluginScannerMojo extends AbstractMojo {
+	/**
+	 * igorf: as of 2012-01-05, generated repository location is hardcoded to
+	 * target/repository in tycho
+	 **/
+	@Parameter(defaultValue = "${project.build.directory}/repository")
+	protected File repository;
 
 	@Component
-    protected BundleReader bundleReader;
+	protected BundleReader bundleReader;
 
-    @Override
-    public void execute()
-        throws MojoExecutionException
-    {
-        try
-        {
-            Properties properties = new Properties();
+	@Override
+	public void execute() throws MojoExecutionException {
+		try {
+			Properties properties = new Properties();
 
-            File[] plugins = new File( repository, "plugins" ).listFiles();
+			File[] plugins = new File(repository, "plugins").listFiles();
 
-            if ( plugins != null )
-            {
-                Map<File, OsgiManifest> manifests = new HashMap<File, OsgiManifest>();
-                for ( File plugin : plugins )
-                {
-                    if ( plugin.getName().endsWith( ".pack.gz" ) )
-                    {
-                        continue;
-                    }
-                    try
-                    {
-                        OsgiManifest manifest = bundleReader.loadManifest( plugin );
-                        manifests.put( plugin, manifest );
-                    }
-                    catch ( OsgiManifestParserException e )
-                    {
-                        getLog().error( e );
-                    }
-                }
+			if (plugins != null) {
+				Map<File, OsgiManifest> manifests = new HashMap<>();
+				for (File plugin : plugins) {
+					if (plugin.getName().endsWith(".pack.gz")) {
+						continue;
+					}
+					try {
+						OsgiManifest manifest = bundleReader.loadManifest(plugin);
+						manifests.put(plugin, manifest);
+					} catch (OsgiManifestParserException e) {
+						getLog().error(e);
+					}
+				}
 
-                processPlugins( properties, manifests );
-            }
+				processPlugins(properties, manifests);
+			}
 
-            try (OutputStream os = new BufferedOutputStream( new FileOutputStream( getDestination() ) ))
-            {
-                properties.store( os, null );
-            }
-        }
-        catch ( Exception e )
-        {
-            throw new MojoExecutionException( "Could not write plugin versions", e );
-        }
-    }
+			try (OutputStream os = new BufferedOutputStream(new FileOutputStream(getDestination()))) {
+				properties.store(os, null);
+			}
+		} catch (Exception e) {
+			throw new MojoExecutionException("Could not write plugin versions", e);
+		}
+	}
 
-    protected abstract void processPlugins( Properties properties, Map<File, OsgiManifest> plugins )
-        throws Exception;
+	protected abstract void processPlugins(Properties properties, Map<File, OsgiManifest> plugins) throws Exception;
 
-    protected abstract File getDestination();
+	protected abstract File getDestination();
 
 }

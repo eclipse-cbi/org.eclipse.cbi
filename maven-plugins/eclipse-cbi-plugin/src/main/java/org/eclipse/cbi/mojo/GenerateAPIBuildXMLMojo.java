@@ -42,18 +42,18 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-@Mojo( name = "generate-api-build-xml", defaultPhase = LifecyclePhase.GENERATE_SOURCES, threadSafe=true)
+@Mojo(name = "generate-api-build-xml", defaultPhase = LifecyclePhase.GENERATE_SOURCES, threadSafe = true)
 public class GenerateAPIBuildXMLMojo extends AbstractMojo {
-	
+
 	private static final String API_BUILD_XML_FILE = ".apibuild.xml";
 	private static final String API_NATURE = "org.eclipse.pde.api.tools.apiAnalysisNature";
-	
-	@Parameter(defaultValue="${project}", required=true, readonly=true)
-    protected MavenProject project;
 
-	@Component(role=TychoProject.class)
-    private Map<String, TychoProject> projectTypes;
-	
+	@Parameter(defaultValue = "${project}", required = true, readonly = true)
+	protected MavenProject project;
+
+	@Component(role = TychoProject.class)
+	private Map<String, TychoProject> projectTypes;
+
 	@Override
 	public void execute() throws MojoExecutionException {
 		File dotProject = new File(project.getBasedir(), ".project");
@@ -70,41 +70,42 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
 	}
 
 	private static boolean isRelevantPackaging(String packaging) {
-		return "eclipse-plugin".equals(packaging)|| "eclipse-test-plugin".equals(packaging);
+		return "eclipse-plugin".equals(packaging) || "eclipse-test-plugin".equals(packaging);
 	}
-	
-	private static boolean dotProjectContainsApiNature(File f){
-		try{
+
+	private static boolean dotProjectContainsApiNature(File f) {
+		try {
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 			Document doc = dBuilder.parse(f);
 			doc.getDocumentElement().normalize();
 			NodeList natures = doc.getElementsByTagName("nature");
 			for (int i = 0; i < natures.getLength(); i++) {
-				 
-				   Node nature = natures.item(i);
-				   String sNature = nature.getTextContent();
-				   if( sNature != null){
-					   if(API_NATURE.equals(sNature.trim())){
-						   return true;
-					   }
-				   }
+
+				Node nature = natures.item(i);
+				String sNature = nature.getTextContent();
+				if (sNature != null) {
+					if (API_NATURE.equals(sNature.trim())) {
+						return true;
+					}
+				}
 			}
-		} catch (Exception e){
+		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
 		return false;
 	}
-	
-	private void generateBuildXML() throws MojoExecutionException{
+
+	private void generateBuildXML() throws MojoExecutionException {
 		System.out.println("Generating target/.apibuild.xml");
 		File targetDir = new File(project.getBuild().getDirectory());
 		if (!targetDir.isDirectory()) {
 			targetDir.mkdirs();
 		}
 		File dotApiBuildXML = new File(targetDir, API_BUILD_XML_FILE);
-		try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dotApiBuildXML), StandardCharsets.UTF_8))) {
+		try (BufferedWriter bw = new BufferedWriter(
+				new OutputStreamWriter(new FileOutputStream(dotApiBuildXML), StandardCharsets.UTF_8))) {
 			bw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 			bw.write("<project name=\"apigen\" default=\"apigen\">\n");
 			bw.write("  <target name=\"apigen\">\n");
@@ -125,11 +126,10 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private String getOutputFoldersAsPath() throws MojoExecutionException {
 		StringBuilder path = new StringBuilder();
-		List<BuildOutputJar> outputJars = getEclipsePluginProject()
-				.getOutputJars();
+		List<BuildOutputJar> outputJars = getEclipsePluginProject().getOutputJars();
 		for (int i = 0; i < outputJars.size(); i++) {
 			if (i > 0) {
 				path.append(File.pathSeparator);
@@ -139,26 +139,24 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
 		return path.toString();
 	}
 
-    private EclipsePluginProject getEclipsePluginProject() throws MojoExecutionException {
-        return ((OsgiBundleProject) getBundleProject()).getEclipsePluginProject(DefaultReactorProject.adapt(project));
-    }
+	private EclipsePluginProject getEclipsePluginProject() throws MojoExecutionException {
+		return ((OsgiBundleProject) getBundleProject()).getEclipsePluginProject(DefaultReactorProject.adapt(project));
+	}
 
-    private BundleProject getBundleProject() throws MojoExecutionException {
-        TychoProject projectType = projectTypes.get(project.getPackaging());
-        if (!(projectType instanceof BundleProject)) {
-            throw new MojoExecutionException("Not a bundle project " + project.toString());
-        }
-        return (BundleProject) projectType;
-    }
+	private BundleProject getBundleProject() throws MojoExecutionException {
+		TychoProject projectType = projectTypes.get(project.getPackaging());
+		if (!(projectType instanceof BundleProject)) {
+			throw new MojoExecutionException("Not a bundle project " + project.toString());
+		}
+		return (BundleProject) projectType;
+	}
 
 	private String calculateName() {
 		TychoProject projectType = projectTypes.get(project.getPackaging());
-		ArtifactKey artifactKey = projectType
-				.getArtifactKey(DefaultReactorProject.adapt(project));
+		ArtifactKey artifactKey = projectType.getArtifactKey(DefaultReactorProject.adapt(project));
 		String symbolicName = artifactKey.getId();
-        // see org.eclipse.tycho.buildversion.BuildQualifierMojo
-		String version = project.getProperties().getProperty(
-				"qualifiedVersion");
+		// see org.eclipse.tycho.buildversion.BuildQualifierMojo
+		String version = project.getProperties().getProperty("qualifiedVersion");
 		return symbolicName + "_" + version;
 	}
 }

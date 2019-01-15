@@ -38,6 +38,7 @@ import org.eclipse.tycho.core.osgitools.DefaultReactorProject;
 import org.eclipse.tycho.core.osgitools.OsgiBundleProject;
 import org.eclipse.tycho.core.osgitools.project.BuildOutputJar;
 import org.eclipse.tycho.core.osgitools.project.EclipsePluginProject;
+import org.sonatype.plexus.build.incremental.BuildContext;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -53,6 +54,9 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
 
 	@Component(role = TychoProject.class)
 	private Map<String, TychoProject> projectTypes;
+
+	@Component
+	private BuildContext buildContext;
 
 	@Override
 	public void execute() throws MojoExecutionException {
@@ -102,6 +106,7 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
 		File targetDir = new File(project.getBuild().getDirectory());
 		if (!targetDir.isDirectory()) {
 			targetDir.mkdirs();
+			buildContext.refresh(targetDir);
 		}
 		File dotApiBuildXML = new File(targetDir, API_BUILD_XML_FILE);
 		try (BufferedWriter bw = new BufferedWriter(
@@ -125,6 +130,7 @@ public class GenerateAPIBuildXMLMojo extends AbstractMojo {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		buildContext.refresh(dotApiBuildXML);
 	}
 
 	private String getOutputFoldersAsPath() throws MojoExecutionException {

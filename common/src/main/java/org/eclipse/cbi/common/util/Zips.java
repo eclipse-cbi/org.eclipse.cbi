@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015 Eclipse Foundation and others
+ * Copyright (c) 2015, 2018 Eclipse Foundation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -34,7 +34,6 @@ import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.archivers.zip.UnixStat;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipFile;
@@ -48,7 +47,7 @@ import com.google.common.primitives.UnsignedInteger;
  * Utility class to work with Zip files ({@link Path} based).
  */
 public class Zips {
-	
+
 	private static final int PERM_MASK = 0777;
 	private static final String ZIP_ENTRY_NAME_SEPARATOR = "/";
 	private static final String BACKSLASH_ESCAPE_REPLACEMENT = "\\\\\\\\";
@@ -56,11 +55,9 @@ public class Zips {
 
 	/**
 	 * Unzip the given {@code source} Zip file in the {@code outputDir}.
-	 * 
-	 * @param source
-	 *            the file to unzip.
-	 * @param outputDir
-	 *            the output directory where the Zip will be unpacked.
+	 *
+	 * @param source    the file to unzip.
+	 * @param outputDir the output directory where the Zip will be unpacked.
 	 * @return the number of unpacked entries
 	 * @throws IOException
 	 */
@@ -75,14 +72,16 @@ public class Zips {
 		PosixFileAttributeView attributes = Files.getFileAttributeView(entryPath, PosixFileAttributeView.class);
 		if (attributes != null) {
 			try {
-				Files.setPosixFilePermissions(entryPath, MorePosixFilePermissions.fromFileMode(entry.getUnixMode() & PERM_MASK));
+				Files.setPosixFilePermissions(entryPath,
+						MorePosixFilePermissions.fromFileMode(entry.getUnixMode() & PERM_MASK));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
 	}
 
-	private static int unpack(ZipFile zipFile, final Path outputDir, BiConsumer<ZipArchiveEntry, Path> entryFixer) throws IOException, ZipException {
+	private static int unpack(ZipFile zipFile, final Path outputDir, BiConsumer<ZipArchiveEntry, Path> entryFixer)
+			throws IOException, ZipException {
 		int unpack = 0;
 		Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
 		while (entries.hasMoreElements()) {
@@ -96,7 +95,8 @@ public class Zips {
 		return unpack;
 	}
 
-	private static Path unpackZipEntry(ZipFile zipFile, ZipArchiveEntry entry, final Path outputDir) throws IOException, ZipException {
+	private static Path unpackZipEntry(ZipFile zipFile, ZipArchiveEntry entry, final Path outputDir)
+			throws IOException, ZipException {
 		final Path entryPath = outputDir.resolve(entry.getName());
 		if (entry.isDirectory()) {
 			Files.createDirectories(entryPath);
@@ -112,12 +112,10 @@ public class Zips {
 
 	/**
 	 * Unzip the given {@code source} Jar file in the {@code outputDir}.
-	 * 
-	 * @param source
-	 *            the file to unzip.
-	 * @param outputDir
-	 *            the output directory where the Jar will be unpacked. It does
-	 *            not have to exist beforehand.
+	 *
+	 * @param source    the file to unzip.
+	 * @param outputDir the output directory where the Jar will be unpacked. It does
+	 *                  not have to exist beforehand.
 	 * @return the number of unpacked entries
 	 * @throws IOException
 	 */
@@ -129,14 +127,16 @@ public class Zips {
 	}
 
 	public static int unpackTarGz(Path sourcePath, Path outputDir) throws IOException {
-		try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(new GZIPInputStream(Files.newInputStream(sourcePath)))) {
+		try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(
+				new GZIPInputStream(Files.newInputStream(sourcePath)))) {
 			return unpack(tarArchiveInputStream, outputDir);
 		}
 	}
-	
-	@VisibleForTesting static int unpack(TarArchiveInputStream zis, Path outputDir) throws IOException {
+
+	@VisibleForTesting
+	static int unpack(TarArchiveInputStream zis, Path outputDir) throws IOException {
 		int unpackedEntries = 0;
-		for(TarArchiveEntry entry = zis.getNextTarEntry(); entry != null; entry = zis.getNextTarEntry()) {
+		for (TarArchiveEntry entry = zis.getNextTarEntry(); entry != null; entry = zis.getNextTarEntry()) {
 			final Path entryPath = outputDir.resolve(entry.getName());
 			if (entry.isDirectory()) {
 				Files.createDirectories(entryPath);
@@ -154,11 +154,12 @@ public class Zips {
 
 			if (!Files.isSymbolicLink(entryPath)) {
 				setPermissions(entry, entryPath);
-				Files.setLastModifiedTime(entryPath, FileTime.from(entry.getLastModifiedDate().getTime(), TimeUnit.MILLISECONDS));
+				Files.setLastModifiedTime(entryPath,
+						FileTime.from(entry.getLastModifiedDate().getTime(), TimeUnit.MILLISECONDS));
 			}
 			unpackedEntries++;
 		}
-		
+
 		return unpackedEntries;
 	}
 
@@ -172,16 +173,13 @@ public class Zips {
 
 	/**
 	 * Zip the given {@code source} file or folder in the {@code targetZip} Zip
-	 * file. If {@code preserveRoot} is set to true, the output Zip will contain
-	 * the folder and its contents, only its contents otherwise.
-	 * 
-	 * @param source
-	 *            the folder to zip.
-	 * @param targetZip
-	 *            the Zip file to create or overwrite.
-	 * @param preserveRoot
-	 *            whether the {@code source} folder should be kept in the target
-	 *            Zip.
+	 * file. If {@code preserveRoot} is set to true, the output Zip will contain the
+	 * folder and its contents, only its contents otherwise.
+	 *
+	 * @param source       the folder to zip.
+	 * @param targetZip    the Zip file to create or overwrite.
+	 * @param preserveRoot whether the {@code source} folder should be kept in the
+	 *                     target Zip.
 	 * @return the number of packed entries
 	 * @throws IOException
 	 */
@@ -194,25 +192,23 @@ public class Zips {
 
 	/**
 	 * Zip the given {@code source} file or folder in the {@code targetJar} Jar
-	 * file. If {@code preserveRoot} is set to true, the output Zip will contain
-	 * the folder and its contents, only its contents otherwise.
-	 * 
-	 * @param source
-	 *            the folder to zip.
-	 * @param targetJar
-	 *            the Jar file to create or overwrite.
-	 * @param preserveRoot
-	 *            whether the {@code source} folder should be kept in the target
-	 *            Jar.
+	 * file. If {@code preserveRoot} is set to true, the output Zip will contain the
+	 * folder and its contents, only its contents otherwise.
+	 *
+	 * @param source       the folder to zip.
+	 * @param targetJar    the Jar file to create or overwrite.
+	 * @param preserveRoot whether the {@code source} folder should be kept in the
+	 *                     target Jar.
 	 * @return the number of packed entries
 	 * @throws IOException
 	 */
 	public static int packJar(Path source, Path targetJar, boolean preserveRoot) throws IOException {
 		checkPathExists(source, "'source' path must exists");
 		try (JarArchiveOutputStream jos = new JarArchiveOutputStream(newBufferedOutputStream(targetJar))) {
-			final Set<Path> pathToExcludes; 
+			final Set<Path> pathToExcludes;
 			if (!preserveRoot) {
-				// if we preserve root folder, then we won't find META-INF/MANIFEST.MF as root entries
+				// if we preserve root folder, then we won't find META-INF/MANIFEST.MF as root
+				// entries
 				pathToExcludes = packManifestIfAny(source, jos);
 			} else {
 				pathToExcludes = ImmutableSet.of();
@@ -222,16 +218,13 @@ public class Zips {
 	}
 
 	/**
-	 * Looks for META-INF/MANIFEST.MF file in the given source folder and add
-	 * them as entries to the JarOutputStream.
-	 * 
-	 * @param source
-	 *            the folder to jar. If not a directory, returns 0 and do
-	 *            nothing
-	 * @param preserveRoot
-	 *            whether the root folder
-	 * @param jos
-	 *            the jar output stream to write
+	 * Looks for META-INF/MANIFEST.MF file in the given source folder and add them
+	 * as entries to the JarOutputStream.
+	 *
+	 * @param source       the folder to jar. If not a directory, returns 0 and do
+	 *                     nothing
+	 * @param preserveRoot whether the root folder
+	 * @param jos          the jar output stream to write
 	 * @return set of paths to the META-INF and MANIFEST.MF, empty set otherwise.
 	 * @throws IOException
 	 */
@@ -259,12 +252,14 @@ public class Zips {
 		}
 		return source;
 	}
-	
+
 	private static BufferedOutputStream newBufferedOutputStream(Path path) throws IOException {
-		return new BufferedOutputStream(Files.newOutputStream(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+		return new BufferedOutputStream(Files.newOutputStream(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE,
+				StandardOpenOption.TRUNCATE_EXISTING));
 	}
 
-	private static int packEntries(Path source, ZipArchiveOutputStream zos, boolean preserveRoot, Set<Path> pathToExcludes) throws IOException {
+	private static int packEntries(Path source, ZipArchiveOutputStream zos, boolean preserveRoot,
+			Set<Path> pathToExcludes) throws IOException {
 		if (Files.isDirectory(source)) {
 			final PathMapper pathMapper;
 			if (preserveRoot) {
@@ -284,14 +279,14 @@ public class Zips {
 	private static String entryNameFrom(Path path, boolean isDirectoryw) {
 		final String pathFsSeparator = path.getFileSystem().getSeparator();
 		final String escapedEntryName;
-		
+
 		if (pathFsSeparator != ZIP_ENTRY_NAME_SEPARATOR) {
 			String separatorRegex = BACKSLASH_PATTERN.matcher(pathFsSeparator).replaceAll(BACKSLASH_ESCAPE_REPLACEMENT);
 			escapedEntryName = path.toString().replaceAll(separatorRegex, ZIP_ENTRY_NAME_SEPARATOR);
 		} else {
 			escapedEntryName = path.toString();
 		}
-		
+
 		if (isDirectoryw && !escapedEntryName.endsWith(ZIP_ENTRY_NAME_SEPARATOR)) {
 			return escapedEntryName + ZIP_ENTRY_NAME_SEPARATOR;
 		} else {
@@ -303,32 +298,34 @@ public class Zips {
 		ZipArchiveEntry zipEntry = createArchiveEntry(zos, entryNameFrom(entryPath, false));
 		zipEntry.setTime(Files.getLastModifiedTime(file).toMillis());
 		zipEntry.setSize(Files.size(file));
-		
+
 		PosixFileAttributeView posixFileAttributeView = Files.getFileAttributeView(file, PosixFileAttributeView.class);
 		if (posixFileAttributeView != null) {
 			PosixFileAttributes posixFileAttributes = posixFileAttributeView.readAttributes();
-			zipEntry.setUnixMode(UnsignedInteger.valueOf(MorePosixFilePermissions.toFileMode(posixFileAttributes.permissions())).intValue());
+			zipEntry.setUnixMode(UnsignedInteger
+					.valueOf(MorePosixFilePermissions.toFileMode(posixFileAttributes.permissions())).intValue());
 		}
-		
+
 		zos.putArchiveEntry(zipEntry);
 		Files.copy(file, zos);
 		zos.closeArchiveEntry();
 	}
-	
+
 	private static void putDirectoryEntry(Path dir, ZipArchiveOutputStream zos, Path entryPath) throws IOException {
 		ZipArchiveEntry zipEntry = createArchiveEntry(zos, entryNameFrom(entryPath, true));
 		zipEntry.setTime(Files.getLastModifiedTime(dir).toMillis());
-		
+
 		PosixFileAttributeView posixFileAttributeView = Files.getFileAttributeView(dir, PosixFileAttributeView.class);
 		if (posixFileAttributeView != null) {
 			PosixFileAttributes posixFileAttributes = posixFileAttributeView.readAttributes();
-			zipEntry.setUnixMode(UnsignedInteger.valueOf(MorePosixFilePermissions.toFileMode(posixFileAttributes.permissions())).intValue());
+			zipEntry.setUnixMode(UnsignedInteger
+					.valueOf(MorePosixFilePermissions.toFileMode(posixFileAttributes.permissions())).intValue());
 		}
-		
+
 		zos.putArchiveEntry(zipEntry);
 		zos.closeArchiveEntry();
 	}
-	
+
 	private static ZipArchiveEntry createArchiveEntry(ZipArchiveOutputStream zos, String entryName) {
 		if (zos instanceof JarArchiveOutputStream) {
 			return new JarArchiveEntry(entryName);
@@ -336,17 +333,17 @@ public class Zips {
 		return new ZipArchiveEntry(entryName);
 	}
 
-	private static interface PathMapper {
+	private interface PathMapper {
 		Path mapTo(Path name);
 	}
 
 	private static final class NoPreserveRootPathMapper implements PathMapper {
 		private final Path source;
-	
+
 		private NoPreserveRootPathMapper(Path source) {
 			this.source = source;
 		}
-	
+
 		@Override
 		public Path mapTo(Path path) {
 			return source.relativize(path);
@@ -355,11 +352,11 @@ public class Zips {
 
 	private static final class PreserveRootPathMapper implements PathMapper {
 		private final Path source;
-	
+
 		private PreserveRootPathMapper(Path source) {
 			this.source = source;
 		}
-	
+
 		@Override
 		public Path mapTo(Path path) {
 			return source.getFileName().resolve(source.relativize(path));
@@ -387,7 +384,7 @@ public class Zips {
 			if (!pathToExcludes.contains(dir)) {
 				Path entryPath = pathMapper.mapTo(dir);
 				// do not create an entry for empty root path when not preserving root
-				if (!Strings.isNullOrEmpty(entryPath.toString())) { 
+				if (!Strings.isNullOrEmpty(entryPath.toString())) {
 					putDirectoryEntry(dir, zos, entryPath);
 					packedEntries++;
 				}

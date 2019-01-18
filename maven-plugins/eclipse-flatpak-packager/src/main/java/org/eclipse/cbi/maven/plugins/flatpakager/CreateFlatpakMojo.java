@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 Red Hat, Inc. and others.
+ * Copyright (c) 2017, 2019 Red Hat, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -144,6 +144,15 @@ public class CreateFlatpakMojo extends AbstractMojo {
 	private String command;
 
 	/**
+	 * The runtime on which to build the Flatpak application. Choices are
+	 * "org.gnome.Platform" or "org.gnome.Sdk", defaults to "org.gnome.Platform"
+	 * 
+	 * @since 1.1.6
+	 */
+	@Parameter(required = true, defaultValue = Manifest.DEFAULT_RUNTIME)
+	private String runtime;
+
+	/**
 	 * The version of the Gnome runtime on which to build the Flatpak application.
 	 * Defaults to "3.30"
 	 * 
@@ -205,6 +214,16 @@ public class CreateFlatpakMojo extends AbstractMojo {
 	 */
 	@Parameter(required = true, defaultValue = "EPL-1.0")
 	private String license;
+
+	/**
+	 * An optional bundle symbolic name of the branding plug-in for the product. If
+	 * not specified, the {@link #id} will be used. This plug-in should contain the
+	 * icons that desktop environments may use for application launchers.
+	 * 
+	 * @since 1.1.6
+	 */
+	@Parameter
+	private String brandingPlugin;
 
 	/**
 	 * The repository to which the new Flatpak application should be exported. If
@@ -407,7 +426,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 				new OutputStreamWriter(new FileOutputStream(appdataFile), StandardCharsets.UTF_8))) {
 			bw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 			bw.write("<component type=\"desktop-application\">\n");
-			bw.write("  <id>" + flatpakId + ".desktop</id>\n");
+			bw.write("  <id>" + flatpakId + "</id>\n");
 			bw.write("  <launchable type=\"desktop-id\">" + flatpakId + ".desktop</launchable>\n");
 			bw.write("  <metadata_license>" + license + "</metadata_license>\n");
 			bw.write("  <project_license>" + license + "</project_license>\n");
@@ -450,51 +469,43 @@ public class CreateFlatpakMojo extends AbstractMojo {
 			bw.write("\n");
 			bw.flush();
 		}
-		additionalSources.add(new AdditionalSource(appdataFile, new File("/app/share/appdata", appdataFile.getName())));
+		additionalSources
+				.add(new AdditionalSource(appdataFile, new File("/app/share/metainfo", appdataFile.getName())));
 
-		// Finally, generate the makefile that installs all the sources
-		File makeFile = new File(targetDir, "Makefile");
-		try (BufferedWriter bw = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(makeFile), StandardCharsets.UTF_8))) {
-			bw.write("all:\n");
-			bw.write("	true\n");
-			bw.write("\n");
-			bw.write("install:\n");
-			bw.write("	sh /usr/lib/sdk/openjdk11/installjdk.sh\n");
-			bw.write("	mv eclipse /app\n");
-			for (AdditionalSource addSource : additionalSources) {
-				bw.write("	mkdir -p $(shell dirname \"" + addSource.getDestination() + "\")\n");
-				bw.write("	mv " + addSource.getDestination().getName() + " " + addSource.getDestination() + "\n");
-				bw.write("	chmod " + addSource.getPermissions() + " " + addSource.getDestination() + "\n");
-			}
-			bw.write("	@mkdir -p /app/bin\n");
-			bw.write("	@for bin in /app/jdk/bin/* /app/eclipse/" + command
-					+ " ; do ln -s $$bin /app/bin ; done\n");
-			bw.write("	for px in 32 48 64 128 256 512 1024 ; do \\\n");
-			bw.write("		mkdir -p /app/share/icons/hicolor/$${px}x$${px}/apps ; \\\n");
-			bw.write("		cp -p /app/eclipse/plugins/" + id + "_*/" + command
-					+ "$${px}.png /app/share/icons/hicolor/$${px}x$${px}/apps/" + flatpakId + ".png ; \\\n");
-			bw.write("	done\n");
-			bw.write("\n");
-			bw.flush();
-		}
-		// Makefile doesn't need a real sandbox destination because we use it only at
-		// build time and not runtime
-		additionalSources.add(new AdditionalSource(makeFile, null));
+		// OpenJDK module
+		Module.Builder jdkModuleBuilder = Module.builder().name("openjdk").buildSystem("simple")
+				.addbuildCommand("/usr/lib/sdk/openjdk11/installjdk.sh");
 
-		// Generate the Flatpak application manifest
-		Module.Builder moduleBuilder = Module.builder().name("eclipse").noAutogen(true);
-
+		// Eclipse module
+		Module.Builder eclipseModuleBuilder = Module.builder().name("eclipse").buildSystem("simple")
+				.addbuildCommand("mv eclipse /app").addbuildCommand("mkdir -p /app/bin")
+				.addbuildCommand("ln -s /app/eclipse/" + command + " /app/bin");
 		Source sourceArchive = Source.builder().type("archive").path(source.getName()).stripComponents(0).build();
-		moduleBuilder.addSource(sourceArchive);
+		eclipseModuleBuilder.addSource(sourceArchive);
 		for (AdditionalSource addSource : additionalSources) {
 			Source sourceFile = Source.builder().type("file").path(addSource.getSource().getName())
-					.destFilename(addSource.getDestination().getName()).build();
-			moduleBuilder.addSource(sourceFile);
+					.destFilename(addSource.getSource().getName()).build();
+			eclipseModuleBuilder.addSource(sourceFile);
+			eclipseModuleBuilder.addbuildCommand("install -Dm " + addSource.getPermissions() + " "
+					+ addSource.getSource().getName() + " " + addSource.getDestination());
+		}
+		// Install icons from the branding plug-in
+		if (brandingPlugin == null || brandingPlugin.isEmpty()) {
+			brandingPlugin = id;
+		}
+		for (int px = 32; px < 2048; px = px * 2) {
+			String iconDir = "/app/share/icons/hicolor/" + px + "x" + px + "/apps";
+			String icon = "/app/eclipse/plugins/" + brandingPlugin + "_*/" + command + px + ".png";
+			eclipseModuleBuilder.addbuildCommand("mkdir -p " + iconDir);
+			eclipseModuleBuilder.addbuildCommand(
+					"if [ -f " + icon + " ] ; then cp -p " + icon + " " + iconDir + "/" + flatpakId + ".png ; fi");
 		}
 
-		Manifest manifest = Manifest.builder().id(flatpakId).branch(branch).runtimeVersion(runtimeVersion)
-				.addModule(moduleBuilder.build()).addFinishArg("--require-version=" + minFlatpakVersion).build();
+		// Generate the Flatpak application manifest
+		Manifest manifest = Manifest.builder().id(flatpakId).branch(branch).runtime(runtime)
+				.runtimeVersion(runtimeVersion).addModule(jdkModuleBuilder.build())
+				.addModule(eclipseModuleBuilder.build()).addFinishArg("--require-version=" + minFlatpakVersion)
+				.addFinishArg("--env=PATH=/app/bin:/app/jdk/bin:/usr/bin").build();
 
 		mapper.writeValue(new File(targetDir, flatpakId + ".json"), manifest);
 	}
@@ -511,6 +522,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 			// Generate locally
 			List<String> builderArgs = new ArrayList<>();
 			builderArgs.add("flatpak-builder");
+			builderArgs.add("--force-clean");
 			builderArgs.add("--disable-cache");
 			builderArgs.add("--disable-download");
 			builderArgs.add("--disable-updates");

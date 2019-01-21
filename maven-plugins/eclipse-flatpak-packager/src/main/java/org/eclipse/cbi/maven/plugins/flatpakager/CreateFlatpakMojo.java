@@ -30,12 +30,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.shared.transfer.artifact.DefaultArtifactCoordinate;
+import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
+import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolverException;
 import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPPublicKey;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;
@@ -192,6 +200,22 @@ public class CreateFlatpakMojo extends AbstractMojo {
 	 * 	&lt;/additionalSources>
 	 * &lt;/additionalSources>
 	 * </pre>
+	 * 
+	 * From 1.1.6, co-ordinates for a Maven artifact may be specified instead of a
+	 * source file. For example:
+	 * 
+	 * <pre>
+	 * &lt;additionalSources>
+	 * 	&lt;additionalSource>
+	 * 		&lt;artifact>
+	 * 			&lt;artifactId>&lt;/artifactId>
+	 * 			&lt;groupId>&lt;/groupId>
+	 * 			&lt;version>&lt;/version>
+	 * 		&lt;/artifact>
+	 * 		&lt;destination>/path/to/location/inside/the/sandbox&lt;/destination>
+	 * 	&lt;/additionalSources>
+	 * &lt;/additionalSources>
+	 * </pre>
 	 *
 	 * @since 1.1.5
 	 */
@@ -312,6 +336,12 @@ public class CreateFlatpakMojo extends AbstractMojo {
 	@Parameter(defaultValue = "${project}", required = true, readonly = true)
 	private MavenProject project;
 
+	@Parameter(defaultValue = "${session}", required = true, readonly = true)
+	private MavenSession session;
+
+	@Component
+	private ArtifactResolver artifactResolver;
+
 	@Override
 	public void execute() throws MojoExecutionException {
 		if (skip) {
@@ -354,7 +384,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 			generateManifest(targetDir);
 			buildAndSignRepo(exceptionHandler, targetDir);
 			generateRefFiles(armouredGpgKey);
-		} catch (IOException | InterruptedException e) {
+		} catch (IOException | InterruptedException | ArtifactResolverException e) {
 			exceptionHandler.handleError("Packaging of Flatpak application failed", e);
 		}
 	}
@@ -391,13 +421,26 @@ public class CreateFlatpakMojo extends AbstractMojo {
 		return null;
 	}
 
-	private void generateManifest(File targetDir) throws IOException {
+	private void generateManifest(File targetDir) throws IOException, ArtifactResolverException {
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.enable(SerializationFeature.INDENT_OUTPUT);
+
+		ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest(session.getProjectBuildingRequest());
 
 		// Copy all sources into the target directory
 		Files.copy(source.toPath(), Paths.get(targetDir.getAbsolutePath(), source.getName()));
 		for (AdditionalSource addSource : additionalSources) {
+			if (addSource.getSource() == null) {
+				getLog().debug("Resolving additional source from Maven: " + addSource.getArtifact().toString());
+				DefaultArtifactCoordinate artifactCoordinate = new DefaultArtifactCoordinate();
+				artifactCoordinate.setGroupId(addSource.getArtifact().getGroupId());
+				artifactCoordinate.setArtifactId(addSource.getArtifact().getArtifactId());
+				artifactCoordinate.setVersion(addSource.getArtifact().getVersion());
+				artifactCoordinate.setClassifier(addSource.getArtifact().getClassifier());
+				artifactCoordinate.setExtension(addSource.getArtifact().getType());
+				Artifact artifact = artifactResolver.resolveArtifact(buildingRequest, artifactCoordinate).getArtifact();
+				addSource.setSource(artifact.getFile());
+			}
 			Files.copy(addSource.getSource().toPath(),
 					Paths.get(targetDir.getAbsolutePath(), addSource.getSource().getName()));
 		}
@@ -483,6 +526,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 		Source sourceArchive = Source.builder().type("archive").path(source.getName()).stripComponents(0).build();
 		eclipseModuleBuilder.addSource(sourceArchive);
 		for (AdditionalSource addSource : additionalSources) {
+			getLog().debug("Additional Source: " + addSource.getSource() + " -> " + addSource.getDestination());
 			Source sourceFile = Source.builder().type("file").path(addSource.getSource().getName())
 					.destFilename(addSource.getSource().getName()).build();
 			eclipseModuleBuilder.addSource(sourceFile);
@@ -505,7 +549,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 		Manifest manifest = Manifest.builder().id(flatpakId).branch(branch).runtime(runtime)
 				.runtimeVersion(runtimeVersion).addModule(jdkModuleBuilder.build())
 				.addModule(eclipseModuleBuilder.build()).addFinishArg("--require-version=" + minFlatpakVersion)
-				.addFinishArg("--env=PATH=/app/bin:/app/jdk/bin:/usr/bin").build();
+				.addFinishArg("--env=PATH=/app/bin:/app/jdk/bin:/usr/bin:/var/run/host/usr/bin").build();
 
 		mapper.writeValue(new File(targetDir, flatpakId + ".json"), manifest);
 	}

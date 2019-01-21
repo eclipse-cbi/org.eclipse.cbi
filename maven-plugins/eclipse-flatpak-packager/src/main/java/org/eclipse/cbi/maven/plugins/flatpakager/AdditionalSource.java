@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Red Hat, Inc. and others.
+ * Copyright (c) 2018, 2019 Red Hat, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,8 +12,11 @@ package org.eclipse.cbi.maven.plugins.flatpakager;
 
 import java.io.File;
 
+import org.apache.maven.model.Dependency;
+
 public class AdditionalSource {
 	private File source;
+	private Dependency artifact;
 	private File destination;
 	private String permissions = "644";
 
@@ -23,13 +26,25 @@ public class AdditionalSource {
 
 	public AdditionalSource(File source, File destination, String permissions) {
 		this(source, destination);
-		if (permissions != null && !permissions.isEmpty()) {
-			setPermissions(permissions);
-		}
+		setPermissions(permissions);
+	}
+
+	public AdditionalSource(Dependency artifact, File destination, String permissions) {
+		this(artifact, destination);
+		setPermissions(permissions);
 	}
 
 	public AdditionalSource(File source, File destination) {
+		this(destination);
 		setSource(source);
+	}
+
+	public AdditionalSource(Dependency artifact, File destination) {
+		this(destination);
+		setArtifact(artifact);
+	}
+
+	private AdditionalSource(File destination) {
 		if (destination == null) {
 			setDestination(new File(source.getName()));
 		} else {
@@ -45,6 +60,14 @@ public class AdditionalSource {
 		this.source = source;
 	}
 
+	public Dependency getArtifact() {
+		return artifact;
+	}
+
+	public void setArtifact(Dependency artifact) {
+		this.artifact = artifact;
+	}
+
 	public File getDestination() {
 		return destination;
 	}
@@ -58,6 +81,8 @@ public class AdditionalSource {
 	}
 
 	public void setPermissions(String permissions) {
-		this.permissions = permissions;
+		if (permissions != null && !permissions.isEmpty()) {
+			this.permissions = permissions;
+		}
 	}
 }

@@ -14,6 +14,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -413,7 +414,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 				} else {
 					return new String(Base64.getEncoder().encode(pgpKey.getEncoded()), StandardCharsets.UTF_8);
 				}
-			} catch (PGPException e) {
+			} catch (FileNotFoundException | PGPException e) {
 				exceptionHandler.handleError("Unable to locate valid GPG key", e);
 				sign = false;
 			}

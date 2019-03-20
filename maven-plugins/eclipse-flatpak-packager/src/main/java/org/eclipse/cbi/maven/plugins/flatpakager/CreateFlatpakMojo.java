@@ -163,7 +163,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 
 	/**
 	 * The version of the Gnome runtime on which to build the Flatpak application.
-	 * Defaults to "3.30"
+	 * Defaults to "3.32"
 	 * 
 	 * @since 1.1.5
 	 */

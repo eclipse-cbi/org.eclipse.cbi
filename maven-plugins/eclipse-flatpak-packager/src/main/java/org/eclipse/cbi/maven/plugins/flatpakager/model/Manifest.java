@@ -18,7 +18,7 @@ import com.google.common.collect.ImmutableSet;
 public abstract class Manifest {
 	public static final String DEFAULT_BRANCH = "master";
 	public static final String DEFAULT_RUNTIME = "org.gnome.Platform";
-	public static final String DEFAULT_RUNTIMEVERSION = "3.30";
+	public static final String DEFAULT_RUNTIMEVERSION = "3.32";
 	public static final String DEFAULT_SDK = "org.gnome.Sdk";
 	public static final String DEFAULT_COMMAND = "eclipse";
 	public static final String DEFAULT_FLATPAKVERSION = "1.0.2";

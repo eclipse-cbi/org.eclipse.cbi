@@ -48,7 +48,7 @@
   </repositories>
 
   <properties>
-    <apache-httpclient-version>4.5.7</apache-httpclient-version>
+    <apache-httpclient-version>4.5.8</apache-httpclient-version>
     <cbi-common-version>1.2.3-SNAPSHOT</cbi-common-version>
     <maven-api-version>3.1.0</maven-api-version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

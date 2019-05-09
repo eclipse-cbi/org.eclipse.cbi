@@ -23,8 +23,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.PropertyConfigurator;
+import org.eclipse.jetty.server.CustomRequestLog;
 import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.NCSARequestLog;
+import org.eclipse.jetty.server.RequestLogWriter;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
@@ -256,10 +257,10 @@ public abstract class EmbeddedServer {
 		contextHandler.addServlet(createVersionServlet(), "/version");
 
 		RequestLogHandler requestLogHandler = new RequestLogHandler();
-		NCSARequestLog requestLog = new NCSARequestLog(accessLogFile().toString());
-		requestLog.setRetainDays(90);
-		requestLog.setAppend(true);
-		requestLog.setExtended(false);
+		RequestLogWriter logWriter = new RequestLogWriter(accessLogFile().toString());
+		logWriter.setRetainDays(90);
+		logWriter.setAppend(true);
+		CustomRequestLog requestLog = new CustomRequestLog(logWriter, CustomRequestLog.NCSA_FORMAT);
 		requestLogHandler.setRequestLog(requestLog);
 
 		HandlerCollection handlers = new HandlerCollection();

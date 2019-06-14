@@ -236,6 +236,9 @@
             <failsOnError>true</failsOnError>
             <consoleOutput>true</consoleOutput>
             <encoding>UTF-8</encoding>
+            <sourceDirectories>
+            	<sourceDirectory>src/main/java</sourceDirectory>
+        	</sourceDirectories>
           </configuration>
           <executions>
             <execution>

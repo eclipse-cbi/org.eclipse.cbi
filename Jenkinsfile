@@ -14,6 +14,7 @@ pipeline {
 
   options {
     buildDiscarder(logRotator(numToKeepStr: '10'))
+    checkoutToSubdirectory('org.eclipse.cbi') 
   }
 
   triggers { pollSCM('@daily') }
@@ -21,16 +22,20 @@ pipeline {
   stages {
     stage('Build') {
       steps {
-        sh '''
-          mvn -B -e clean verify
-        '''
+        dir('org.eclipse.cbi') {
+          sh '''
+            mvn -B -e clean verify
+          '''
+        }
       }
     }
     stage('Deploy') {
       steps {
-        sh '''
-          mvn  -B -e deploy
-        '''
+        dir('org.eclipse.cbi') {
+          sh '''
+            mvn  -B -e deploy
+          '''
+        }
       }
     }
     stage('Release') {
@@ -41,11 +46,13 @@ pipeline {
       }
       steps {
         sshagent(['git.eclipse.org-bot-ssh']) {
-          sh '''
-            git config --global user.email "cbi-bot@eclipse.org"
-            git config --global user.name "CBI Bot"
-            ./release.sh pom.xml
-          '''
+          dir('org.eclipse.cbi') {
+            sh '''
+              git config --global user.email "cbi-bot@eclipse.org"
+              git config --global user.name "CBI Bot"
+              ./release.sh pom.xml
+            '''
+          }
         }
       }
     }

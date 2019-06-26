@@ -16,14 +16,14 @@ pipeline {
     stage('Build') {
       steps {
         sh '''
-          mvn clean verify
+          mvn -B -e clean verify
         '''
       }
     }
     stage('Deploy') {
       steps {
         sh '''
-          mvn deploy
+          mvn  -B -e deploy
         '''
       }
     }

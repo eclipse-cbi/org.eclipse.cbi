@@ -32,7 +32,7 @@ export M2_HOME="${M2_HOME:-/shared/common/apache-maven-latest}"
 export MAVEN_OPTS="${MAVEN_OPTS:--Xmx1024m -Xms256m -XX:MaxPermSize=256M}"
 export GIT_BRANCH="${GIT_BRANCH:-master}"
 export WORKSPACE="${WORKSPACE:-$(pwd)}"
-export DRY_RUN="${DRY_RUN:+true}"
+export DRY_RUN="${DRY_RUN:-false}"
 
 export VERSIONS_MAVEN_PLUGIN="${VERSIONS_MAVEN_PLUGIN:-org.codehaus.mojo:versions-maven-plugin:2.3}"
 export MAVEN_HELP_PLUGIN="${MAVEN_HELP_PLUGIN:-org.apache.maven.plugins:maven-help-plugin:2.2}"
@@ -69,42 +69,42 @@ grep SNAPSHOT "${POM}" && {
   exit 1
 }
 
-if [ -z ${DRY_RUN} ]; then
+if [ ${DRY_RUN} = true ]; then
+  echo "DRY RUN: git add --all"
+  echo "DRY RUN: git commit -m \"Prepare release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}\""
+  echo "DRY RUN: git tag \"${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}\" -m \"Release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}\""
+  echo "DRY RUN: git push origin \"${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}\""
+  echo "DRY RUN: git push origin \"${GIT_BRANCH}\""
+else 
   # commit all changes made to the pom
   git add --all
   git commit -m "Prepare release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}"
   git tag "${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}" -m "Release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}"
   git push origin "${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}"
   git push origin "${GIT_BRANCH}"
-else 
-  echo "DRY RUN: git add --all"
-  echo "DRY RUN: git commit -m \"Prepare release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}\""
-  echo "DRY RUN: git tag \"${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}\" -m \"Release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}\""
-  echo "DRY RUN: git push origin \"${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}\""
-  echo "DRY RUN: git push origin \"${GIT_BRANCH}\""
 fi
 
 # build artifacts to be deployed
 mvn clean verify -f "${POM}"
 
-if [ -z ${DRY_RUN} ]; then
+if [ ${DRY_RUN} = true ]; then
+  echo "DRY RUN: mvn deploy -f \"${POM}\""
+else 
   # deploy build artifact
   mvn deploy -f "${POM}"
-else 
-  echo "DRY RUN: mvn deploy -f \"${POM}\""
 fi
 
 # clean and prepare for next iteration
 git-clean-reset
 mvn ${VERSIONS_MAVEN_PLUGIN}:set -DnewVersion=${DEVELOPMENT_VERSION} -DgenerateBackupPoms=false -f ${POM}
 
-if [ -z ${DRY_RUN} ]; then
+if [ ${DRY_RUN} = true ]; then
+  echo "DRY RUN: git add --all"
+  echo "DRY RUN: git commit -m \"Prepare for next development iteration (${GROUP_ID}:${ARTIFACT_ID}:${DEVELOPMENT_VERSION})\""
+  echo "DRY RUN: git push origin \"${GIT_BRANCH}\""
+else
   # commit next iteration changes
   git add --all
   git commit -m "Prepare for next development iteration (${GROUP_ID}:${ARTIFACT_ID}:${DEVELOPMENT_VERSION})"
   git push origin "${GIT_BRANCH}"
-else
-  echo "DRY RUN: git add --all"
-  echo "DRY RUN: git commit -m \"Prepare for next development iteration (${GROUP_ID}:${ARTIFACT_ID}:${DEVELOPMENT_VERSION})\""
-  echo "DRY RUN: git push origin \"${GIT_BRANCH}\""
 fi

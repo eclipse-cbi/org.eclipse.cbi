@@ -12,6 +12,12 @@ pipeline {
     booleanParam(name: 'DRY_RUN', defaultValue: false, description: 'Wether the release step should push changes to git repo and maven repo')
   }
 
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '10'))
+  }
+
+  triggers { pollSCM('@daily') }
+
   stages {
     stage('Build') {
       steps {
@@ -33,11 +39,14 @@ pipeline {
           env.RELEASE_VERSION != '' && env.DEVELOPMENT_VERSION != ''
         }
       }
-
       steps {
-        sh '''
-          ./release.sh pom.xml
-        '''
+        sshagent(['git.eclipse.org-bot-ssh']) {
+          sh '''
+            git config --global user.email "cbi-bot@eclipse.org"
+            git config --global user.name "CBI Bot"
+            ./release.sh pom.xml
+          '''
+        }
       }
     }
   }

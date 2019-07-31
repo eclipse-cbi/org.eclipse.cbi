@@ -53,14 +53,10 @@
   </scm>
 
   <properties>
-    <minimum-maven-version>3.3.1</minimum-maven-version>
-    <cbi-checkstyle-version>1.0.1</cbi-checkstyle-version>
-    <jetty-version>9.4.18.v20190429</jetty-version>
+    <minimum-maven-version>3.6.1</minimum-maven-version>
+    <cbi-checkstyle-version>1.0.2</cbi-checkstyle-version>
+    <jetty-version>9.4.19.v20190610</jetty-version>
   </properties>
-
-  <prerequisites>
-    <maven>${minimum-maven-version}</maven>
-  </prerequisites>
 
   <repositories>
     <repository>
@@ -192,7 +188,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-site-plugin</artifactId>
-          <version>3.7.1</version>
+          <version>3.8.2</version>
         </plugin>
         <plugin>
           <!-- This maven-enforcer-plugin configuration to actually break
@@ -219,6 +215,14 @@
             </execution>
           </executions>
         </plugin>
+        <plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>versions-maven-plugin</artifactId>
+					<version>2.7</version>
+					<configuration>
+						<rulesUri>file:///${project.basedir}/maven-updates-rules.xml</rulesUri>
+					</configuration>
+				</plugin>
         <plugin>
           <artifactId>maven-checkstyle-plugin</artifactId>
           <version>3.1.0</version>
@@ -252,7 +256,7 @@
         <plugin>
           <groupId>com.github.spotbugs</groupId>
           <artifactId>spotbugs-maven-plugin</artifactId>
-          <version>3.1.12</version>
+          <version>3.1.12.1</version>
           <configuration>
             <threshold>High</threshold>
           </configuration>
@@ -334,7 +338,7 @@
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
-        <version>2.28.2</version>
+        <version>3.0.0</version>
         <scope>test</scope>
       </dependency>
     </dependencies>

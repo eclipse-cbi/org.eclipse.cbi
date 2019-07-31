@@ -4,6 +4,7 @@ spec:
   containers:
   - name: cbi
     image: eclipsecbi/cbi-build-env
+    imagePullPolicy: Always
     command:
     - cat
     tty: true

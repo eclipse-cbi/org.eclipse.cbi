@@ -107,9 +107,9 @@ push_release() {
 # build artifacts to be deployed
 build() {
   if [ "${DRY_RUN}" = true ]; then
-    >&2 echo "DRY RUN: ${SCRIPT_FOLDER}/mvnw -BCUe clean verify -f \"${POM}\""
+    >&2 echo "DRY RUN: ${SCRIPT_FOLDER}/mvnw -B -C -U -e clean verify -f \"${POM}\""
   else
-    "${SCRIPT_FOLDER}/mvnw" -BCUe clean verify -f "${POM}"
+    "${SCRIPT_FOLDER}/mvnw" -B -C -U -e clean verify -f "${POM}"
   fi
 }
 

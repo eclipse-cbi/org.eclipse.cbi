@@ -46,7 +46,6 @@ spec:
         name: "m2-dir"
       name: "toolchains-xml"
     - emptyDir:
-        medium: ""
       name: "m2repo"
     - configMap:
         name: "known-hosts"

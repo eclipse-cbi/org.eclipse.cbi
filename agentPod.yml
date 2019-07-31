@@ -1,5 +1,7 @@
 apiVersion: v1
 kind: Pod
+metadata:
+  name: testpod
 spec:
   containers:
   - name: cbi
@@ -32,27 +34,27 @@ spec:
       subPath: "settings.xml"
     - mountPath: "/home/jenkins/.ssh"
       name: "known-hosts"
-    volumes:
-    - name: "settings-security-xml"
-      secret:
-        items:
-        - key: "settings-security.xml"
-          path: "settings-security.xml"
-        secretName: "m2-secret-dir"
-    - configMap:
-        items:
-        - key: "toolchains.xml"
-          path: "toolchains.xml"
-        name: "m2-dir"
-      name: "toolchains-xml"
-    - emptyDir:
-      name: "m2repo"
-    - configMap:
-        name: "known-hosts"
+  volumes:
+  - name: "settings-security-xml"
+    secret:
+      items:
+      - key: "settings-security.xml"
+        path: "settings-security.xml"
+      secretName: "m2-secret-dir"
+  - configMap:
+      items:
+      - key: "toolchains.xml"
+        path: "toolchains.xml"
+      name: "m2-dir"
+    name: "toolchains-xml"
+  - emptyDir:
+    name: "m2repo"
+  - configMap:
       name: "known-hosts"
-    - name: "settings-xml"
-      secret:
-        items:
-        - key: "settings.xml"
-          path: "settings.xml"
-        secretName: "m2-secret-dir"
+    name: "known-hosts"
+  - name: "settings-xml"
+    secret:
+      items:
+      - key: "settings.xml"
+        path: "settings.xml"
+      secretName: "m2-secret-dir"

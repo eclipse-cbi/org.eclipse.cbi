@@ -32,6 +32,8 @@ spec:
       subPath: "settings.xml"
     - mountPath: "/home/jenkins/.ssh"
       name: "known-hosts"
+    - mountPath: "/home/jenkins/.m2/wrapper"
+      name: "m2wrapper"
   volumes:
   - name: "settings-security-xml"
     secret:
@@ -47,6 +49,8 @@ spec:
     name: "toolchains-xml"
   - emptyDir:
     name: "m2repo"
+  - emptyDir:
+    name: "m2wrapper"
   - configMap:
       name: "known-hosts"
     name: "known-hosts"

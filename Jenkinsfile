@@ -31,11 +31,11 @@ pipeline {
     VERSIONS_MAVEN_PLUGIN = latest_maven_release_gav('org.codehaus.mojo', 'versions-maven-plugin')
     MAVEN_DEPENDENCY_PLUGIN = latest_maven_release_gav('org.apache.maven.plugins', 'maven-dependency-plugin')
     ARTIFACT_ID = sh(
-      script: 'xml sel -N mvn="http://maven.apache.org/POM/4.0.0" -t -v  "/mvn:project/mvn:artifactId" "${POM}"',
+      script: "xml sel -N mvn=\"http://maven.apache.org/POM/4.0.0\" -t -v  \"/mvn:project/mvn:artifactId\" \"${env.POM}\"",
       returnStdout: true
     )
     GROUP_ID = sh(
-      script: 'xml sel -N mvn="http://maven.apache.org/POM/4.0.0" -t -v  "/mvn:project/mvn:groupId" "${POM}"',
+      script: "xml sel -N mvn=\"http://maven.apache.org/POM/4.0.0\" -t -v  \"/mvn:project/mvn:groupId\" \"${env.POM}\"",
       returnStdout: true
     )
   }

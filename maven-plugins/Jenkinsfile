@@ -25,7 +25,7 @@ pipeline {
   }
 
   environment {
-    POM='webservice/pom.xml'
+    POM='maven-plugins/pom.xml'
     MAVEN_OPTS='-Xmx1024m -Xms256m -XshowSettings:vm -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn'
     MAVEN_CONFIG = '-B -C -U -e'
     VERSIONS_MAVEN_PLUGIN = latest_maven_release_gav('org.codehaus.mojo', 'versions-maven-plugin')

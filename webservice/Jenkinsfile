@@ -153,7 +153,7 @@ pipeline {
             "${WORKSPACE}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:set" -DnewVersion="${NEXT_DEVELOPMENT_VERSION}" -DgenerateBackupPoms=false -f "${POM}"
             if [ "${DRY_RUN}" = true ]; then
               >&2 echo "DRY RUN: git add --all"
-              >&2 echo "DRY RUN: git commit -m \"Prepare for next development iteration (${GROUP_ID}:${ARTIFACT_ID}:${NEXT_DEVELOPMENT_VERSION})\""
+              >&2 echo "DRY RUN: git commit -m \"Prepare for next development iteration ${GROUP_ID}:${ARTIFACT_ID}:${NEXT_DEVELOPMENT_VERSION}\""
               >&2 echo "DRY RUN: git push origin \"${GIT_BRANCH}\""
             else
               # commit next iteration changes

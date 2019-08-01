@@ -26,10 +26,6 @@
     <minimum-maven-version>3.3</minimum-maven-version>
   </properties>
 
-  <prerequisites>
-    <maven>${minimum-maven-version}</maven>
-  </prerequisites>
-
   <distributionManagement>
     <repository>
       <id>repo.eclipse.org</id>

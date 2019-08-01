@@ -220,7 +220,7 @@
 					<artifactId>versions-maven-plugin</artifactId>
 					<version>2.7</version>
 					<configuration>
-						<rulesUri>file:///${project.basedir}/maven-updates-rules.xml</rulesUri>
+						<rulesUri>file:///${env.PWD}/maven-updates-rules.xml</rulesUri>
 					</configuration>
 				</plugin>
         <plugin>

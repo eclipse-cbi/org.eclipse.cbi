@@ -5,7 +5,7 @@ spec:
   - name: cbi
     image: eclipsecbi/cbi-build-env
     imagePullPolicy: Always
-    command:
+    args:
     - cat
     tty: true
     resources:

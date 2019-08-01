@@ -25,16 +25,17 @@ pipeline {
   }
 
   environment {
+    POM='checkstyle/pom.xml'
     MAVEN_OPTS='-Xmx1024m -Xms256m -XshowSettings:vm -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn'
     MAVEN_CONFIG = '-B -C -U -e'
     VERSIONS_MAVEN_PLUGIN = latest_maven_release_gav('org.codehaus.mojo', 'versions-maven-plugin')
     MAVEN_DEPENDENCY_PLUGIN = latest_maven_release_gav('org.apache.maven.plugins', 'maven-dependency-plugin')
     ARTIFACT_ID = sh(
-      script: 'xml sel -N mvn="http://maven.apache.org/POM/4.0.0" -t -v  "/mvn:project/mvn:artifactId" "pom.xml"',
+      script: 'xml sel -N mvn="http://maven.apache.org/POM/4.0.0" -t -v  "/mvn:project/mvn:artifactId" "${POM}"',
       returnStdout: true
     )
     GROUP_ID = sh(
-      script: 'xml sel -N mvn="http://maven.apache.org/POM/4.0.0" -t -v  "/mvn:project/mvn:groupId" "pom.xml"',
+      script: 'xml sel -N mvn="http://maven.apache.org/POM/4.0.0" -t -v  "/mvn:project/mvn:groupId" "${POM}"',
       returnStdout: true
     )
   }
@@ -56,14 +57,14 @@ pipeline {
         sh '''
           # set the version the the to-be released version and commit all changes made to the pom
           if [ "${DRY_RUN}" = true ]; then
-            >&2 echo "DRY RUN: ${WORKSPACE}/mvnw \"${VERSIONS_MAVEN_PLUGIN}:set\" -DnewVersion=\"${RELEASE_VERSION}\" -DgenerateBackupPoms=false"
+            >&2 echo "DRY RUN: ${WORKSPACE}/mvnw \"${VERSIONS_MAVEN_PLUGIN}:set\" -DnewVersion=\"${RELEASE_VERSION}\" -DgenerateBackupPoms=false -f \"${POM}\""
             >&2 echo "DRY RUN: git config --global user.email \"cbi-bot@eclipse.org\""
             >&2 echo "DRY RUN: git config --global user.name \"CBI Bot\""
             >&2 echo "DRY RUN: git add --all"
             >&2 echo "DRY RUN: git commit -m \"Prepare release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}\""
             >&2 echo "DRY RUN: git tag \"${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}\" -m \"Release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}\""
           else
-            "${WORKSPACE}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:set" -DnewVersion="${RELEASE_VERSION}" -DgenerateBackupPoms=false
+            "${WORKSPACE}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:set" -DnewVersion="${RELEASE_VERSION}" -DgenerateBackupPoms=false -f "${POM}"
             git config --global user.email "cbi-bot@eclipse.org"
             git config --global user.name "CBI Bot"
             git add --all
@@ -71,14 +72,14 @@ pipeline {
             git tag "${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}" -m "Release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}"
             
             # quick check that we don't depend on SNAPSHOT anymore
-            if "${WORKSPACE}/mvnw" "${MAVEN_DEPENDENCY_PLUGIN}:list" | grep SNAPSHOT; then
-              >&2 echo "ERROR: At least one dependency to a 'SNAPSHOT' version has been found from 'pom.xml'"
+            if "${WORKSPACE}/mvnw" "${MAVEN_DEPENDENCY_PLUGIN}:list" -f "${POM}" | grep SNAPSHOT; then
+              >&2 echo "ERROR: At least one dependency to a 'SNAPSHOT' version has been found from '${POM}'"
               >&2 echo "ERROR: It is forbidden for releasing"
               exit 1
             fi
 
-            if grep SNAPSHOT "pom.xml"; then
-              >&2 echo "ERROR: At least one 'SNAPSHOT' string has been found in 'pom.xml'"
+            if grep SNAPSHOT "${POM}"; then
+              >&2 echo "ERROR: At least one 'SNAPSHOT' string has been found in '${POM}'"
               >&2 echo "ERROR: It is forbidden for releasing"
               exit 1
             fi
@@ -90,15 +91,15 @@ pipeline {
     stage('Display plugin/dependency updates') {
       steps {
         sh '''
-          "${WORKSPACE}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:display-plugin-updates"
-          "${WORKSPACE}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:display-dependency-updates"
+          "${WORKSPACE}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:display-plugin-updates" -f "${POM}"
+          "${WORKSPACE}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:display-dependency-updates" -f "${POM}"
         '''
       }
     }
 
     stage('Build') {
       steps {
-        sh '"${WORKSPACE}/mvnw" clean verify'
+        sh '"${WORKSPACE}/mvnw" clean verify -f "${POM}"'
       }
     }
 
@@ -106,9 +107,9 @@ pipeline {
       steps {
         sh '''
           if [ "${DRY_RUN}" = true ] && [ "${RELEASE_VERSION}" != "" ] && [ "${NEXT_DEVELOPMENT_VERSION}" != "" ]; then
-            >&2 echo "DRY RUN: ${WORKSPACE}/mvnw deploy"
+            >&2 echo "DRY RUN: ${WORKSPACE}/mvnw deploy -f \"${POM}\""
           else
-            "${WORKSPACE}/mvnw" deploy
+            "${WORKSPACE}/mvnw" deploy -f "${POM}"
           fi
         '''
       }
@@ -149,7 +150,7 @@ pipeline {
             git checkout -q -f "${GIT_BRANCH}"
             git reset -q --hard "origin/${GIT_BRANCH}"
 
-            "${WORKSPACE}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:set" -DnewVersion="${NEXT_DEVELOPMENT_VERSION}" -DgenerateBackupPoms=false
+            "${WORKSPACE}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:set" -DnewVersion="${NEXT_DEVELOPMENT_VERSION}" -DgenerateBackupPoms=false -f "${POM}"
             if [ "${DRY_RUN}" = true ]; then
               >&2 echo "DRY RUN: git add --all"
               >&2 echo "DRY RUN: git commit -m \"Prepare for next development iteration (${GROUP_ID}:${ARTIFACT_ID}:${NEXT_DEVELOPMENT_VERSION})\""

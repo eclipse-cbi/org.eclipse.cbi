@@ -13,7 +13,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.eclipse.cbi</groupId>
   <artifactId>checkstyle</artifactId>
-  <version>1.0.2-SNAPSHOT</version>
+  <version>1.0.2</version>
 
   <scm>
     <connection>scm:git:https://git.eclipse.org/r/cbi/org.eclipse.cbi</connection>

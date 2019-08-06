@@ -6,4 +6,4 @@ RUN apk add --no-cache \
 ENV HOME=/home/jenkins
 WORKDIR /home/jenkins
 
-ENTRYPOINT [ "uid_entrypoint", "/bin/bash" ]
+ENTRYPOINT [ "uid_entrypoint" ]

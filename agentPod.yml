@@ -5,8 +5,7 @@ spec:
   - name: cbi
     image: eclipsecbi/cbi-build-env
     imagePullPolicy: Always
-    args:
-    - cat
+    args: ["cat"]
     tty: true
     resources:
       limits:

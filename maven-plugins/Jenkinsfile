@@ -129,7 +129,7 @@ pipeline {
               >&2 echo "DRY RUN: git push origin \"${GIT_BRANCH}\""
             else 
               git push origin "${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}"
-              git push origin "${GIT_BRANCH}"
+              git push origin HEAD:"${GIT_BRANCH}"
             fi
           '''
         }

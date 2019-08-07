@@ -40,7 +40,7 @@
   </modules>
 
   <properties>
-    <cbi-common-version>1.2.3-SNAPSHOT</cbi-common-version>
+    <cbi-common-version>1.2.3</cbi-common-version>
   </properties>
 
   <dependencyManagement>

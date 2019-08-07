@@ -35,7 +35,7 @@ pipeline {
       returnStdout: true
     )
     GROUP_ID = sh(
-      script: "xml sel -N mvn=\"http://maven.apache.org/POM/4.0.0\" -t -v  \"/mvn:project/mvn:groupId|/mvn:project/mvn:parent/mvn:groupId\" \"${env.POM}\"",
+      script: "xml sel -N mvn=\"http://maven.apache.org/POM/4.0.0\" -t -v  \"(/mvn:project/mvn:groupId|/mvn:project/mvn:parent/mvn:groupId)[last()]\" \"${env.POM}\"",
       returnStdout: true
     )
   }

@@ -47,19 +47,20 @@ pipeline {
   triggers { 
     pollSCM('@daily') 
     gerrit(
-      serverName: 'git.eclipse.org',
+      serverName: 'Eclipse Gerrit',
       gerritProjects: [[
-        compareType: 'PATH',
+        compareType: 'ANT',
         pattern: 'cbi/org.eclipse.cbi',
-        branches: [[ compareType: 'PATH', pattern: '**' ]],
-        filePaths: [[ compareType: 'PATH', pattern: "*" ]],
+        branches: [[ compareType: 'ANT', pattern: '**' ]],
+        filePaths: [[ compareType: 'ANT', pattern: "*" ]],
         disableStrictForbiddenFileVerification: false
       ]],
       triggerOnEvents: [
         changeMerged(),
         refUpdated(),
         draftPublished(),
-        patchsetCreated(excludeDrafts: false, excludeNoCodeChange: false, excludeTrivialRebase: false)
+        patchsetCreated(excludeDrafts: false, excludeNoCodeChange: false, excludeTrivialRebase: false),
+        commentAddedContains(commentAddedCommentContains: 'please start a build')
       ]
     )
   }

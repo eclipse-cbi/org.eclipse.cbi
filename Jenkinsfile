@@ -44,7 +44,25 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr: '10'))
   }
 
-  triggers { pollSCM('@daily') }
+  triggers { 
+    pollSCM('@daily') 
+    gerrit(
+      serverName: 'git.eclipse.org',
+      gerritProjects: [[
+        compareType: 'PATH',
+        pattern: 'cbi/org.eclipse.cbi',
+        branches: [[ compareType: 'PATH', pattern: '**' ]],
+        filePaths: [[ compareType: 'PATH', pattern: "*" ]],
+        disableStrictForbiddenFileVerification: false
+      ]],
+      triggerOnEvents: [
+        changeMerged(),
+        refUpdated(),
+        draftPublished(),
+        patchsetCreated(excludeDrafts: false, excludeNoCodeChange: false, excludeTrivialRebase: false)
+      ]
+    )
+  }
 
   stages {
     stage('Prepare release') {

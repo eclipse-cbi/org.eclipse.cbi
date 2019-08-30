@@ -13,17 +13,18 @@ package org.eclipse.cbi.webservice.signing.macosx;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.cbi.webservice.servlet.RequestFacade;
-import org.eclipse.cbi.webservice.servlet.ResponseFacade;
-
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
+
+import org.eclipse.cbi.webservice.servlet.RequestFacade;
+import org.eclipse.cbi.webservice.servlet.ResponseFacade;
 
 /**
  * Serves OS X code signing service through POST request. It requires a "file"
@@ -34,11 +35,13 @@ import com.google.common.base.Preconditions;
 public abstract class SigningServlet extends HttpServlet {
 
 	private static final String TEMP_FILE_PREFIX = SigningServlet.class.getSimpleName() + "-";
-	private static final String SIGNED_ZIP_FILE_SUFFIX = ".signed.zip";
-
+	
 	private static final String ZIP_CONTENT_TYPE = "application/zip";
+	private static final String OCTET_STREAM__CONTENT_TYPE = "application/octet-stream";
 
 	private static final String FILE_PART_NAME = "file";
+
+	private static final String ENTITLEMENTS_PART_NAME = "entitlements";
 
 	private static final long serialVersionUID = 523028904959736808L;
 
@@ -48,36 +51,45 @@ public abstract class SigningServlet extends HttpServlet {
 	 * {@inheritDoc}
 	 */
 	@Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse response) throws ServletException, IOException {
+	protected void doPost(HttpServletRequest req, HttpServletResponse response) throws ServletException, IOException {
 		final ResponseFacade responseFacade = ResponseFacade.builder()
-				.servletResponse(response)
-				.build();
+			.servletResponse(response)
+			.build();
 
 		try(RequestFacade requestFacade = RequestFacade.builder(tempFolder()).request(req).build()) {
-			doSign(requestFacade, responseFacade);
-		}
-    }
-
-	private void doSign(RequestFacade requestFacade, final ResponseFacade answeringMachine) throws IOException, ServletException {
-		if (requestFacade.hasPart(FILE_PART_NAME)) {
-			final String suffix = requestFacade.getSubmittedFileName(FILE_PART_NAME).get() + SIGNED_ZIP_FILE_SUFFIX;
-			final Path zipWithSignedApps = Files.createTempFile(tempFolder(), TEMP_FILE_PREFIX, suffix);
-			try {
-				doSign(zipWithSignedApps, requestFacade, answeringMachine);
-			} finally {
-				Codesigner.cleanTemporaryResource(zipWithSignedApps);
+			if (requestFacade.hasPart(FILE_PART_NAME)) {
+				doSign(requestFacade, responseFacade);
+			} else {
+				responseFacade.replyError(HttpServletResponse.SC_BAD_REQUEST, "POST request must contain a part named '" + FILE_PART_NAME + "'");
 			}
-		} else {
-			answeringMachine.replyError(HttpServletResponse.SC_BAD_REQUEST, "POST request must contain a part named '" + FILE_PART_NAME + "'");
 		}
 	}
 
-	private void doSign(final Path zipWithSignedApps, RequestFacade requestFacade, final ResponseFacade answeringMachine) throws IOException, ServletException {
-		Path zipWithUnsignedApps = requestFacade.getPartPath(FILE_PART_NAME, TEMP_FILE_PREFIX).get();
-		if (codesigner().signZippedApplications(zipWithUnsignedApps, zipWithSignedApps) > 0) {
-			answeringMachine.replyWithFile(ZIP_CONTENT_TYPE, requestFacade.getSubmittedFileName(FILE_PART_NAME).get(), zipWithSignedApps);
+	private void doSign(RequestFacade requestFacade, final ResponseFacade answeringMachine) throws IOException, ServletException {
+		Path fileToBeSigned = requestFacade.getPartPath(FILE_PART_NAME, TEMP_FILE_PREFIX).get();
+		Optional<Path> entitlements = requestFacade.getPartPath(ENTITLEMENTS_PART_NAME, TEMP_FILE_PREFIX);
+		if ("zip".equals(com.google.common.io.Files.getFileExtension(requestFacade.getSubmittedFileName(FILE_PART_NAME).get()))) {
+			signFilesInZip(requestFacade, answeringMachine, fileToBeSigned, entitlements);
 		} else {
-			answeringMachine.replyError(HttpServletResponse.SC_BAD_REQUEST, "No '.app' folder can be found in the provided zip file");
+			if (codesigner().signFile(fileToBeSigned, entitlements) > 0) {
+				answeringMachine.replyWithFile(OCTET_STREAM__CONTENT_TYPE, requestFacade.getSubmittedFileName(FILE_PART_NAME).get(), fileToBeSigned);
+			} else {
+				answeringMachine.replyError(HttpServletResponse.SC_BAD_REQUEST, "Unable to sign provided file");
+			}
+		}
+	}
+
+	private void signFilesInZip(RequestFacade requestFacade, final ResponseFacade answeringMachine, Path zipFileWithFilesToBeSigned, Optional<Path> entitlements) throws IOException, ServletException {
+		final String submittedFilename = requestFacade.getSubmittedFileName(FILE_PART_NAME).get();
+		final Path signedFile = Files.createTempFile(tempFolder(), TEMP_FILE_PREFIX, "signed." + com.google.common.io.Files.getFileExtension(submittedFilename));
+		try {
+			if (codesigner().signZippedApplications(zipFileWithFilesToBeSigned, signedFile, entitlements) > 0) {
+				answeringMachine.replyWithFile(ZIP_CONTENT_TYPE, requestFacade.getSubmittedFileName(FILE_PART_NAME).get(), signedFile);
+			} else {
+				answeringMachine.replyError(HttpServletResponse.SC_BAD_REQUEST, "No '.app' folder can be found in the provided zip file");
+			}
+		} finally {
+			Codesigner.cleanTemporaryResource(signedFile);
 		}
 	}
 

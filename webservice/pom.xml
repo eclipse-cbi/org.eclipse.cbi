@@ -41,6 +41,7 @@
 
   <properties>
     <cbi-common-version>1.2.3</cbi-common-version>
+    <webservice-common-version>1.0.0-SNAPSHOT</webservice-common-version>
   </properties>
 
   <dependencyManagement>
@@ -53,7 +54,7 @@
       <dependency>
         <groupId>org.eclipse.cbi</groupId>
         <artifactId>webservice-common</artifactId>
-        <version>${project.version}</version>
+        <version>${webservice-common-version}</version>
       </dependency>
       <dependency>
         <groupId>args4j</groupId>

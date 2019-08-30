@@ -12,8 +12,8 @@ package org.eclipse.cbi.webservice.signing.macosx;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.base.Throwables.throwIfUnchecked;
 import static com.google.common.base.Throwables.throwIfInstanceOf;
+import static com.google.common.base.Throwables.throwIfUnchecked;
 import static java.util.Objects.requireNonNull;
 import static org.eclipse.cbi.webservice.util.function.UnsafePredicate.safePredicate;
 
@@ -21,8 +21,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+
+import com.google.auto.value.AutoValue;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 
 import org.eclipse.cbi.common.util.Paths;
 import org.eclipse.cbi.common.util.Zips;
@@ -30,10 +35,6 @@ import org.eclipse.cbi.webservice.util.ProcessExecutor;
 import org.eclipse.cbi.webservice.util.function.WrappedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.auto.value.AutoValue;
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
 
 @AutoValue
 public abstract class Codesigner {
@@ -46,7 +47,7 @@ public abstract class Codesigner {
 
 	Codesigner() {}
 
-	public long signZippedApplications(Path source, Path target) throws IOException {
+	public long signZippedApplications(Path source, Path target, Optional<Path> entitlements) throws IOException {
 		requireNonNull(source);
 		requireNonNull(target);
 		checkArgument(Files.isRegularFile(source), "Source zip must be an existing regular file");
@@ -58,7 +59,7 @@ public abstract class Codesigner {
 			unzipDirectory = Files.createTempDirectory(tempFolder(), TEMP_FILE_PREFIX);
 			// unzip the part in temp folder.
 			if (Zips.unpackZip(source, unzipDirectory) > 0) {
-				return signAndRezip(unzipDirectory, target);
+				return signAndRezip(unzipDirectory, target, entitlements);
 			} else {
 				throw new IOException("The provided Zip file is invalid");
 			}
@@ -66,6 +67,13 @@ public abstract class Codesigner {
 			// clean up temp folder if used
 			cleanTemporaryResource(unzipDirectory);
 		}
+	}
+
+	public long signFile(Path source, Optional<Path> entitlements) throws IOException {
+		requireNonNull(source);
+		checkArgument(Files.isRegularFile(source), "Source file must be an existing regular file");
+		signFile(source, entitlements, true);
+		return 1;
 	}
 
 	/**
@@ -76,7 +84,7 @@ public abstract class Codesigner {
 	 *         is signed or an error occured with at least one.
 	 * @throws IOException  if an I/O error occurs when signing
 	 */
-	public long signApplications(Path directory) throws IOException {
+	public long signApplications(Path directory, Optional<Path> entitlements) throws IOException {
 		requireNonNull(directory);
 		checkArgument(Files.isDirectory(directory), "Path must reference an existing directory");
 
@@ -88,7 +96,7 @@ public abstract class Codesigner {
 			try {
 				return pathStream
 					.filter(p -> Files.isDirectory(p) && dotAppPattern.matches(p))
-					.filter(safePredicate(p -> signApplication(p, false)))
+					.filter(safePredicate(p -> signApplication(p, entitlements, false)))
 					.count();
 			} catch (WrappedException e) {
 				throwIfInstanceOf(e.getCause(), IOException.class);
@@ -98,12 +106,8 @@ public abstract class Codesigner {
 		}
 	}
 
-	public boolean signApplication(Path app) throws IOException {
-		return signApplication(app, true);
-	}
-
-	private long signAndRezip(Path unzipDirectory, Path signedFile) throws IOException {
-		final long nbSignedApps = signApplications(unzipDirectory);
+	private long signAndRezip(Path unzipDirectory, Path signedFile, Optional<Path> entitlements) throws IOException {
+		final long nbSignedApps = signApplications(unzipDirectory, entitlements);
 		if (nbSignedApps > 0) {
 			if (Zips.packZip(unzipDirectory, signedFile, false) <= 0) {
 				throw new IOException("The signing was succesfull, but something wrong happened when trying to zip it back");
@@ -112,7 +116,7 @@ public abstract class Codesigner {
 		return nbSignedApps;
 	}
 
-	private boolean signApplication(Path app, boolean needUnlock) throws IOException {
+	private boolean signApplication(Path app, Optional<Path> entitlements, boolean needUnlock) throws IOException {
 		requireNonNull(app);
 		checkArgument(app.getFileSystem().getPathMatcher(DOT_APP_GLOB_PATTERN).matches(app), "Path must ends with '.app");
 		checkArgument(Files.isDirectory(app), "Path must reference an existing directory");
@@ -122,12 +126,32 @@ public abstract class Codesigner {
 		}
 
 		final StringBuilder output = new StringBuilder();
-		final int codesignExitValue = processExecutor().exec(codesignCommand(app), output, codesignTimeout(), TimeUnit.SECONDS);
+		final int codesignExitValue = processExecutor().exec(codesignCommand(app, entitlements, true), output, codesignTimeout(), TimeUnit.SECONDS);
 		if (codesignExitValue == 0) {
 			return true;
 		} else {
 			throw new IOException(Joiner.on('\n').join(
 					"The 'codesign' command on '" + app.getFileName() + "' exited with value '" + codesignExitValue + "'",
+					"'codesign' command output:",
+					output));
+		}
+	}
+
+	private boolean signFile(Path file, Optional<Path> entitlements, boolean needUnlock) throws IOException {
+		requireNonNull(file);
+		checkArgument(Files.isRegularFile(file), "Path must reference an existing regular file");
+
+		if (needUnlock) {
+			unlockKeychain();
+		}
+
+		final StringBuilder output = new StringBuilder();
+		final int codesignExitValue = processExecutor().exec(codesignCommand(file, entitlements, false), output, codesignTimeout(), TimeUnit.SECONDS);
+		if (codesignExitValue == 0) {
+			return true;
+		} else {
+			throw new IOException(Joiner.on('\n').join(
+					"The 'codesign' command on '" + file.getFileName() + "' exited with value '" + codesignExitValue + "'",
 					"'codesign' command output:",
 					output));
 		}
@@ -144,8 +168,16 @@ public abstract class Codesigner {
 		}
 	}
 
-	private ImmutableList<String> codesignCommand(Path path) {
-		return ImmutableList.<String>builder().addAll(codesignCommandPrefix()).add(path.toString()).build();
+	private ImmutableList<String> codesignCommand(Path path, Optional<Path> entitlements, boolean deep) {
+		ImmutableList.Builder<String> command = ImmutableList.<String>builder().addAll(codesignCommandPrefix());
+		if (entitlements.isPresent()) {
+			command.add("--entitlements", entitlements.get().toString());
+		}
+		if (deep) {
+			command.add("--deep");
+		}
+		command.add(path.toString());
+		return command.build();
 	}
 
 	static void cleanTemporaryResource(Path tempResource) {
@@ -280,7 +312,7 @@ public abstract class Codesigner {
 			checkState(!certificateName().isEmpty(), "Certificate name must not be empty");
 			checkState(Files.exists(keychain()) && Files.isRegularFile(keychain()), "Keychain file must exists");
 			ImmutableList.Builder<String> commandPrefix = ImmutableList.builder();
-			commandPrefix.add("codesign", "-s", certificateName(), "-f", "--verbose=4",  "--keychain", keychain().toString());
+			commandPrefix.add("codesign", "-s", certificateName(), "--options", "runtime", "-f", "--verbose=4",  "--keychain", keychain().toString());
 			if (!timeStampAuthority().trim().isEmpty()) {
 				commandPrefix.add("--timestamp=\""+timeStampAuthority().trim()+"\"");
 			} else {

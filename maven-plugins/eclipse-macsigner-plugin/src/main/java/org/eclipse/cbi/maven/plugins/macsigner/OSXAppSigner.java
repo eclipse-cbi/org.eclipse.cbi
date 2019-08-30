@@ -25,6 +25,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.google.auto.value.AutoValue;
+import com.google.common.base.Joiner;
+
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
@@ -37,9 +40,6 @@ import org.eclipse.cbi.maven.http.AbstractCompletionListener;
 import org.eclipse.cbi.maven.http.HttpClient;
 import org.eclipse.cbi.maven.http.HttpRequest;
 import org.eclipse.cbi.maven.http.HttpResult;
-
-import com.google.auto.value.AutoValue;
-import com.google.common.base.Joiner;
 
 /**
  * A signer of OS X applications.
@@ -57,7 +57,8 @@ public abstract class OSXAppSigner {
 	 */
 	private static final String DOT_APP_GLOB_PATTERN = "glob:**.app";
 
-	private static final String PART_NAME = "file";
+	private static final String FILE_PART_NAME = "file";
+	private static final String ENTITLEMENTS_PART_NAME = "entitlements";
 	
 	abstract ExceptionHandler exceptionHandler();
 
@@ -86,13 +87,13 @@ public abstract class OSXAppSigner {
 	 * @return the number of signed apps.
 	 * @throws MojoExecutionException
 	 */
-	public int signApplications(Set<Path> signFiles) throws MojoExecutionException {
+	public int signApplications(Set<Path> signFiles, Path entitlements) throws MojoExecutionException {
 		Objects.requireNonNull(signFiles);
 		int ret = 0;
 		for (Path signFile : signFiles) {
 			final PathMatcher appPattern = signFile.getFileSystem().getPathMatcher(DOT_APP_GLOB_PATTERN);
 			if (Files.isDirectory(signFile) && appPattern.matches(signFile)) {
-		    	if (signApplication(signFile)) {
+		    	if (signApplication(signFile, entitlements)) {
 		    		ret++;
 		    	}
 		    } else {
@@ -112,14 +113,14 @@ public abstract class OSXAppSigner {
 	 * @return the number of signed apps.
 	 * @throws MojoExecutionException
 	 */
-	public int signApplications(Path baseSearchDir, Set<PathMatcher> pathMatchers) throws MojoExecutionException {
+	public int signApplications(Path baseSearchDir, Set<PathMatcher> pathMatchers, Path entitlements) throws MojoExecutionException {
 		Objects.requireNonNull(baseSearchDir);
 		Objects.requireNonNull(pathMatchers);
 
 		int ret = 0;
 
 		try {
-			OSXApplicationSignerVisitor applicationSignerVisitor = new OSXApplicationSignerVisitor(pathMatchers);
+			OSXApplicationSignerVisitor applicationSignerVisitor = new OSXApplicationSignerVisitor(pathMatchers, entitlements);
 			Files.walkFileTree(baseSearchDir, applicationSignerVisitor);
 			ret = applicationSignerVisitor.getSignedAppCount();
 		} catch (MojoExecutionIOExceptionWrapper e) {
@@ -137,7 +138,8 @@ public abstract class OSXAppSigner {
      * @param appFolder
      * @throws MojoExecutionException
      */
-    public boolean signApplication(Path appFolder) throws MojoExecutionException {
+    public boolean signApplication(Path appFolder, Path entitlements) throws MojoExecutionException {
+			Objects.requireNonNull(appFolder);
     	boolean ret = false;
     	Path zippedApp = null;
 
@@ -146,7 +148,7 @@ public abstract class OSXAppSigner {
             Zips.packZip(appFolder, zippedApp, true);
 
             log().info("[" + new Date() + "] Signing OS X application '" + appFolder + "'...");
-            if (!processOnSigningServer(zippedApp)) {
+            if (!processOnSigningServer(zippedApp, entitlements)) {
                 exceptionHandler().handleError("Signing of OS X application '" + appFolder + "' failed. Activate debug (-X, --debug) to see why.");
             } else {
             	ret = true;
@@ -165,9 +167,13 @@ public abstract class OSXAppSigner {
     	return ret;
     }
     
-    private boolean processOnSigningServer(final Path file) throws IOException {
+    private boolean processOnSigningServer(final Path file, Path entitlements) throws IOException {
     		HttpRequest.Config requestConfig = HttpRequest.Config.builder().timeout(timeout()).build();
-		final HttpRequest request = HttpRequest.on(serverUri()).withParam(PART_NAME, file).build();
+		final HttpRequest.Builder requestBuilder = HttpRequest.on(serverUri()).withParam(FILE_PART_NAME, file);
+		if (entitlements != null) {
+			requestBuilder.withParam(ENTITLEMENTS_PART_NAME, entitlements);
+		}
+		final HttpRequest request = requestBuilder.build();
 		log().debug("OS X app signing request: " + request.toString());
 		boolean success = httpClient().send(request, requestConfig, new AbstractCompletionListener(file.getParent(), file.getFileName().toString(), OSXAppSigner.class.getSimpleName(), new MavenLogger(log())) {
 			@Override
@@ -188,10 +194,12 @@ public abstract class OSXAppSigner {
 
 		private final Set<PathMatcher> pathMatchers;
 		private int signedAppCount;
+		private Path entitlements;
 
-		OSXApplicationSignerVisitor(Set<PathMatcher> pathMatchers) {
+		OSXApplicationSignerVisitor(Set<PathMatcher> pathMatchers, Path entitlements) {
 			this.pathMatchers = pathMatchers;
 			this.signedAppCount = 0;
+			this.entitlements = entitlements;
 		}
 
 		public int getSignedAppCount() {
@@ -212,7 +220,7 @@ public abstract class OSXAppSigner {
 
 		private FileVisitResult signApp(Path dir) throws MojoExecutionIOExceptionWrapper {
 			try {
-				if (signApplication(dir)) {
+				if (signApplication(dir, entitlements)) {
 					signedAppCount++;
 				}
 			} catch (MojoExecutionException e) {

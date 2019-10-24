@@ -23,8 +23,8 @@ import org.eclipse.cbi.maven.common.test.util.NullLog;
 import org.eclipse.cbi.maven.http.CompletionListener;
 import org.eclipse.cbi.maven.http.HttpClient;
 import org.eclipse.cbi.maven.http.HttpRequest;
-import org.eclipse.cbi.maven.http.HttpResult;
 import org.eclipse.cbi.maven.http.HttpRequest.Builder;
+import org.eclipse.cbi.maven.http.HttpResult;
 import org.eclipse.cbi.maven.http.apache.ApacheHttpClient;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.server.Handler;
@@ -49,18 +49,18 @@ public class ApacheHttpClientTest {
 	public static void beforeClass() {
 		Log.setLog(new NullJettyLogger());
 	}
-	
+
 	@Before
 	public void before() {
 		log = new NullLog();
 	}
-	
+
 	@Test
 	public void testProcessStandardFile() throws Exception {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			Server server = createProcessingServer(createProcessingHandler());
 			try {
-				
+
 				Path path = SampleFilesGenerators.createLoremIpsumFile(fs.getPath("/pathto/fileToProcess"), 10);
 				HttpClient client = ApacheHttpClient.create(log);
 				HttpRequest request = newRequest("localhost", getPort(server)).withParam("file", path).build();
@@ -70,7 +70,7 @@ public class ApacheHttpClientTest {
 			}
 		}
 	}
-	
+
 	@Test(expected = IOException.class)
 	public void testProcessOfflineServer() throws Exception {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -80,7 +80,7 @@ public class ApacheHttpClientTest {
 			client.send(request, new FailTestOnError());
 		}
 	}
-	
+
 	@Test
 	public void testProcessRequest() throws Exception {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
@@ -90,16 +90,16 @@ public class ApacheHttpClientTest {
 				HttpClient client = ApacheHttpClient.create(log);
 				HttpRequest request = newRequest("localhost", getPort(server)).withParam("file", path).build();
 				assertTrue(client.send(request, new CompletionListener() {
-					
+
 					@Override
 					public void onError(HttpResult error) throws IOException {
 						Assert.fail();
 					}
-					
+
 					@Override
 					public void onSuccess(HttpResult result) throws IOException {
 						assertEquals(200, result.statusCode());
-						
+
 						ByteArrayOutputStream response = new ByteArrayOutputStream();
 						result.copyContent(response);
 						assertArrayEquals("Valid!".getBytes(), response.toByteArray());
@@ -131,7 +131,7 @@ public class ApacheHttpClientTest {
 	private Builder newRequest(String host, int port) {
 		return HttpRequest.on(URI.create("http://" + host + ":" + port + "/processing-service"));
 	}
-	
+
 	private static Server createProcessingServer(Handler handler) throws Exception {
 		Server server = new Server(0);
         server.setHandler(handler);
@@ -142,12 +142,12 @@ public class ApacheHttpClientTest {
 	private static int getPort(Server server) {
 		return ((NetworkConnector)server.getConnectors()[0]).getLocalPort();
 	}
-	
+
 	private static Handler createTestingHandler() {
 		return new AbstractHandler() {
 			@Override
 			public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-				baseRequest.setAttribute(Request.__MULTIPART_CONFIG_ELEMENT, new MultipartConfigElement(""));
+				baseRequest.setAttribute(Request.MULTIPART_CONFIG_ELEMENT, new MultipartConfigElement(""));
 				assertEquals("/processing-service", target);
 				assertTrue(request.getContentType().startsWith(ContentType.MULTIPART_FORM_DATA.getMimeType()));
 				assertTrue(HttpMethod.POST.is(request.getMethod()));
@@ -183,10 +183,10 @@ public class ApacheHttpClientTest {
 
 		@Override
 		public void onSuccess(HttpResult result) throws IOException {
-			
+
 		}
 	}
-	
+
 	private static final class FailTestOnSuccess implements CompletionListener {
 		@Override
 		public void onError(HttpResult error) throws IOException {

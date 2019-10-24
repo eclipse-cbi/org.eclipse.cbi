@@ -24,7 +24,7 @@
 
   <properties>
     <jackson.version>2.9.9</jackson.version>
-    <bouncycastle.version>1.62</bouncycastle.version>
+    <bouncycastle.version>1.64</bouncycastle.version>
   </properties>
 
   <scm>

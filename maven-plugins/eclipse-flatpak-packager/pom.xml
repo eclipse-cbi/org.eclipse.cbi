@@ -23,7 +23,7 @@
   </parent>
 
   <properties>
-    <jackson.version>2.9.9</jackson.version>
+    <jackson.version>2.10.0</jackson.version>
     <bouncycastle.version>1.64</bouncycastle.version>
   </properties>
 

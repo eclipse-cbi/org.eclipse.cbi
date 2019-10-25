@@ -7,7 +7,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -130,7 +130,7 @@ public class CodesignerTest {
 			Path target = fs.getPath("signed.zip");
 			assertEquals(0, createCodesignerUnderTest(fs, processExecutor).signZippedApplications(source, target, Optional.empty()));
 			verify(processExecutor).exec(eq(ImmutableList.of("security", "unlock", "-p", "password", "/path/to/keychain")), any(), anyLong(), any());
-			verifyZeroInteractions(processExecutor);
+			verifyNoMoreInteractions(processExecutor);
 
 			verifyCleanedTempFolder(fs);
 		}
@@ -149,7 +149,7 @@ public class CodesignerTest {
 			assertTrue(listCaptor.getAllValues().get(1).get(listCaptor.getAllValues().get(1).size()-1).toString().startsWith("/tmp"));
 			assertTrue(listCaptor.getAllValues().get(1).get(listCaptor.getAllValues().get(1).size()-1).toString().endsWith("MyApp.app"));
 
-			verifyZeroInteractions(processExecutor);
+			verifyNoMoreInteractions(processExecutor);
 
 			verifyCleanedTempFolder(fs);
 		}
@@ -169,7 +169,7 @@ public class CodesignerTest {
 			verify(processExecutor).exec(listCaptor.capture(), any(), eq(20L), any());
 			assertEquals("codesign", listCaptor.getAllValues().get(0).get(0));
 
-			verifyZeroInteractions(processExecutor);
+			verifyNoMoreInteractions(processExecutor);
 
 			verifyCleanedTempFolder(fs);
 		}

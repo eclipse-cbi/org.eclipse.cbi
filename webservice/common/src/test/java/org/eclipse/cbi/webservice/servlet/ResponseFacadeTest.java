@@ -34,6 +34,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import com.google.common.jimfs.Jimfs;
 import com.google.common.net.HttpHeaders;
 
+@SuppressWarnings("javadoc")
 @RunWith(MockitoJUnitRunner.class)
 public class ResponseFacadeTest {
 

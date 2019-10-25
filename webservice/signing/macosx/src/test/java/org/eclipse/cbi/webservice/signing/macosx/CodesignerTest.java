@@ -34,6 +34,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
+@SuppressWarnings("javadoc")
 @RunWith(MockitoJUnitRunner.class)
 public class CodesignerTest {
 

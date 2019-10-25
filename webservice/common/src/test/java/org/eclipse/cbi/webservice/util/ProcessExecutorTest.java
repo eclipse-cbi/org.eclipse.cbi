@@ -20,6 +20,7 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 
+@SuppressWarnings("javadoc")
 public class ProcessExecutorTest {
 
 	@Test

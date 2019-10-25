@@ -26,6 +26,7 @@ import org.junit.Test;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 
+@SuppressWarnings("javadoc")
 public class EmbeddedServerPropertiesTest {
 
 	@Test(expected=IllegalStateException.class)

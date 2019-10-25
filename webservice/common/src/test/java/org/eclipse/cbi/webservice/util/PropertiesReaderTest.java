@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import com.google.common.jimfs.Jimfs;
 
+@SuppressWarnings("javadoc")
 public class PropertiesReaderTest {
 
 	@Test

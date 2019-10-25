@@ -34,6 +34,7 @@ import org.mockito.stubbing.Answer;
 
 import com.google.common.jimfs.Jimfs;
 
+@SuppressWarnings("javadoc")
 @RunWith(MockitoJUnitRunner.class)
 public class RequestFacadeTest {
 

@@ -39,6 +39,7 @@ public abstract class Flatpakager {
 	public void generateFlatpakRepo(boolean sign, Path manifest) throws IOException {
 		ImmutableList.Builder<String> builderArgs = ImmutableList.builder();
 		builderArgs.add("flatpak-builder");
+		builderArgs.add("--force-clean");
 		builderArgs.add("--disable-cache");
 		builderArgs.add("--disable-download");
 		builderArgs.add("--disable-updates");

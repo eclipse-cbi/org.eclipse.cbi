@@ -538,7 +538,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 		if (brandingPlugin == null || brandingPlugin.isEmpty()) {
 			brandingPlugin = id;
 		}
-		for (int px = 32; px < 2048; px = px * 2) {
+		for (int px = 32; px < 512; px = px * 2) {
 			String iconDir = "/app/share/icons/hicolor/" + px + "x" + px + "/apps";
 			String icon = "/app/eclipse/plugins/" + brandingPlugin + "_*/" + command + px + ".png";
 			eclipseModuleBuilder.addbuildCommand("mkdir -p " + iconDir);

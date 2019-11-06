@@ -550,7 +550,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 		Manifest manifest = Manifest.builder().id(flatpakId).branch(branch).runtime(runtime)
 				.runtimeVersion(runtimeVersion).addModule(jdkModuleBuilder.build())
 				.addModule(eclipseModuleBuilder.build()).addFinishArg("--require-version=" + minFlatpakVersion)
-				.addFinishArg("--env=PATH=/app/bin:/app/jdk/bin:/usr/bin:/var/run/host/usr/bin").build();
+				.addFinishArg("--env=PATH=/app/bin:/app/jdk/bin:/usr/bin").build();
 
 		mapper.writeValue(new File(targetDir, flatpakId + ".json"), manifest);
 	}

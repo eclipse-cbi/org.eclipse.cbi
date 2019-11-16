@@ -251,6 +251,39 @@ public class CreateFlatpakMojo extends AbstractMojo {
 	private String brandingPlugin;
 
 	/**
+	 * Whether or not to append the set of default finish args, defaults to "true"
+	 * and the default finish args are as follows:
+	 * <ul>
+	 * <li>--filesystem=host</li>
+	 * <li>--share=network</li>
+	 * <li>--share=ipc</li>
+	 * <li>--socket=x11</li>
+	 * <li>--socket=wayland</li>
+	 * <li>--allow=devel</li>
+	 * <li>--socket=session-bus</li>
+	 * <li>--device=dri</li>
+	 * <li>--env=PATH=/app/bin:/app/jdk/bin:/usr/bin</li>
+	 * <li>--require-version=1.0.2</li>
+	 * </ul>
+	 * 
+	 * @since 1.1.8
+	 */
+	@Parameter(defaultValue = "true")
+	private boolean appendDefaultFinishArgs;
+
+	/**
+	 * An optional list of finish args to be used. The full set of finish args that
+	 * may be used are detailed in the <a href=
+	 * "http://docs.flatpak.org/en/latest/flatpak-command-reference.html#flatpak-build-finish">Flatpak
+	 * command reference</a>. The given list of finish args will be appended to the
+	 * default set if the {@link #appendDefaultFinishArgs} flag is also set to true.
+	 * 
+	 * @since 1.1.8
+	 */
+	@Parameter
+	private List<String> finishArgs;
+
+	/**
 	 * The repository to which the new Flatpak application should be exported. If
 	 * not specified, a new repository will be created inside the build directory.
 	 * 
@@ -423,9 +456,6 @@ public class CreateFlatpakMojo extends AbstractMojo {
 	}
 
 	private void generateManifest(File targetDir) throws IOException, ArtifactResolverException {
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.enable(SerializationFeature.INDENT_OUTPUT);
-
 		ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest(session.getProjectBuildingRequest());
 
 		// Copy all sources into the target directory
@@ -547,12 +577,28 @@ public class CreateFlatpakMojo extends AbstractMojo {
 		}
 
 		// Generate the Flatpak application manifest
-		Manifest manifest = Manifest.builder().id(flatpakId).branch(branch).runtime(runtime)
-				.runtimeVersion(runtimeVersion).addModule(jdkModuleBuilder.build())
-				.addModule(eclipseModuleBuilder.build()).addFinishArg("--require-version=" + minFlatpakVersion)
-				.addFinishArg("--env=PATH=/app/bin:/app/jdk/bin:/usr/bin").build();
+		Manifest.Builder manifestBuilder = Manifest.builder()
+				.id(flatpakId)
+				.branch(branch)
+				.runtime(runtime)
+				.runtimeVersion(runtimeVersion)
+				.addModule(jdkModuleBuilder.build())
+				.addModule(eclipseModuleBuilder.build());
+		if (appendDefaultFinishArgs) {
+			manifestBuilder.addFinishArg("--require-version=" + minFlatpakVersion);
+			for (String fArg : Manifest.DEFAULT_FINISH_ARGS) {
+				manifestBuilder.addFinishArg(fArg);
+			}
+		}
+		if (finishArgs != null) {
+			for (String fArg : finishArgs) {
+				manifestBuilder.addFinishArg(fArg);
+			}
+		}
 
-		mapper.writeValue(new File(targetDir, flatpakId + ".json"), manifest);
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.enable(SerializationFeature.INDENT_OUTPUT);
+		mapper.writeValue(new File(targetDir, flatpakId + ".json"), manifestBuilder.build());
 	}
 
 	private void buildAndSignRepo(ExceptionHandler exceptionHandler, File targetDir)

@@ -28,14 +28,14 @@ public abstract class Manifest {
 	public static final String DEFAULT_FLATPAKVERSION = "1.0.2";
 
 	// Probably always want JDK
-	public static final List<String> DEFAULT_SDK_EXTENSIONS = Collections
-			.unmodifiableList(Arrays.asList("org.freedesktop.Sdk.Extension.openjdk11"));
+	public static final List<String> DEFAULT_SDK_EXTENSIONS = Collections.unmodifiableList(
+			Arrays.asList("org.freedesktop.Sdk.Extension.openjdk11", "org.freedesktop.Sdk.Extension.node10"));
 
 	// Fairly liberal by default: Access to host file system, windowing system and
 	// network connection. Allow communication with the host DBus session bus.
 	public static final List<String> DEFAULT_FINISH_ARGS = Collections.unmodifiableList(Arrays.asList(
 			"--filesystem=host", "--share=network", "--share=ipc", "--socket=x11", "--socket=wayland", "--allow=devel",
-			"--socket=session-bus", "--device=dri", "--env=PATH=/app/bin:/app/jdk/bin:/usr/bin"));
+			"--socket=session-bus", "--device=dri", "--env=PATH=/app/bin:/app/jdk/bin:/app/node/bin:/usr/bin"));
 
 	@JsonProperty("id")
 	public abstract String id();

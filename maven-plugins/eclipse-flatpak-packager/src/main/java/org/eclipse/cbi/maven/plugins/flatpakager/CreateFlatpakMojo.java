@@ -547,22 +547,41 @@ public class CreateFlatpakMojo extends AbstractMojo {
 				.add(new AdditionalSource(appdataFile, new File("/app/share/metainfo", appdataFile.getName())));
 
 		// OpenJDK module
-		Module.Builder jdkModuleBuilder = Module.builder().name("openjdk").buildSystem("simple")
+		Module.Builder jdkModuleBuilder = Module.builder()
+				.name("openjdk")
+				.buildSystem("simple")
 				.addbuildCommand("/usr/lib/sdk/openjdk11/installjdk.sh");
 
+		// Node module
+		Module.Builder nodeModuleBuilder = Module.builder()
+				.name("node")
+				.buildSystem("simple")
+				.addbuildCommand("/usr/lib/sdk/node10/install.sh");
+
 		// Eclipse module
-		Module.Builder eclipseModuleBuilder = Module.builder().name("eclipse").buildSystem("simple")
-				.addbuildCommand("mv eclipse /app").addbuildCommand("mkdir -p /app/bin")
+		Module.Builder eclipseModuleBuilder = Module.builder()
+				.name("eclipse")
+				.buildSystem("simple")
+				.addbuildCommand("mv eclipse /app")
+				.addbuildCommand("mkdir -p /app/bin")
 				.addbuildCommand("ln -s /app/eclipse/" + command + " /app/bin");
-		Source sourceArchive = Source.builder().type("archive").path(source.getName()).stripComponents(0).build();
+		Source sourceArchive = Source.builder()
+				.type("archive")
+				.path(source.getName())
+				.stripComponents(0)
+				.build();
 		eclipseModuleBuilder.addSource(sourceArchive);
 		for (AdditionalSource addSource : additionalSources) {
 			getLog().debug("Additional Source: " + addSource.getSource() + " -> " + addSource.getDestination());
-			Source sourceFile = Source.builder().type("file").path(addSource.getSource().getName())
-					.destFilename(addSource.getSource().getName()).build();
+			Source sourceFile = Source.builder()
+					.type("file")
+					.path(addSource.getSource().getName())
+					.destFilename(addSource.getSource().getName())
+					.build();
 			eclipseModuleBuilder.addSource(sourceFile);
-			eclipseModuleBuilder.addbuildCommand("install -Dm " + addSource.getPermissions() + " "
-					+ addSource.getSource().getName() + " " + addSource.getDestination());
+			eclipseModuleBuilder
+					.addbuildCommand("install -Dm " + addSource.getPermissions() + " " + addSource.getSource()
+							.getName() + " " + addSource.getDestination());
 		}
 		// Install icons from the branding plug-in
 		if (brandingPlugin == null || brandingPlugin.isEmpty()) {
@@ -583,6 +602,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 				.runtime(runtime)
 				.runtimeVersion(runtimeVersion)
 				.addModule(jdkModuleBuilder.build())
+				.addModule(nodeModuleBuilder.build())
 				.addModule(eclipseModuleBuilder.build());
 		if (appendDefaultFinishArgs) {
 			manifestBuilder.addFinishArg("--require-version=" + minFlatpakVersion);

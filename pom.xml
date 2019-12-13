@@ -55,7 +55,7 @@
   <properties>
     <minimum-maven-version>3.6.1</minimum-maven-version>
     <cbi-checkstyle-version>1.0.2</cbi-checkstyle-version>
-    <jetty-version>9.4.22.v20191022</jetty-version>
+    <jetty-version>9.4.24.v20191120</jetty-version>
   </properties>
 
   <repositories>

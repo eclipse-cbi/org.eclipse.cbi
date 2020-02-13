@@ -29,7 +29,7 @@ public abstract class Manifest {
 
 	// Probably always want JDK
 	public static final List<String> DEFAULT_SDK_EXTENSIONS = Collections.unmodifiableList(
-			Arrays.asList("org.freedesktop.Sdk.Extension.openjdk11", "org.freedesktop.Sdk.Extension.node10"));
+			Arrays.asList("org.freedesktop.Sdk.Extension.openjdk11", "org.freedesktop.Sdk.Extension.node12"));
 
 	// Fairly liberal by default: Access to host file system, windowing system and
 	// network connection. Allow communication with the host DBus session bus.

@@ -556,7 +556,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 		Module.Builder nodeModuleBuilder = Module.builder()
 				.name("node")
 				.buildSystem("simple")
-				.addbuildCommand("/usr/lib/sdk/node10/install.sh");
+				.addbuildCommand("/usr/lib/sdk/node12/install.sh");
 
 		// Eclipse module
 		Module.Builder eclipseModuleBuilder = Module.builder()

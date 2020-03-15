@@ -15,7 +15,6 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.cbi.webservice.util.ProcessExecutor;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;

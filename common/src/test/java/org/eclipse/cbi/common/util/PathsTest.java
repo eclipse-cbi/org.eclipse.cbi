@@ -10,12 +10,13 @@
  *******************************************************************************/
 package org.eclipse.cbi.common.util;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.eclipse.cbi.common.util.Paths;
 import org.junit.Test;
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
@@ -25,91 +26,85 @@ import org.junit.runner.RunWith;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 
-import static org.junit.Assert.*;
-
 @RunWith(Theories.class)
 public class PathsTest {
 
 	@DataPoints
 	public static Configuration[] fsConfigurations() {
-		return new Configuration[] {
-				Configuration.unix(),
-				Configuration.osX(),
-				Configuration.windows(),
-		};
+		return new Configuration[] { Configuration.unix(), Configuration.osX(), Configuration.windows(), };
 	}
-	
-	@Test(expected=NullPointerException.class)
+
+	@Test(expected = NullPointerException.class)
 	public void testDeleteNullPath() throws IOException {
 		Paths.delete(null);
 	}
-	
+
 	@Test
 	public void testQDeleteNullPath() {
 		Paths.deleteQuietly(null);
 	}
-	
+
 	@Theory
-	@Test(expected=IOException.class)
+	@Test(expected = IOException.class)
 	public void testDeleteNonExistingFile(Configuration fsConf) throws IOException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {	
+		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			Path path = fs.getPath("test");
 			Paths.delete(path);
 		}
 	}
-	
+
 	@Theory
 	public void testQDeleteNonExistingFile(Configuration fsConf) throws IOException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {	
+		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			Path path = fs.getPath("test");
 			Paths.deleteQuietly(path);
 			assertTrue(!Files.exists(path));
 		}
 	}
-	
+
 	@Theory
 	public void testDeleteSimpleFile(Configuration fsConf) throws IOException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {	
+		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			Path path = fs.getPath("test");
 			Files.createFile(path);
 			Paths.delete(path);
 			assertTrue(!Files.exists(path));
 		}
 	}
-	
+
 	@Theory
 	public void testQDeleteSimpleFile(Configuration fsConf) throws IOException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {	
+		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			Path path = fs.getPath("test");
 			Files.createFile(path);
 			Paths.deleteQuietly(path);
 			assertTrue(!Files.exists(path));
 		}
 	}
-	
+
 	@Theory
 	public void testDeleteDirectory(Configuration fsConf) throws IOException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {	
+		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			Path path = fs.getPath("test");
 			Files.createDirectory(path);
 			Paths.delete(path);
 			assertTrue(!Files.exists(path));
 		}
 	}
-	
+
 	@Theory
 	public void testQDeleteDirectory(Configuration fsConf) throws IOException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {	
+		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			Path path = fs.getPath("test");
 			Files.createDirectory(path);
 			Paths.deleteQuietly(path);
 			assertTrue(!Files.exists(path));
 		}
 	}
-	
+
 	@Theory
 	public void testDeleteDirectories(Configuration fsConf) throws IOException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {	
+		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			Path path = sampleFileHierarchy(fs);
 			Paths.delete(path);
 			assertTrue(!Files.exists(path));
@@ -118,7 +113,7 @@ public class PathsTest {
 
 	@Theory
 	public void testQDeleteDirectories(Configuration fsConf) throws IOException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {	
+		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			Path path = sampleFileHierarchy(fs);
 			Paths.deleteQuietly(path);
 			assertTrue(!Files.exists(path));

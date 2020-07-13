@@ -147,12 +147,7 @@ public class RecursiveJarSignerTest {
 				.log(log)
 				.maxDepth(maxDepth)
 				.filter(new EclipseJarSignerFilter(log))
-				.delegate(new JarSigner() {
-			@Override
-			public int sign(Path jarfile, Options options) throws IOException {
-				return 1;
-			}
-		}).build();
+				.delegate((jarfile, options) -> 1).build();
 	}
 	
 	private Path createJarWithNestedJars(Path jarFile, int maxDepth) throws IOException {

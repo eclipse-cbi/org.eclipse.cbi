@@ -30,9 +30,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 
 @SuppressWarnings("javadoc")
 @RunWith(MockitoJUnitRunner.class)
@@ -237,16 +235,13 @@ public class CodesignerTest {
 	public void testZipResult() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
 			// let's add a new file a the root of the app to simulate signing
-			when(processExecutor.exec(any(), any(), anyLong(), any())).then(new Answer<Integer>() {
-				@Override
-				public Integer answer(InvocationOnMock invocation) throws Throwable {
-					ImmutableList<String> command = (ImmutableList<String>) invocation.getArguments()[0];
-					if ("codesign".equals(command.get(0))) {
-						Path app = fs.getPath(command.get(command.size() - 1).toString());
-						Files.createFile(app.resolve("signed"));
-					}
-					return 0;
+			when(processExecutor.exec(any(), any(), anyLong(), any())).then(invocation -> {
+				ImmutableList<String> command = (ImmutableList<String>) invocation.getArguments()[0];
+				if ("codesign".equals(command.get(0))) {
+					Path app = fs.getPath(command.get(command.size() - 1).toString());
+					Files.createFile(app.resolve("signed"));
 				}
+				return 0;
 			});
 
 			Path source = createTestZipFile2(fs);

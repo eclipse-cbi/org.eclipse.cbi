@@ -27,9 +27,7 @@ import javax.servlet.http.Part;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 
 import com.google.common.jimfs.Jimfs;
 
@@ -105,13 +103,10 @@ public class RequestFacadeTest {
 		try (FileSystem fs = Jimfs.newFileSystem(); RequestFacade facade = createRequestFacadeUnderTest(fs)) {
 			when(request.getPart("testPart")).thenReturn(part);
 			when(part.getSubmittedFileName()).thenReturn("submittedFilename.txt");
-			doAnswer(new Answer<Object>() {
-				@Override
-				public Object answer(InvocationOnMock invocation) throws Throwable {
-					String filename = invocation.getArgument(0);
-					Files.createFile(fs.getRootDirectories().iterator().next().resolve("tmp").resolve(filename));
-					return null;
-				}
+			doAnswer(invocation -> {
+				String filename = invocation.getArgument(0);
+				Files.createFile(fs.getRootDirectories().iterator().next().resolve("tmp").resolve(filename));
+				return null;
 			}).when(part).write(anyString());
 
 			Path path = facade.getPartPath("testPart").get();

@@ -48,7 +48,7 @@ public interface UnsafePredicate<T> {
 	 * @return a predicate that does not throw exception.
 	 */
 	static <T> Predicate<T> safePredicate(UnsafePredicate<T> p) {
-		return (s) -> {
+		return s -> {
 			try {
 				return p.test(s);
 			} catch (Exception e) {

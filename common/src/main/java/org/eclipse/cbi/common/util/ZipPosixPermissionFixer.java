@@ -15,6 +15,7 @@ import static org.eclipse.cbi.common.util.RecordDefinition.createLEField;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipException;
@@ -27,7 +28,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import com.google.common.primitives.UnsignedInteger;
 import com.google.common.primitives.UnsignedLong;
 
@@ -111,7 +111,7 @@ abstract class ZipPosixPermissionFixer {
 		
 		public ZipReader(SeekableByteChannelRecordReader reader, long zipSize) {
 			this.reader = Preconditions.checkNotNull(reader);
-			this.recordPositions = Maps.newHashMap();
+			this.recordPositions = new HashMap<>();
 			this.zipSize = zipSize;
 		}
 		

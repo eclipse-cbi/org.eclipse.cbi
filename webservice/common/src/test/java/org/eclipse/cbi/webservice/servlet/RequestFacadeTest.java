@@ -24,7 +24,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.Part;
 
-import org.eclipse.cbi.webservice.servlet.RequestFacade;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;

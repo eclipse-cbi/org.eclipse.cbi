@@ -305,8 +305,7 @@ public class UpdatePackPropertiesFile extends Task {
 	private void deleteDirectory(File tempDestDir) {
 
 		File[] files = tempDestDir.listFiles();
-		for (int i = 0; i < files.length; i++) {
-			File file = files[i];
+		for (File file : files) {
 			if (file.isDirectory()) {
 				// call recursively
 				deleteDirectory(file);
@@ -366,17 +365,17 @@ public class UpdatePackPropertiesFile extends Task {
 		File[] files = dirObj.listFiles();
 		byte[] tmpBuf = new byte[1024];
 
-		for (int i = 0; i < files.length; i++) {
-			String entryName = files[i].getAbsolutePath().substring(rootDirectory.length());
+		for (File file : files) {
+			String entryName = file.getAbsolutePath().substring(rootDirectory.length());
 			if (!entryName.equals(".") && !entryName.equals("..")) {
-				entryName = slashify(entryName, files[i].isDirectory());
-				if (files[i].isDirectory()) {
+				entryName = slashify(entryName, file.isDirectory());
+				if (file.isDirectory()) {
 					log(" Adding Directory Entry: " + entryName, Project.MSG_DEBUG);
 					out.putNextEntry(new ZipEntry(entryName));
 					// now recurse through the directory
-					addDir(files[i], out, rootDirectory);
+					addDir(file, out, rootDirectory);
 				} else {
-					FileInputStream in = new FileInputStream(files[i].getAbsolutePath());
+					FileInputStream in = new FileInputStream(file.getAbsolutePath());
 					log(" Adding: " + entryName, Project.MSG_DEBUG);
 
 					out.putNextEntry(new ZipEntry(entryName));
@@ -415,8 +414,7 @@ public class UpdatePackPropertiesFile extends Task {
 	private String checkIfJarsSigned(String currentresults, String destinationDir, String parentDir, String[] jars)
 			throws IOException {
 		if (jars != null) {
-			for (int i = 0; i < jars.length; i++) {
-				String jarname = jars[i];
+			for (String jarname : jars) {
 				try (JarFile jarFile = new JarFile(destinationDir + parentDir + jarname)) {
 					Enumeration<? extends ZipEntry> jarentries = jarFile.entries();
 					while (jarentries.hasMoreElements()) {

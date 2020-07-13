@@ -34,7 +34,7 @@ public class SigningServer {
 	private String configurationFilePath = "windows-signing-service.properties";
 	
 	@Argument
-	private List<String> arguments = new ArrayList<String>();
+	private List<String> arguments = new ArrayList<>();
 	
     public static void main(String[] args) throws Exception {
     	new SigningServer().doMain(FileSystems.getDefault(), args);

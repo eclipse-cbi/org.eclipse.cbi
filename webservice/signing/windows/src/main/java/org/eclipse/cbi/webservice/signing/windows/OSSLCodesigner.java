@@ -30,7 +30,7 @@ import com.google.common.collect.ImmutableList;
 public abstract class OSSLCodesigner {
 
 	private static final String TEMP_FILE_PREFIX = OSSLCodesigner.class.getSimpleName() + "-";
-	private static Logger logger = LoggerFactory.getLogger(OSSLCodesigner.class);;
+	private static Logger logger = LoggerFactory.getLogger(OSSLCodesigner.class);
 
 	public Path sign(Path file) throws IOException {
 		Path out = null;

@@ -52,7 +52,7 @@ public abstract class DMGPackagerServletRequestParser implements Closeable {
 	private final Set<Path> tempPaths;
 	
 	DMGPackagerServletRequestParser() {
-		tempPaths = new LinkedHashSet<Path>();
+		tempPaths = new LinkedHashSet<>();
 	}
 	
 	@Override

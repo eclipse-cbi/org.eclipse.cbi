@@ -34,7 +34,7 @@ public class DMGPackagerServer {
 	private String configurationFilePath = "dmg-packaging-service.properties";
 	
 	@Argument
-	private List<String> arguments = new ArrayList<String>();
+	private List<String> arguments = new ArrayList<>();
 	
     public static void main(String[] args) throws Exception {
     	new DMGPackagerServer().doMain(FileSystems.getDefault(), args);

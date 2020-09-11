@@ -11,13 +11,17 @@
 package org.eclipse.cbi.common.util;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFileAttributeView;
@@ -34,13 +38,17 @@ import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.UnixStat;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.compress.archivers.zip.ZipEncoding;
+import org.apache.commons.compress.archivers.zip.ZipEncodingHelper;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteStreams;
 import com.google.common.primitives.UnsignedInteger;
 
 /**
@@ -64,50 +72,56 @@ public class Zips {
 	public static int unpackZip(Path source, final Path outputDir) throws IOException {
 		checkPathExists(source, "'source' path must exists");
 		try (ZipFile zipFile = new ZipFile(Files.newByteChannel(source))) {
-			return unpack(zipFile, outputDir, Zips::fixPosixPermissions);
+			return unpack(zipFile, outputDir);
 		}
 	}
 
-	private static void fixPosixPermissions(ZipArchiveEntry entry, Path entryPath) {
-		PosixFileAttributeView attributes = Files.getFileAttributeView(entryPath, PosixFileAttributeView.class);
-		if (attributes != null) {
-			try {
-				Files.setPosixFilePermissions(entryPath,
-						MorePosixFilePermissions.fromFileMode(entry.getUnixMode() & PERM_MASK));
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-	}
-
-	private static int unpack(ZipFile zipFile, final Path outputDir, BiConsumer<ZipArchiveEntry, Path> entryFixer)
-			throws IOException, ZipException {
+	private static int unpack(ZipFile zipFile, final Path outputDir) throws IOException {
 		int unpack = 0;
 		Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
 		while (entries.hasMoreElements()) {
 			ZipArchiveEntry entry = entries.nextElement();
-			final Path entryPath = unpackZipEntry(zipFile, entry, outputDir);
-			if (entryFixer != null) {
-				entryFixer.accept(entry, entryPath);
-			}
+			unpackEntry(zipFile, entry, outputDir);
 			unpack++;
 		}
 		return unpack;
 	}
 
-	private static Path unpackZipEntry(ZipFile zipFile, ZipArchiveEntry entry, final Path outputDir)
-			throws IOException, ZipException {
+	private static Path unpackEntry(ZipFile zipFile, ZipArchiveEntry entry, final Path outputDir) throws IOException {
 		final Path entryPath = outputDir.resolve(entry.getName());
+
 		if (entry.isDirectory()) {
 			Files.createDirectories(entryPath);
 		} else {
 			Path parentPath = entryPath.normalize().getParent();
 			Files.createDirectories(parentPath);
-			Files.copy(zipFile.getInputStream(entry), entryPath, StandardCopyOption.REPLACE_EXISTING);
+			if (entry.isUnixSymlink()) {
+				Files.createSymbolicLink(entryPath, parentPath.resolve(zipFile.getUnixSymlink(entry)));
+			} else {
+				Files.copy(zipFile.getInputStream(entry), entryPath, StandardCopyOption.REPLACE_EXISTING);
+			}
 		}
 
-		Files.setLastModifiedTime(entryPath, FileTime.from(entry.getTime(), TimeUnit.MILLISECONDS));
+		setPermissions(entryPath, entry, LinkOption.NOFOLLOW_LINKS);
+		setLastModifiedTime(entryPath, FileTime.from(entry.getTime(), TimeUnit.MILLISECONDS), LinkOption.NOFOLLOW_LINKS);
+		
 		return entryPath;
+	}
+
+	private static Path setLastModifiedTime(Path path, FileTime fileTime, LinkOption... linkOptions) throws IOException {
+		BasicFileAttributeView attributes = Files.getFileAttributeView(path, BasicFileAttributeView.class, linkOptions);
+		if (attributes != null) {
+			attributes.setTimes(fileTime, null, null);
+		}
+		return path;
+	}
+
+	private static Path setPermissions(Path path, ZipArchiveEntry entry, LinkOption... linkOptions) throws IOException {
+		PosixFileAttributeView attributes = Files.getFileAttributeView(path, PosixFileAttributeView.class, linkOptions);
+		if (attributes != null) {
+			attributes.setPermissions(MorePosixFilePermissions.fromFileMode(entry.getUnixMode() & PERM_MASK));
+		}
+		return path;
 	}
 
 	/**
@@ -122,7 +136,7 @@ public class Zips {
 	public static int unpackJar(Path source, Path outputDir) throws IOException {
 		checkPathExists(source, "'source' path must exists");
 		try (ZipFile zipFile = new ZipFile(Files.newByteChannel(source))) {
-			return unpack(zipFile, outputDir, null);
+			return unpack(zipFile, outputDir);
 		}
 	}
 
@@ -134,41 +148,47 @@ public class Zips {
 	}
 
 	@VisibleForTesting
-	static int unpack(TarArchiveInputStream zis, Path outputDir) throws IOException {
+	static int unpack(TarArchiveInputStream tais, Path outputDir) throws IOException {
 		int unpackedEntries = 0;
-		for (TarArchiveEntry entry = zis.getNextTarEntry(); entry != null; entry = zis.getNextTarEntry()) {
-			final Path entryPath = outputDir.resolve(entry.getName());
-			if (entry.isDirectory()) {
-				Files.createDirectories(entryPath);
-			} else if (entry.isLink()) {
-				Files.createLink(entryPath, outputDir.resolve(entry.getLinkName()));
-			} else if (entry.isSymbolicLink()) {
-				Files.createSymbolicLink(entryPath, outputDir.resolve(entry.getLinkName()));
-			} else if (entry.isFile()) {
-				Path parentPath = entryPath.normalize().getParent();
-				Files.createDirectories(parentPath);
-				Files.copy(zis, entryPath, StandardCopyOption.REPLACE_EXISTING);
-			} else {
-				throw new IOException("Type of a Tar entry is not supported");
-			}
-
-			if (!Files.isSymbolicLink(entryPath)) {
-				setPermissions(entry, entryPath);
-				Files.setLastModifiedTime(entryPath,
-						FileTime.from(entry.getLastModifiedDate().getTime(), TimeUnit.MILLISECONDS));
-			}
+		for (TarArchiveEntry entry = tais.getNextTarEntry(); entry != null; entry = tais.getNextTarEntry()) {
+			unpackEntry(tais, entry, outputDir);
 			unpackedEntries++;
 		}
 
 		return unpackedEntries;
 	}
 
-	private static void setPermissions(TarArchiveEntry entry, final Path entryPath) throws IOException {
+	private static Path unpackEntry(TarArchiveInputStream tais, TarArchiveEntry entry, final Path outputDir) throws IOException {
+		final Path entryPath = outputDir.resolve(entry.getName());
+		if (entry.isDirectory()) {
+			Files.createDirectories(entryPath);
+		} else {
+			Path parentPath = entryPath.normalize().getParent();
+			Files.createDirectories(parentPath);
+			if (entry.isLink()) {
+				Files.createLink(entryPath, outputDir.resolve(entry.getLinkName()));
+			} else if (entry.isSymbolicLink()) {
+				Files.createSymbolicLink(entryPath, outputDir.resolve(entry.getLinkName()));
+			} else if (entry.isFile()) {
+				Files.copy(tais, entryPath, StandardCopyOption.REPLACE_EXISTING);
+			} else {
+				throw new IOException("Type of a Tar entry is not supported");
+			}
+		}
+
+		setPermissions(entryPath, entry, LinkOption.NOFOLLOW_LINKS);
+		setLastModifiedTime(entryPath, FileTime.from(entry.getLastModifiedDate().getTime(), TimeUnit.MILLISECONDS), LinkOption.NOFOLLOW_LINKS);
+
+		return entryPath;
+	}
+
+	private static Path setPermissions(final Path path, TarArchiveEntry entry, LinkOption... linkOptions) throws IOException {
 		// to set permissions if we are on a posix file system.
-		PosixFileAttributeView attributes = Files.getFileAttributeView(entryPath, PosixFileAttributeView.class);
+		PosixFileAttributeView attributes = Files.getFileAttributeView(path, PosixFileAttributeView.class, linkOptions);
 		if (attributes != null) {
 			attributes.setPermissions(MorePosixFilePermissions.fromFileMode(entry.getMode()));
 		}
+		return path;
 	}
 
 	/**
@@ -260,23 +280,26 @@ public class Zips {
 
 	private static int packEntries(Path source, ZipArchiveOutputStream zos, boolean preserveRoot,
 			Set<Path> pathToExcludes) throws IOException {
-		if (Files.isDirectory(source)) {
 			final PathMapper pathMapper;
 			if (preserveRoot) {
 				pathMapper = new PreserveRootPathMapper(source);
 			} else {
 				pathMapper = new NoPreserveRootPathMapper(source);
 			}
+		if (Files.isDirectory(source)) {
 			PackerFileVisitor packerFileVisitor = new PackerFileVisitor(zos, pathMapper, pathToExcludes);
 			Files.walkFileTree(source, packerFileVisitor);
 			return packerFileVisitor.packedEntries();
+		} else if (Files.isSymbolicLink(source)) {
+			putSymlinkEntry(source, zos, pathMapper, source.getFileName());
+			return 1;
 		} else {
 			putFileEntry(source, zos, source.getFileName());
 			return 1;
 		}
 	}
 
-	private static String entryNameFrom(Path path, boolean isDirectoryw) {
+	private static String entryNameFrom(Path path, boolean isDirectory) {
 		final String pathFsSeparator = path.getFileSystem().getSeparator();
 		final String escapedEntryName;
 
@@ -287,11 +310,29 @@ public class Zips {
 			escapedEntryName = path.toString();
 		}
 
-		if (isDirectoryw && !escapedEntryName.endsWith(ZIP_ENTRY_NAME_SEPARATOR)) {
+		if (isDirectory && !escapedEntryName.endsWith(ZIP_ENTRY_NAME_SEPARATOR)) {
 			return escapedEntryName + ZIP_ENTRY_NAME_SEPARATOR;
 		} else {
 			return escapedEntryName;
 		}
+	}
+
+	private static void putSymlinkEntry(Path file, ZipArchiveOutputStream zos, PathMapper pathMapper, Path entryPath) throws IOException {
+		ZipArchiveEntry zipEntry = createArchiveEntry(zos, entryNameFrom(entryPath, false));
+		zipEntry.setTime(Files.getLastModifiedTime(file, LinkOption.NOFOLLOW_LINKS).toMillis());
+
+		Path linkTarget = Files.readSymbolicLink(file);
+		ZipEncoding zipEncoding = ZipEncodingHelper.getZipEncoding(zos.getEncoding());
+		ByteBuffer rawLinkTargetEntryPath = zipEncoding.encode(entryNameFrom(pathMapper.mapTo(linkTarget), Files.isDirectory(linkTarget)));
+		byte[] b = new byte[rawLinkTargetEntryPath.remaining()];
+		rawLinkTargetEntryPath.get(b);
+		
+		zipEntry.setSize(b.length);
+		zipEntry.setUnixMode(UnixStat.LINK_FLAG | UnixStat.DEFAULT_LINK_PERM);
+
+		zos.putArchiveEntry(zipEntry);
+		ByteStreams.copy(new ByteArrayInputStream(b), zos);
+		zos.closeArchiveEntry();
 	}
 
 	private static void putFileEntry(Path file, ZipArchiveOutputStream zos, Path entryPath) throws IOException {
@@ -398,7 +439,11 @@ public class Zips {
 		public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 			if (!pathToExcludes.contains(file)) {
 				Path entryPath = pathMapper.mapTo(file);
-				putFileEntry(file, zos, entryPath);
+				if (Files.isSymbolicLink(file)) {
+					putSymlinkEntry(file, zos, pathMapper, entryPath);
+				} else {
+					putFileEntry(file, zos, entryPath);
+				}
 				packedEntries++;
 			}
 			return FileVisitResult.CONTINUE;

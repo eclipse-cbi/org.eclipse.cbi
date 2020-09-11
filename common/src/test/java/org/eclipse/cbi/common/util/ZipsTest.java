@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
@@ -164,6 +165,30 @@ public class ZipsTest {
 			}
 		}
 	}
+
+	@Test
+	public void testPackLink() throws IOException {
+		Configuration conf = Configuration.unix().toBuilder().setAttributeViews("basic", "owner", "unix", "posix").build();
+		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
+			Path path1 = createLoremIpsumFile(fs.getPath("folder", "t1", "Test1.java"), 3);
+			Path path2 = createLoremIpsumFile(fs.getPath("folder", "t2", "t3", "Test2.java"), 10);
+			Path path3 = Files.createSymbolicLink(fs.getPath("folder/link1"), path1);
+			Path path4 = Files.createSymbolicLink(fs.getPath("folder/t2/link2"), fs.getPath("folder/t2/t3"));
+			Path zip = fs.getPath("testPackWithFolders.zip");
+			assertEquals(7, Zips.packZip(fs.getPath("folder"), zip, false));
+			
+			try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zip))) {
+				checkNextEntry(zis, path3, "t1/Test1.java");
+				checkNextEntry(zis, path1.getParent(), "t1/Test1.java");
+				checkNextEntry(zis, path1, "t1/Test1.java");
+				checkNextEntry(zis, path2.getParent(), "t2/");
+				checkNextEntry(zis, path4, "t2/t3/");
+				checkNextEntry(zis, path2.getParent().getParent(), "t2/t3/");
+				checkNextEntry(zis, path2, "t2/t3/Test2.java");
+				assertNull(zis.getNextEntry());
+			}
+		}
+	}
 	
 	@Theory
 	public void testPackWithFoldersPreservingRoot(Configuration conf) throws IOException {
@@ -228,6 +253,43 @@ public class ZipsTest {
 			assertTrue(Files.size(fs.getPath("unzipFolder/folder/t1/Test1.java")) > 0);
 			assertTrue(Files.exists(fs.getPath("unzipFolder/folder/t2/t3/Test2.java")));
 			assertTrue(Files.size(fs.getPath("unzipFolder/folder/t2/t3/Test2.java")) > 0);
+		}
+	}
+
+	@Theory
+	public void testUnpackZipWithLinks(Configuration conf) throws IOException {
+		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
+			try (InputStream is = this.getClass().getResource("/withsymlinks.zip").openStream()) {
+				Files.copy(is, fs.getPath("withsymlinks.zip"));
+			}
+			try {
+				int unpackNum = Zips.unpackZip(fs.getPath("withsymlinks.zip"), fs.getPath("unzipFolder"));
+				assertEquals(12, unpackNum);
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new RuntimeException(e);
+			}
+			assertTrue(Files.exists(fs.getPath("unzipFolder/file1")));
+			assertTrue(Files.exists(fs.getPath("unzipFolder/file2")));
+			assertTrue(Files.exists(fs.getPath("unzipFolder/folder1")));
+			assertTrue(Files.exists(fs.getPath("unzipFolder/folder1/subfile1")));
+			assertTrue(Files.exists(fs.getPath("unzipFolder/folder1/subfile2")));
+			assertTrue(Files.exists(fs.getPath("unzipFolder/folder2")));
+			
+			assertTrue(Files.exists(fs.getPath("unzipFolder/link1"), LinkOption.NOFOLLOW_LINKS));
+			assertTrue(Files.exists(fs.getPath("unzipFolder/folder1/sublink1"), LinkOption.NOFOLLOW_LINKS));
+			assertTrue(Files.exists(fs.getPath("unzipFolder/folder1/subfolderlink2"), LinkOption.NOFOLLOW_LINKS));
+			assertTrue(Files.exists(fs.getPath("unzipFolder/folder1Link"), LinkOption.NOFOLLOW_LINKS));
+
+			assertTrue(Files.isSameFile(Files.readSymbolicLink(fs.getPath("unzipFolder/link1")), fs.getPath("unzipFolder/file1")));
+			assertTrue(Files.isSameFile(Files.readSymbolicLink(fs.getPath("unzipFolder/folder1/sublink1")), fs.getPath("unzipFolder/file1")));
+			assertTrue(Files.isSameFile(Files.readSymbolicLink(fs.getPath("unzipFolder/folder1/subfolderlink2")), fs.getPath("unzipFolder/folder2")));
+			assertTrue(Files.isSameFile(Files.readSymbolicLink(fs.getPath("unzipFolder/folder1Link")), fs.getPath("unzipFolder/folder1")));
+
+			assertTrue(Files.isSymbolicLink(fs.getPath("unzipFolder/link1")));
+			assertTrue(Files.isSymbolicLink(fs.getPath("unzipFolder/folder1/sublink1")));
+			assertTrue(Files.isSymbolicLink(fs.getPath("unzipFolder/folder1/subfolderlink2")));
+			assertTrue(Files.isSymbolicLink(fs.getPath("unzipFolder/folder1Link")));
 		}
 	}
 	
@@ -342,6 +404,7 @@ public class ZipsTest {
 		try (FileSystem fs = Jimfs.newFileSystem(conf); 
 			TarArchiveInputStream is = new TarArchiveInputStream(new GZIPInputStream(this.getClass().getResource("/test.tar.gz").openStream()))) {
 			assertEquals(8, Zips.unpack(is, fs.getPath("untarFolder")));
+			assertTrue(Files.exists(fs.getPath("untarFolder", "folderSymlink"), LinkOption.NOFOLLOW_LINKS));
 			assertTrue(Files.isSymbolicLink(fs.getPath("untarFolder", "folderSymlink")));
 			assertTrue(Files.isSameFile(fs.getPath("untarFolder", "folder"), Files.readSymbolicLink(fs.getPath("untarFolder", "folderSymlink"))));
 			assertTrue(Files.isSameFile(fs.getPath("untarFolder", "folder2", "hardlinkToExe"), fs.getPath("untarFolder", "anExe")));
@@ -363,15 +426,19 @@ public class ZipsTest {
 	private static void checkNextEntry(ZipInputStream zis, Path originalPath, String expectedEntryName) throws IOException {
 		ZipEntry entry = zis.getNextEntry();
 		assertNotNull(entry);
-		assertEquals(expectedEntryName, entry.getName());
 		
 		if (!Files.isDirectory(originalPath)) {
-			assertArrayEquals(Files.readAllBytes(originalPath), ByteStreams.toByteArray(zis));
-			assertEquals(Files.size(originalPath), entry.getSize());
+			if (Files.isSymbolicLink(originalPath)) {
+				assertEquals(expectedEntryName, new String(ByteStreams.toByteArray(zis)));
+			} else {
+				assertEquals(expectedEntryName, entry.getName());
+				assertArrayEquals(Files.readAllBytes(originalPath), ByteStreams.toByteArray(zis));
+				assertEquals(Files.size(originalPath), entry.getSize());
+			}
 		}
 		
 		// zip entry time encoding is lossy.
-		long pathTime = dosToJavaTime(javaToDosTime(Files.getLastModifiedTime(originalPath).toMillis()));
+		long pathTime = dosToJavaTime(javaToDosTime(Files.getLastModifiedTime(originalPath, LinkOption.NOFOLLOW_LINKS).toMillis()));
 		assertEquals(pathTime, entry.getTime());
 	}
 

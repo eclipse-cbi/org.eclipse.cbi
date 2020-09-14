@@ -109,6 +109,7 @@ public class Zips {
 	}
 
 	private static Path setLastModifiedTime(Path path, FileTime fileTime, LinkOption... linkOptions) throws IOException {
+		// We cannot just call Files.setLastModifiedTime as it does not take LinkOption and thus does not work with symlinks
 		BasicFileAttributeView attributes = Files.getFileAttributeView(path, BasicFileAttributeView.class, linkOptions);
 		if (attributes != null) {
 			attributes.setTimes(fileTime, null, null);
@@ -117,6 +118,7 @@ public class Zips {
 	}
 
 	private static Path setPermissions(Path path, ZipArchiveEntry entry, LinkOption... linkOptions) throws IOException {
+		// We cannot just call Files.setPosixFilePermissions as it does not take LinkOption and thus does not work with symlinks
 		PosixFileAttributeView attributes = Files.getFileAttributeView(path, PosixFileAttributeView.class, linkOptions);
 		if (attributes != null) {
 			attributes.setPermissions(MorePosixFilePermissions.fromFileMode(entry.getUnixMode() & PERM_MASK));

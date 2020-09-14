@@ -35,7 +35,7 @@ export DRY_RUN="${DRY_RUN:-false}"
 latest_maven_release() {
   local groupId=${1}
   local artifactId=${2}
-  curl -sSL "http://repo1.maven.org/maven2/${groupId//\.//}/${artifactId}/maven-metadata.xml" | xml sel -t -v "metadata/versioning/release"
+  curl -sSL "https://repo1.maven.org/maven2/${groupId//\.//}/${artifactId}/maven-metadata.xml" | xml sel -t -v "metadata/versioning/release"
 }
 
 latest_maven_release_gav() {

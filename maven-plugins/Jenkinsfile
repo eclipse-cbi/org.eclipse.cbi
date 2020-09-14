@@ -2,7 +2,7 @@ def latest_maven_release_gav(groupId, artifactId) {
   return sh(
     script: """
       _groupId=${groupId}
-      latest_maven_release="\$(curl -sSL "http://repo1.maven.org/maven2/\${_groupId//\\.//}/${artifactId}/maven-metadata.xml" | xml sel -t -v "metadata/versioning/release")"
+      latest_maven_release="\$(curl -sSL "https://repo1.maven.org/maven2/\${_groupId//\\.//}/${artifactId}/maven-metadata.xml" | xml sel -t -v "metadata/versioning/release")"
       echo "${groupId}:${artifactId}:\${latest_maven_release}"
     """,
     returnStdout: true

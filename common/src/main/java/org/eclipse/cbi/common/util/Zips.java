@@ -29,10 +29,14 @@ import java.nio.file.attribute.PosixFileAttributes;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
-import java.util.zip.ZipException;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteStreams;
+import com.google.common.primitives.UnsignedInteger;
 
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
@@ -44,12 +48,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipEncoding;
 import org.apache.commons.compress.archivers.zip.ZipEncodingHelper;
 import org.apache.commons.compress.archivers.zip.ZipFile;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.io.ByteStreams;
-import com.google.common.primitives.UnsignedInteger;
 
 /**
  * Utility class to work with Zip files ({@link Path} based).
@@ -109,19 +107,23 @@ public class Zips {
 	}
 
 	private static Path setLastModifiedTime(Path path, FileTime fileTime, LinkOption... linkOptions) throws IOException {
-		// We cannot just call Files.setLastModifiedTime as it does not take LinkOption and thus does not work with symlinks
-		BasicFileAttributeView attributes = Files.getFileAttributeView(path, BasicFileAttributeView.class, linkOptions);
-		if (attributes != null) {
-			attributes.setTimes(fileTime, null, null);
+			// This "if" can be removed once it runs on JDK11+ (see https://bugs.openjdk.java.net/browse/JDK-8220793)
+		if (!Files.isSymbolicLink(path)) {
+			BasicFileAttributeView attributes = Files.getFileAttributeView(path, BasicFileAttributeView.class, linkOptions);
+			if (attributes != null) {
+				attributes.setTimes(fileTime, null, null);
+			}
 		}
 		return path;
 	}
 
 	private static Path setPermissions(Path path, ZipArchiveEntry entry, LinkOption... linkOptions) throws IOException {
-		// We cannot just call Files.setPosixFilePermissions as it does not take LinkOption and thus does not work with symlinks
-		PosixFileAttributeView attributes = Files.getFileAttributeView(path, PosixFileAttributeView.class, linkOptions);
-		if (attributes != null) {
-			attributes.setPermissions(MorePosixFilePermissions.fromFileMode(entry.getUnixMode() & PERM_MASK));
+		// This "if" cannot be removed except for macOS platform, if jdk would support such behavior
+		if (!Files.isSymbolicLink(path)) {
+			PosixFileAttributeView attributes = Files.getFileAttributeView(path, PosixFileAttributeView.class, linkOptions);
+			if (attributes != null) {
+				attributes.setPermissions(MorePosixFilePermissions.fromFileMode(entry.getUnixMode() & PERM_MASK));
+			}
 		}
 		return path;
 	}

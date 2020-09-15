@@ -94,7 +94,7 @@ public class Zips {
 			Path parentPath = entryPath.normalize().getParent();
 			Files.createDirectories(parentPath);
 			if (entry.isUnixSymlink()) {
-				Files.createSymbolicLink(entryPath, parentPath.resolve(zipFile.getUnixSymlink(entry)));
+				Files.createSymbolicLink(entryPath, entryPath.getFileSystem().getPath(zipFile.getUnixSymlink(entry)));
 			} else {
 				Files.copy(zipFile.getInputStream(entry), entryPath, StandardCopyOption.REPLACE_EXISTING);
 			}
@@ -172,7 +172,7 @@ public class Zips {
 			if (entry.isLink()) {
 				Files.createLink(entryPath, outputDir.resolve(entry.getLinkName()));
 			} else if (entry.isSymbolicLink()) {
-				Files.createSymbolicLink(entryPath, outputDir.resolve(entry.getLinkName()));
+				Files.createSymbolicLink(entryPath, entryPath.getFileSystem().getPath(entry.getLinkName()));
 			} else if (entry.isFile()) {
 				Files.copy(tais, entryPath, StandardCopyOption.REPLACE_EXISTING);
 			} else {

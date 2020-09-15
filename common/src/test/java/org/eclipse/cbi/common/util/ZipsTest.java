@@ -35,6 +35,10 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import com.google.common.io.ByteStreams;
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
+
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
@@ -44,10 +48,6 @@ import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
-
-import com.google.common.io.ByteStreams;
-import com.google.common.jimfs.Configuration;
-import com.google.common.jimfs.Jimfs;
 
 @RunWith(Theories.class)
 public class ZipsTest {
@@ -281,16 +281,25 @@ public class ZipsTest {
 			assertTrue(Files.exists(fs.getPath("unzipFolder/folder1/subfolderlink2"), LinkOption.NOFOLLOW_LINKS));
 			assertTrue(Files.exists(fs.getPath("unzipFolder/folder1Link"), LinkOption.NOFOLLOW_LINKS));
 
-			assertTrue(Files.isSameFile(Files.readSymbolicLink(fs.getPath("unzipFolder/link1")), fs.getPath("unzipFolder/file1")));
-			assertTrue(Files.isSameFile(Files.readSymbolicLink(fs.getPath("unzipFolder/folder1/sublink1")), fs.getPath("unzipFolder/file1")));
-			assertTrue(Files.isSameFile(Files.readSymbolicLink(fs.getPath("unzipFolder/folder1/subfolderlink2")), fs.getPath("unzipFolder/folder2")));
-			assertTrue(Files.isSameFile(Files.readSymbolicLink(fs.getPath("unzipFolder/folder1Link")), fs.getPath("unzipFolder/folder1")));
+			assertEquals(Files.readSymbolicLink(fs.getPath("unzipFolder/link1")), fs.getPath("file1"));
+			assertEquals(Files.readSymbolicLink(fs.getPath("unzipFolder/folder1/sublink1")), fs.getPath("../file1"));
+			assertEquals(Files.readSymbolicLink(fs.getPath("unzipFolder/folder1/subfolderlink2")), fs.getPath("../folder2"));
+			assertEquals(Files.readSymbolicLink(fs.getPath("unzipFolder/folder1Link")), fs.getPath("folder1"));
+
+			assertTrue(Files.isSameFile(resolveLink(fs.getPath("unzipFolder/link1")), fs.getPath("unzipFolder/file1")));
+			assertTrue(Files.isSameFile(resolveLink(fs.getPath("unzipFolder/folder1/sublink1")), fs.getPath("unzipFolder/file1")));
+			assertTrue(Files.isSameFile(resolveLink(fs.getPath("unzipFolder/folder1/subfolderlink2")), fs.getPath("unzipFolder/folder2")));
+			assertTrue(Files.isSameFile(resolveLink(fs.getPath("unzipFolder/folder1Link")), fs.getPath("unzipFolder/folder1")));
 
 			assertTrue(Files.isSymbolicLink(fs.getPath("unzipFolder/link1")));
 			assertTrue(Files.isSymbolicLink(fs.getPath("unzipFolder/folder1/sublink1")));
 			assertTrue(Files.isSymbolicLink(fs.getPath("unzipFolder/folder1/subfolderlink2")));
 			assertTrue(Files.isSymbolicLink(fs.getPath("unzipFolder/folder1Link")));
 		}
+	}
+
+	Path resolveLink(Path link) throws IOException {
+		return link.getParent().resolve(Files.readSymbolicLink(link));
 	}
 	
 	@Theory
@@ -406,7 +415,8 @@ public class ZipsTest {
 			assertEquals(8, Zips.unpack(is, fs.getPath("untarFolder")));
 			assertTrue(Files.exists(fs.getPath("untarFolder", "folderSymlink"), LinkOption.NOFOLLOW_LINKS));
 			assertTrue(Files.isSymbolicLink(fs.getPath("untarFolder", "folderSymlink")));
-			assertTrue(Files.isSameFile(fs.getPath("untarFolder", "folder"), Files.readSymbolicLink(fs.getPath("untarFolder", "folderSymlink"))));
+			assertTrue(Files.isSameFile(fs.getPath("untarFolder", "folder"), resolveLink(fs.getPath("untarFolder", "folderSymlink"))));
+			assertTrue(Files.isSameFile(fs.getPath("untarFolder","folder","testFile"), resolveLink(fs.getPath("untarFolder","folder2","aSymlink"))));
 			assertTrue(Files.isSameFile(fs.getPath("untarFolder", "folder2", "hardlinkToExe"), fs.getPath("untarFolder", "anExe")));
 			Path exe = fs.getPath("untarFolder", "anExe");
 			PosixFileAttributeView posixView = Files.getFileAttributeView(exe, PosixFileAttributeView.class);

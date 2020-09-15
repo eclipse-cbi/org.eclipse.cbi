@@ -1,0 +1,309 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.eclipse.cbi</groupId>
+    <artifactId>cbi-parent</artifactId>
+    <version>1.3.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>cbi-bom</artifactId>
+  <packaging>pom</packaging>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <jetty-version>9.4.31.v20200723</jetty-version>
+    <auto-value.version>1.7.4</auto-value.version> <!-- also defined in parent pom for annotation processor -->
+    <apache-httpclient-version>4.5.12</apache-httpclient-version>
+    <maven-api-version>3.6.3</maven-api-version>
+    <jackson.version>2.11.2</jackson.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+
+      <!-- common -->
+      <dependency>
+        <groupId>org.eclipse.cbi</groupId>
+        <artifactId>cbi-common</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.cbi</groupId>
+        <artifactId>cbi-common</artifactId>
+        <version>${project.version}</version>
+        <type>test-jar</type>
+      </dependency>
+
+      <!-- Maven plugins -->
+
+      <!-- <dependency>
+        <groupId>org.eclipse.cbi.maven.plugins</groupId>
+        <artifactId>maven-plugin-parent</artifactId>
+        <version>${project.version}</version>
+      </dependency> -->
+      <dependency>
+        <groupId>org.eclipse.cbi.maven.plugins</groupId>
+        <artifactId>cbi-maven-plugin-common</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.cbi.maven.plugins</groupId>
+        <artifactId>cbi-maven-plugin-common</artifactId>
+        <version>${project.version}</version>
+        <type>test-jar</type>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.cbi.maven.plugins</groupId>
+        <artifactId>eclipse-cbi-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.cbi.maven.plugins</groupId>
+        <artifactId>eclipse-dmg-packager</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.cbi.maven.plugins</groupId>
+        <artifactId>eclipse-flatpak-packager</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.cbi.maven.plugins</groupId>
+        <artifactId>eclipse-jarsigner-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.cbi.maven.plugins</groupId>
+        <artifactId>eclipse-macsigner-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.cbi.maven.plugins</groupId>
+        <artifactId>eclipse-winsigner-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!-- Webservices -->
+
+      <dependency>
+        <groupId>org.eclipse.cbi</groupId>
+        <artifactId>webservice-parent</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.cbi</groupId>
+        <artifactId>webservice-common</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.eclipse.cbi</groupId>
+        <artifactId>packaging-parent</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.cbi</groupId>
+        <artifactId>flatpak-packaging-service</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.cbi</groupId>
+        <artifactId>dmg-packaging-service</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.eclipse.cbi</groupId>
+        <artifactId>signing-parent</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.cbi</groupId>
+        <artifactId>jar-signing-service</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.cbi</groupId>
+        <artifactId>macosx-signing-service</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.cbi</groupId>
+        <artifactId>windows-signing-service</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!-- Dependencies -->
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-compress</artifactId>
+        <version>1.20</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>29.0-jre</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.auto.value</groupId>
+        <artifactId>auto-value-annotations</artifactId>
+        <version>${auto-value.version}</version>
+      </dependency>
+      <dependency> <!-- Nullable annotations -->
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>jsr305</artifactId>
+        <version>3.0.2</version>
+      </dependency>
+
+      <!-- Webservices dependencies -->
+      <dependency>
+        <groupId>args4j</groupId>
+        <artifactId>args4j</artifactId>
+        <version>2.33</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-server</artifactId>
+        <version>${jetty-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-servlet</artifactId>
+        <version>${jetty-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-log4j12</artifactId>
+        <version>1.7.30</version>
+      </dependency>
+
+      <!-- Maven plugins dependencies -->
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-core</artifactId>
+        <version>${maven-api-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>tycho-core</artifactId>
+        <version>2.0.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-plugin-api</artifactId>
+        <version>${maven-api-version}</version>
+      </dependency>
+      <dependency> <!-- Required dependency convergence enforcer rule -->
+        <groupId>org.codehaus.plexus</groupId>
+        <artifactId>plexus-classworlds</artifactId>
+        <version>2.6.0</version>
+      </dependency>
+      <dependency> <!-- Required dependency convergence enforcer rule -->
+        <groupId>org.codehaus.plexus</groupId>
+        <artifactId>plexus-utils</artifactId>
+        <version>3.3.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.plexus</groupId> <!-- Required dependency convergence enforcer rule -->
+        <artifactId>plexus-component-annotations</artifactId>
+        <version>2.1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId> <!-- Required dependency convergence enforcer rule -->
+        <artifactId>slf4j-api</artifactId>
+        <version>1.7.30</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-io</groupId> <!-- Required dependency convergence enforcer rule -->
+        <artifactId>commons-io</artifactId>
+        <version>2.8.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven</groupId> <!-- Required dependency convergence enforcer rule -->
+        <artifactId>maven-artifact</artifactId>
+        <version>${maven-api-version}</version>
+      </dependency>
+      <dependency> <!-- Required dependency convergence enforcer rule -->
+        <groupId>org.apache.maven.shared</groupId>
+        <artifactId>maven-shared-utils</artifactId>
+        <version>3.3.3</version>
+      </dependency>
+      <dependency> <!-- Required dependency convergence enforcer rule -->
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-model</artifactId>
+        <version>${maven-api-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven.plugin-tools</groupId>
+        <artifactId>maven-plugin-annotations</artifactId>
+        <version>3.6.0</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.sonatype.plexus</groupId>
+        <artifactId>plexus-build-api</artifactId>
+        <version>0.0.7</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpclient</artifactId>
+        <version>${apache-httpclient-version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpmime</artifactId>
+        <version>${apache-httpclient-version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcpg-jdk15on</artifactId>
+        <version>1.66</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.maven.shared</groupId>
+        <artifactId>maven-artifact-transfer</artifactId>
+        <version>0.12.0</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-annotations</artifactId>
+        <version>4.1.2</version>
+      </dependency>
+  
+      <!-- Dependency scope: test -->
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.13</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.jimfs</groupId>
+        <artifactId>jimfs</artifactId>
+        <version>1.1</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>3.5.10</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+</project>

@@ -7,13 +7,31 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <groupId>org.eclipse.cbi.maven.plugins</groupId>
   <artifactId>cbi-maven-plugin-common</artifactId>
 
   <parent>
-    <groupId>org.eclipse.cbi.maven.plugins</groupId>
-    <artifactId>maven-plugin-parent</artifactId>
+    <groupId>org.eclipse.cbi</groupId>
+    <artifactId>cbi-build-parent</artifactId>
     <version>1.3.0-SNAPSHOT</version>
+    <relativePath>../../build-parent/pom.xml</relativePath>
   </parent>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
   <dependencies>
     <dependency>

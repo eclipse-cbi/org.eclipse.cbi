@@ -12,7 +12,7 @@
 <project name="Eclipse CBI Plugins">
   <bannerLeft>
     <name>Eclipse</name>
-    <src>https://www.eclipse.org/eclipse.org-common/themes/solstice/public/images/logo/eclipse.png</src>
+    <src>https://www.eclipse.org/artwork/images/v2/eclipse_foundation_logo.jpg</src>
     <href>https://eclipse.org</href>
   </bannerLeft>
   <body>
@@ -29,6 +29,6 @@
   <skin>
     <groupId>org.apache.maven.skins</groupId>
     <artifactId>maven-fluido-skin</artifactId>
-    <version>1.7</version>
+    <version>1.9</version>
   </skin>
 </project>

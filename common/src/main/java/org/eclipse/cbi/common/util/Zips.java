@@ -327,7 +327,7 @@ public class Zips {
 
 		Path linkTarget = Files.readSymbolicLink(file);
 		ZipEncoding zipEncoding = ZipEncodingHelper.getZipEncoding(zos.getEncoding());
-		ByteBuffer rawLinkTargetEntryPath = zipEncoding.encode(entryNameFrom(pathMapper.mapTo(linkTarget), Files.isDirectory(linkTarget)));
+		ByteBuffer rawLinkTargetEntryPath = zipEncoding.encode(entryNameFrom(linkTarget, linkTarget.toString().endsWith(file.getFileSystem().getSeparator())));
 		byte[] b = new byte[rawLinkTargetEntryPath.remaining()];
 		rawLinkTargetEntryPath.get(b);
 		

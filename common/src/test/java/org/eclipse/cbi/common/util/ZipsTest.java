@@ -172,17 +172,41 @@ public class ZipsTest {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
 			Path path1 = createLoremIpsumFile(fs.getPath("folder", "t1", "Test1.java"), 3);
 			Path path2 = createLoremIpsumFile(fs.getPath("folder", "t2", "t3", "Test2.java"), 10);
-			Path path3 = Files.createSymbolicLink(fs.getPath("folder/link1"), path1);
-			Path path4 = Files.createSymbolicLink(fs.getPath("folder/t2/link2"), fs.getPath("folder/t2/t3"));
+			Path path3 = Files.createSymbolicLink(fs.getPath("folder/link1"), fs.getPath("t1/Test1.java"));
+			Path path4 = Files.createSymbolicLink(fs.getPath("folder/t2/link2"), fs.getPath("t3"));
 			Path zip = fs.getPath("testPackWithFolders.zip");
 			assertEquals(7, Zips.packZip(fs.getPath("folder"), zip, false));
 			
 			try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zip))) {
 				checkNextEntry(zis, path3, "t1/Test1.java");
-				checkNextEntry(zis, path1.getParent(), "t1/Test1.java");
+				checkNextEntry(zis, path1.getParent(), "t1/");
 				checkNextEntry(zis, path1, "t1/Test1.java");
 				checkNextEntry(zis, path2.getParent(), "t2/");
-				checkNextEntry(zis, path4, "t2/t3/");
+				checkNextEntry(zis, path4, "t3");
+				checkNextEntry(zis, path2.getParent().getParent(), "t2/t3/");
+				checkNextEntry(zis, path2, "t2/t3/Test2.java");
+				assertNull(zis.getNextEntry());
+			}
+		}
+	}
+
+	@Test
+	public void testPackLinkAbsolute() throws IOException {
+		Configuration conf = Configuration.unix().toBuilder().setAttributeViews("basic", "owner", "unix", "posix").build();
+		try (FileSystem fs = Jimfs.newFileSystem(conf)) {
+			Path path1 = createLoremIpsumFile(fs.getPath("/folder", "t1", "Test1.java"), 3);
+			Path path2 = createLoremIpsumFile(fs.getPath("/folder", "t2", "t3", "Test2.java"), 10);
+			Path path3 = Files.createSymbolicLink(fs.getPath("/folder/link1"), fs.getPath("t1/Test1.java"));
+			Path path4 = Files.createSymbolicLink(fs.getPath("/folder/t2/link2"), fs.getPath("t3"));
+			Path zip = fs.getPath("testPackWithFolders.zip");
+			assertEquals(7, Zips.packZip(fs.getPath("/folder"), zip, false));
+
+			try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zip))) {
+				checkNextEntry(zis, path3, "t1/Test1.java");
+				checkNextEntry(zis, path1.getParent(), "t1/");
+				checkNextEntry(zis, path1, "t1/Test1.java");
+				checkNextEntry(zis, path2.getParent(), "t2/");
+				checkNextEntry(zis, path4, "t3");
 				checkNextEntry(zis, path2.getParent().getParent(), "t2/t3/");
 				checkNextEntry(zis, path2, "t2/t3/Test2.java");
 				assertNull(zis.getNextEntry());
@@ -436,17 +460,17 @@ public class ZipsTest {
 	private static void checkNextEntry(ZipInputStream zis, Path originalPath, String expectedEntryName) throws IOException {
 		ZipEntry entry = zis.getNextEntry();
 		assertNotNull(entry);
-		
-		if (!Files.isDirectory(originalPath)) {
-			if (Files.isSymbolicLink(originalPath)) {
-				assertEquals(expectedEntryName, new String(ByteStreams.toByteArray(zis)));
-			} else {
-				assertEquals(expectedEntryName, entry.getName());
-				assertArrayEquals(Files.readAllBytes(originalPath), ByteStreams.toByteArray(zis));
-				assertEquals(Files.size(originalPath), entry.getSize());
-			}
+		if (!Files.isSymbolicLink(originalPath)) {
+			assertEquals(expectedEntryName, entry.getName());
+		} else {
+			assertEquals(expectedEntryName, new String(ByteStreams.toByteArray(zis)));
 		}
 		
+		if (!Files.isDirectory(originalPath) && !Files.isSymbolicLink(originalPath)) {
+			assertArrayEquals(Files.readAllBytes(originalPath), ByteStreams.toByteArray(zis));
+			assertEquals(Files.size(originalPath), entry.getSize());
+		}
+
 		// zip entry time encoding is lossy.
 		long pathTime = dosToJavaTime(javaToDosTime(Files.getLastModifiedTime(originalPath, LinkOption.NOFOLLOW_LINKS).toMillis()));
 		assertEquals(pathTime, entry.getTime());

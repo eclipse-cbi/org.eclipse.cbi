@@ -153,6 +153,17 @@ public class CreateFlatpakMojo extends AbstractMojo {
 	private String command;
 
 	/**
+	 * An optional list of MIME types that the application should register with the
+	 * desktop environment that it knows how to open. Desktop environments like
+	 * Gnome may offer to use the Flatpak application to open files of the types
+	 * listed here.
+	 * 
+	 * @since 1.3.0
+	 */
+	@Parameter
+	private List<String> mimeTypes;
+
+	/**
 	 * The runtime on which to build the Flatpak application. Choices are
 	 * "org.gnome.Platform" or "org.gnome.Sdk", defaults to "org.gnome.Platform"
 	 * 
@@ -228,7 +239,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 	 * valid <a href="https://spdx.org/specifications">SPDX license expression</a>.
 	 * For example:
 	 * <ul>
-	 * <li>{@code EPL-1.0}</li>
+	 * <li>{@code EPL-2.0}</li>
 	 * <li>{@code Apache-2.0 AND LGPL-3.0-or-later}</li>
 	 * </ul>
 	 * <p>
@@ -237,8 +248,24 @@ public class CreateFlatpakMojo extends AbstractMojo {
 	 * 
 	 * @since 1.1.5
 	 */
-	@Parameter(required = true, defaultValue = "EPL-1.0")
+	@Parameter(required = true, defaultValue = "EPL-2.0")
 	private String license;
+
+	/**
+	 * The license that the application metadata is distributed under. It should be a
+	 * valid <a href="https://spdx.org/specifications">SPDX license expression</a>.
+	 * For example, the default value is:
+	 * <ul>
+	 * <li>{@code CC0-1.0}</li>
+	 * </ul>
+	 * <p>
+	 * A full list of recognized licenses and their identifiers can be found at the
+	 * <a href="https://spdx.org/licenses/">SPDX OpenSource License Registry</a>.
+	 * 
+	 * @since 1.3.0
+	 */
+	@Parameter(required = true, defaultValue = "CC0-1.0")
+	private String metadataLicense;
 
 	/**
 	 * An optional bundle symbolic name of the branding plug-in for the product. If
@@ -485,9 +512,17 @@ public class CreateFlatpakMojo extends AbstractMojo {
 			bw.write("Name=" + name + "\n");
 			bw.write("Comment=" + summary + "\n");
 			bw.write("Icon=" + flatpakId + "\n");
-			bw.write("Exec=" + command + "\n");
+			if (mimeTypes != null && mimeTypes.size() > 0) {
+				bw.write("Exec=" + command + " %f\n");
+			} else {
+				bw.write("Exec=" + command + "\n");
+			}
 			bw.write("Terminal=false\n");
 			bw.write("Categories=Development;IDE;\n");
+			if (mimeTypes != null && mimeTypes.size() > 0) {
+				String typeList = String.join(";", mimeTypes);
+				bw.write("MimeType=" + typeList + ";\n");
+			}
 			bw.write("\n");
 			bw.flush();
 		}
@@ -502,7 +537,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 			bw.write("<component type=\"desktop-application\">\n");
 			bw.write("  <id>" + flatpakId + "</id>\n");
 			bw.write("  <launchable type=\"desktop-id\">" + flatpakId + ".desktop</launchable>\n");
-			bw.write("  <metadata_license>" + license + "</metadata_license>\n");
+			bw.write("  <metadata_license>" + metadataLicense + "</metadata_license>\n");
 			bw.write("  <project_license>" + license + "</project_license>\n");
 			bw.write("  <name>" + name + "</name>\n");
 			bw.write("  <summary>" + summary + "</summary>\n");
@@ -550,13 +585,10 @@ public class CreateFlatpakMojo extends AbstractMojo {
 		Module.Builder jdkModuleBuilder = Module.builder()
 				.name("openjdk")
 				.buildSystem("simple")
-				.addbuildCommand("/usr/lib/sdk/openjdk11/installjdk.sh");
-
-		// Node module
-		Module.Builder nodeModuleBuilder = Module.builder()
-				.name("node")
-				.buildSystem("simple")
-				.addbuildCommand("/usr/lib/sdk/node12/install.sh");
+				.addbuildCommand("/usr/lib/sdk/openjdk11/installjdk.sh")
+				.addbuildCommand("mv /app/jdk /app/openjdk-11")
+				.addbuildCommand("/usr/lib/sdk/openjdk/installjdk.sh")
+				.addbuildCommand("mv /app/jdk /app/openjdk-latest");
 
 		// Eclipse module
 		Module.Builder eclipseModuleBuilder = Module.builder()
@@ -602,7 +634,6 @@ public class CreateFlatpakMojo extends AbstractMojo {
 				.runtime(runtime)
 				.runtimeVersion(runtimeVersion)
 				.addModule(jdkModuleBuilder.build())
-				.addModule(nodeModuleBuilder.build())
 				.addModule(eclipseModuleBuilder.build());
 		if (appendDefaultFinishArgs) {
 			manifestBuilder.addFinishArg("--require-version=" + minFlatpakVersion);

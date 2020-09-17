@@ -22,20 +22,20 @@ import com.google.common.collect.ImmutableSet;
 public abstract class Manifest {
 	public static final String DEFAULT_BRANCH = "master";
 	public static final String DEFAULT_RUNTIME = "org.gnome.Platform";
-	public static final String DEFAULT_RUNTIMEVERSION = "3.36";
+	public static final String DEFAULT_RUNTIMEVERSION = "3.38";
 	public static final String DEFAULT_SDK = "org.gnome.Sdk";
 	public static final String DEFAULT_COMMAND = "eclipse";
 	public static final String DEFAULT_FLATPAKVERSION = "1.0.2";
 
 	// Probably always want JDK
 	public static final List<String> DEFAULT_SDK_EXTENSIONS = Collections.unmodifiableList(
-			Arrays.asList("org.freedesktop.Sdk.Extension.openjdk11", "org.freedesktop.Sdk.Extension.node12"));
+			Arrays.asList("org.freedesktop.Sdk.Extension.openjdk11", "org.freedesktop.Sdk.Extension.openjdk"));
 
 	// Fairly liberal by default: Access to host file system, windowing system and
 	// network connection. Allow communication with the host DBus session bus.
 	public static final List<String> DEFAULT_FINISH_ARGS = Collections.unmodifiableList(Arrays.asList(
 			"--filesystem=host", "--share=network", "--share=ipc", "--socket=x11", "--socket=wayland", "--allow=devel",
-			"--socket=session-bus", "--device=dri", "--env=PATH=/app/bin:/app/jdk/bin:/app/node/bin:/usr/bin"));
+			"--socket=session-bus", "--device=dri", "--env=PATH=/app/bin:/app/openjdk-11/bin:/usr/bin"));
 
 	@JsonProperty("id")
 	public abstract String id();

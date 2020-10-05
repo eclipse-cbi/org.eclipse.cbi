@@ -17,14 +17,14 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.TimeUnit;
 
+import com.google.auto.value.AutoValue;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
+
 import org.eclipse.cbi.common.util.Paths;
 import org.eclipse.cbi.webservice.util.ProcessExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.auto.value.AutoValue;
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
 
 @AutoValue
 public abstract class OSSLCodesigner {
@@ -36,6 +36,8 @@ public abstract class OSSLCodesigner {
 		Path out = null;
 		try {
 			out = Files.createTempFile(tempFolder(), TEMP_FILE_PREFIX, file.getFileName().toString());
+			// osslsigncode requires non existent file
+			Files.delete(out);
 			StringBuilder output = new StringBuilder();
 			int osslsigncodeExitValue = processExecutor().exec(createCommand(file, out), output, timeout(), TimeUnit.SECONDS);
 			if (osslsigncodeExitValue != 0) {
@@ -60,6 +62,7 @@ public abstract class OSSLCodesigner {
 	private ImmutableList<String> createCommand(Path in, Path out) {
 		return ImmutableList.<String>builder()
 				.add(osslsigncode().toString())
+				.add("sign")
 				.add("-pkcs12", pkcs12().toString())
 				.add("-pass", pkcs12Password())
 				.add("-n", description())

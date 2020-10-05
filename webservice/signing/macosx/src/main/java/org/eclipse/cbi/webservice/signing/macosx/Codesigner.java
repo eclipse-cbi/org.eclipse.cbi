@@ -43,7 +43,7 @@ public abstract class Codesigner {
 
 	private static final String TEMP_FILE_PREFIX = Codesigner.class.getSimpleName() + "-";
 
-	private static final String DOT_APP_GLOB_PATTERN = "glob:**.app";
+	private static final String DOT_APP_GLOB_PATTERN = "glob:**.{app,plugin,framework}";
 
 	Codesigner() {}
 
@@ -118,7 +118,7 @@ public abstract class Codesigner {
 
 	private boolean signApplication(Path app, Optional<Path> entitlements, boolean needUnlock) throws IOException {
 		requireNonNull(app);
-		checkArgument(app.getFileSystem().getPathMatcher(DOT_APP_GLOB_PATTERN).matches(app), "Path must ends with '.app");
+		checkArgument(app.getFileSystem().getPathMatcher(DOT_APP_GLOB_PATTERN).matches(app), "Path must ends with '.app', '.framework' or '.plugin'");
 		checkArgument(Files.isDirectory(app), "Path must reference an existing directory");
 
 		if (needUnlock) {

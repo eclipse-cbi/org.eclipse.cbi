@@ -40,6 +40,11 @@ pipeline {
     )
   }
 
+  tools {
+    maven 'apache-maven-latest'
+    jdk 'adoptopenjdk-openj9-latest-lts'
+  }
+
   options {
     buildDiscarder(logRotator(numToKeepStr: '10'))
   }

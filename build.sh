@@ -22,7 +22,7 @@ shopt -s extglob
 shopt -s globstar
 shopt -s nullglob
 
-SCRIPT_FOLDER="$(dirname "$(readlink -f "${0}")")"
+SCRIPT_FOLDER="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 export RELEASE_VERSION="${RELEASE_VERSION:-}"
 export NEXT_DEVELOPMENT_VERSION="${NEXT_DEVELOPMENT_VERSION:-}"
@@ -139,3 +139,4 @@ prepare_next_dev() {
 }
 
 "${@}"
+

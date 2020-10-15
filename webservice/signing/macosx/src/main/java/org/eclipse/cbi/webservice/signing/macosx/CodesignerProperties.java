@@ -25,7 +25,8 @@ public class CodesignerProperties {
 	private static final long DEFAULT_SECURITY_UNLOCK_TIMEOUT = 20;
 	private static final long DEFAULT_CODESIGN_TIMEOUT = TimeUnit.MINUTES.toSeconds(10);
 	private static final String DEFAULT_CODESIGN_TIMESTAMP_AUTHORITY = "";
-	private static final String CERTIFICATE_NAME = "macosx.certificate";
+	private static final String IDENTITY_NAME_APPLICATION = "macosx.identity.application";
+	private static final String IDENTITY_NAME_INSTALLER = "macosx.identity.installer";
 	private static final String KEYCHAIN_PASSWORD_FILE = "macosx.keychain.password";
 	private static final String KEYCHAIN_PATH = "macosx.keychain";
 	private static final String SECURITY_UNLOCK_TIMEOUT = "macosx.security.unlock.timeout";
@@ -46,8 +47,12 @@ public class CodesignerProperties {
 		return propertiesReader.getFileContent(KEYCHAIN_PASSWORD_FILE);
 	}
 
-	public String getCertificate() {
-		return propertiesReader.getString(CERTIFICATE_NAME);
+	public String getIdentityApplication() {
+		return propertiesReader.getString(IDENTITY_NAME_APPLICATION);
+	}
+
+	public String getIdentityInstaller() {
+		return propertiesReader.getString(IDENTITY_NAME_INSTALLER);
 	}
 
 	public long getSecurityUnlockTimeout() {

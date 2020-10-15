@@ -8,21 +8,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
+
 import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
 import org.eclipse.cbi.webservice.util.PropertiesReader;
 import org.junit.Test;
-
-import com.google.common.jimfs.Configuration;
-import com.google.common.jimfs.Jimfs;
 
 @SuppressWarnings("javadoc")
 public class CodesignerPropertiesTest {
 
 	@Test(expected=IllegalStateException.class)
-	public void testEmptyPropertiesGetCertificate() throws IOException {
+	public void testEmptyPropertiesgetIdentityApplication() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			CodesignerProperties propertiesReader = new CodesignerProperties(new PropertiesReader(new Properties(), fs));
-			propertiesReader.getCertificate();
+			propertiesReader.getIdentityApplication();
 		}
 	}
 
@@ -43,10 +43,10 @@ public class CodesignerPropertiesTest {
 	}
 
 	@Test
-	public void testGetCertificate() throws IOException {
+	public void testgetIdentityApplication() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			CodesignerProperties propertiesReader = new CodesignerProperties(new PropertiesReader(createTestProperties(), fs));
-			assertEquals("Certificate Corporation, Inc.", propertiesReader.getCertificate());
+			assertEquals("Certificate Corporation, Inc.", propertiesReader.getIdentityApplication());
 		}
 	}
 
@@ -106,7 +106,7 @@ public class CodesignerPropertiesTest {
 
 	private static Properties createTestProperties() {
 		Properties properties = new Properties();
-		properties.setProperty("macosx.certificate", "Certificate Corporation, Inc.");
+		properties.setProperty("macosx.identity.application", "Certificate Corporation, Inc.");
 		properties.setProperty("macosx.keychain.password", "/path/to/keychain/password");
 		properties.setProperty("macosx.keychain", "/path/to/keychain");
 		return properties;

@@ -51,7 +51,8 @@ public class SigningServer {
 			final Path tempFolder = serverConf.getTempFolder();
 
 			final Codesigner codesigner = Codesigner.builder()
-				.certificateName(conf.getCertificate())
+				.identityApplication(conf.getIdentityApplication())
+				.identityInstaller(conf.getIdentityInstaller())
 				.keychain(conf.getKeychain())
 				.keychainPassword(conf.getKeychainPassword())
 				.tempFolder(tempFolder)

@@ -42,7 +42,8 @@ public class CodesignerTest {
 	public void testNonExistingTempFolder() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
 			Codesigner.builder()
-					.certificateName("Cert")
+					.identityApplication("Cert application")
+					.identityInstaller("Cert installer")
 					.keychain(Files.createFile(Files.createDirectories(fs.getPath("/path/to")).resolve("keychain")))
 					.keychainPassword("password")
 					.tempFolder(fs.getPath("/tmp"))
@@ -55,7 +56,8 @@ public class CodesignerTest {
 	public void testNonExistingKeychain() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
 			Codesigner.builder()
-					.certificateName("Cert")
+					.identityApplication("Cert application")
+					.identityInstaller("Cert installer")
 					.keychain(fs.getPath("/path/to/keychain"))
 					.keychainPassword("password")
 					.tempFolder(Files.createDirectory(fs.getPath("/tmp")))
@@ -267,7 +269,8 @@ public class CodesignerTest {
 
 	private static Codesigner createCodesignerUnderTest(FileSystem fs, ProcessExecutor processExecutor) throws IOException {
 		return Codesigner.builder()
-				.certificateName("Cert")
+				.identityApplication("Cert application")
+				.identityInstaller("Cert installer")
 				.keychain(Files.createFile(Files.createDirectories(fs.getPath("/path/to")).resolve("keychain")))
 				.keychainPassword("password")
 				.tempFolder(Files.createDirectory(fs.getPath("/tmp")))

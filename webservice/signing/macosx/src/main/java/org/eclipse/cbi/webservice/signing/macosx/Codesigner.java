@@ -18,9 +18,10 @@ import static java.util.Objects.requireNonNull;
 import static org.eclipse.cbi.webservice.util.function.UnsafePredicate.safePredicate;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
+import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -44,6 +45,8 @@ public abstract class Codesigner {
 	private static final String TEMP_FILE_PREFIX = Codesigner.class.getSimpleName() + "-";
 
 	private static final String DOT_APP_GLOB_PATTERN = "glob:**.{app,plugin,framework}";
+
+	private static final String DOT_PKG_GLOB_PATTERN = "glob:**.{pkg,mpkg}";
 
 	Codesigner() {}
 
@@ -69,11 +72,22 @@ public abstract class Codesigner {
 		}
 	}
 
+	private long signAndRezip(Path unzipDirectory, Path signedFile, Optional<Path> entitlements) throws IOException {
+		final long nbSignedApps = signAll(unzipDirectory, entitlements);
+		if (nbSignedApps > 0) {
+			if (Zips.packZip(unzipDirectory, signedFile, false) <= 0) {
+				throw new IOException("The signing was succesfull, but something wrong happened when trying to zip it back");
+			}
+		}
+		return nbSignedApps;
+	}
+
 	public long signFile(Path source, Optional<Path> entitlements) throws IOException {
 		requireNonNull(source);
-		checkArgument(Files.isRegularFile(source), "Source file must be an existing regular file");
-		signFile(source, entitlements, true);
-		return 1;
+		if (doSign(source, entitlements, true)) {
+			return 1;
+		}
+		return 0;
 	}
 
 	/**
@@ -84,19 +98,17 @@ public abstract class Codesigner {
 	 *         is signed or an error occured with at least one.
 	 * @throws IOException  if an I/O error occurs when signing
 	 */
-	public long signApplications(Path directory, Optional<Path> entitlements) throws IOException {
+	private long signAll(Path directory, Optional<Path> entitlements) throws IOException {
 		requireNonNull(directory);
 		checkArgument(Files.isDirectory(directory), "Path must reference an existing directory");
 
 		unlockKeychain();
 
 		try (Stream<Path> pathStream = Files.list(directory)) {
-			final PathMatcher dotAppPattern = directory.getFileSystem().getPathMatcher(DOT_APP_GLOB_PATTERN);
-
 			try {
 				return pathStream
-					.filter(p -> Files.isDirectory(p) && dotAppPattern.matches(p))
-					.filter(safePredicate(p -> signApplication(p, entitlements, false)))
+					.filter(Codesigner::signable)
+					.filter(safePredicate(p -> doSign(p, entitlements, false)))
 					.count();
 			} catch (WrappedException e) {
 				throwIfInstanceOf(e.getCause(), IOException.class);
@@ -106,47 +118,39 @@ public abstract class Codesigner {
 		}
 	}
 
-	private long signAndRezip(Path unzipDirectory, Path signedFile, Optional<Path> entitlements) throws IOException {
-		final long nbSignedApps = signApplications(unzipDirectory, entitlements);
-		if (nbSignedApps > 0) {
-			if (Zips.packZip(unzipDirectory, signedFile, false) <= 0) {
-				throw new IOException("The signing was succesfull, but something wrong happened when trying to zip it back");
+	private static boolean signable(Path path) {
+		final FileSystem fs = path.getFileSystem();
+		return fs.getPathMatcher(DOT_APP_GLOB_PATTERN).matches(path) || fs.getPathMatcher(DOT_PKG_GLOB_PATTERN).matches(path);
+	}
+
+	private boolean doSign(Path file, Optional<Path> entitlements, boolean needUnlock) throws IOException {
+		if (needUnlock) {
+			unlockKeychain();
+		}
+
+		final FileSystem fs = file.getFileSystem();
+		if (Files.isDirectory(file)) {
+			if (fs.getPathMatcher(DOT_APP_GLOB_PATTERN).matches(file)) {
+				return codesign(file, entitlements, true);
+			} else {
+				logger.warn("Folder '"+file+"' does not match pattern "+DOT_APP_GLOB_PATTERN+" so it won't be signed");
+			}
+		} else if (Files.isRegularFile(file)) {
+			if (fs.getPathMatcher(DOT_PKG_GLOB_PATTERN).matches(file)) {
+				return productsign(file);
+			} else {
+				return codesign(file, entitlements, true);
 			}
 		}
-		return nbSignedApps;
+
+		return false;
 	}
 
-	private boolean signApplication(Path app, Optional<Path> entitlements, boolean needUnlock) throws IOException {
-		requireNonNull(app);
-		checkArgument(app.getFileSystem().getPathMatcher(DOT_APP_GLOB_PATTERN).matches(app), "Path must ends with '.app', '.framework' or '.plugin'");
-		checkArgument(Files.isDirectory(app), "Path must reference an existing directory");
-
-		if (needUnlock) {
-			unlockKeychain();
-		}
-
-		final StringBuilder output = new StringBuilder();
-		final int codesignExitValue = processExecutor().exec(codesignCommand(app, entitlements, true), output, codesignTimeout(), TimeUnit.SECONDS);
-		if (codesignExitValue == 0) {
-			return true;
-		} else {
-			throw new IOException(Joiner.on('\n').join(
-					"The 'codesign' command on '" + app.getFileName() + "' exited with value '" + codesignExitValue + "'",
-					"'codesign' command output:",
-					output));
-		}
-	}
-
-	private boolean signFile(Path file, Optional<Path> entitlements, boolean needUnlock) throws IOException {
+	private boolean codesign(Path file, Optional<Path> entitlements, boolean deep) throws IOException {
 		requireNonNull(file);
-		checkArgument(Files.isRegularFile(file), "Path must reference an existing regular file");
-
-		if (needUnlock) {
-			unlockKeychain();
-		}
 
 		final StringBuilder output = new StringBuilder();
-		final int codesignExitValue = processExecutor().exec(codesignCommand(file, entitlements, false), output, codesignTimeout(), TimeUnit.SECONDS);
+		final int codesignExitValue = processExecutor().exec(codesignCommand(file, entitlements, deep), output, codesignTimeout(), TimeUnit.SECONDS);
 		if (codesignExitValue == 0) {
 			return true;
 		} else {
@@ -154,6 +158,29 @@ public abstract class Codesigner {
 					"The 'codesign' command on '" + file.getFileName() + "' exited with value '" + codesignExitValue + "'",
 					"'codesign' command output:",
 					output));
+		}
+	}
+
+	private boolean productsign(Path file) throws IOException {
+		requireNonNull(file);
+		checkArgument(file.getFileSystem().getPathMatcher(DOT_PKG_GLOB_PATTERN).matches(file), "Path must ends with '.pkg' or '.mpkg'");
+		checkArgument(Files.isRegularFile(file), "Path must reference an existing regular file");
+
+		final StringBuilder output = new StringBuilder();
+		Path signedProduct = Files.createTempFile(file.getParent(), com.google.common.io.Files.getNameWithoutExtension(file.getFileName().toString()), com.google.common.io.Files.getFileExtension(file.getFileName().toString()));
+		try {
+			final int productsignExitValue = processExecutor().exec(productsignCommand(file, signedProduct), output, productsignTimeout(), TimeUnit.SECONDS);
+			if (productsignExitValue == 0) {
+				Files.move(signedProduct, file, StandardCopyOption.REPLACE_EXISTING);
+				return true;
+			} else {
+				throw new IOException(Joiner.on('\n').join(
+						"The 'productsign' command on '" + file.getFileName() + "' exited with value '" + productsignExitValue + "'",
+						"'productsign' command output:",
+						output));
+			}
+		} finally {
+			cleanTemporaryResource(signedProduct);
 		}
 	}
 
@@ -178,6 +205,14 @@ public abstract class Codesigner {
 		}
 		command.add(path.toString());
 		return command.build();
+	}
+
+	private ImmutableList<String> productsignCommand(Path input, Path output) {
+		ImmutableList.Builder<String> command = ImmutableList.<String>builder().addAll(productsignCommandPrefix());
+		return command
+			.add(input.toString())
+			.add(output.toString())
+			.build();
 	}
 
 	static void cleanTemporaryResource(Path tempResource) {
@@ -218,11 +253,15 @@ public abstract class Codesigner {
 	 *
 	 * @return the name of the certificate to use to sign OS X applications.
 	 */
-	abstract String certificateName();
+	abstract String identityApplication();
+
+	abstract String identityInstaller();
 
 	abstract ProcessExecutor processExecutor();
 
 	abstract long codesignTimeout();
+
+	abstract long productsignTimeout();
 	
 	abstract String timeStampAuthority();
 
@@ -230,12 +269,15 @@ public abstract class Codesigner {
 
 	abstract ImmutableList<String> codesignCommandPrefix();
 
+	abstract ImmutableList<String> productsignCommandPrefix();
+
 	abstract ImmutableList<String> securityUnlockCommand();
 
 	public static Builder builder() {
 		return new AutoValue_Codesigner.Builder()
 			.securityUnlockTimeout(20)
-			.codesignTimeout(TimeUnit.MINUTES.toSeconds(10));
+			.codesignTimeout(TimeUnit.MINUTES.toSeconds(10))
+			.productsignTimeout(TimeUnit.MINUTES.toSeconds(10));
 	}
 
 	@AutoValue.Builder
@@ -274,16 +316,21 @@ public abstract class Codesigner {
 		/**
 		 * Sets the name of the certificate to be used for signing.
 		 *
-		 * @param certificateName
+		 * @param identityApplication
 		 *            the name of the certificate to be used for signing.
 		 * @return this builder for daisy chaining.
 		 */
-		public abstract Builder certificateName(String certificateName);
-		abstract String certificateName();
+		public abstract Builder identityApplication(String identityApplication);
+		abstract String identityApplication();
+
+		public abstract Builder identityInstaller(String identityInstaller);
+		abstract String identityInstaller();
 
 		public abstract Builder processExecutor(ProcessExecutor executor);
 
 		public abstract Builder codesignTimeout(long codesignTimeout);
+
+		public abstract Builder productsignTimeout(long productsignTimeout);
 		
 		public abstract Builder timeStampAuthority(String timeStampAuthority);
 		abstract String timeStampAuthority();
@@ -291,6 +338,8 @@ public abstract class Codesigner {
 		public abstract Builder securityUnlockTimeout(long securityUnlockTimeout);
 
 		abstract Builder codesignCommandPrefix(ImmutableList<String> commandPrefix);
+
+		abstract Builder productsignCommandPrefix(ImmutableList<String> commandPrefix);
 
 		abstract Builder securityUnlockCommand(ImmutableList<String> command);
 
@@ -309,16 +358,26 @@ public abstract class Codesigner {
 		 *         builder.
 		 */
 		public Codesigner build() {
-			checkState(!certificateName().isEmpty(), "Certificate name must not be empty");
+			checkState(!identityApplication().isEmpty(), "Certificate name must not be empty");
 			checkState(Files.exists(keychain()) && Files.isRegularFile(keychain()), "Keychain file must exists");
-			ImmutableList.Builder<String> commandPrefix = ImmutableList.builder();
-			commandPrefix.add("codesign", "-s", certificateName(), "--options", "runtime", "-f", "--verbose=4",  "--keychain", keychain().toString());
+			ImmutableList.Builder<String> codesignCommandPrefix = ImmutableList.builder();
+			codesignCommandPrefix.add("codesign", "-s", identityApplication(), "--options", "runtime", "-f", "--verbose=4",  "--keychain", keychain().toString());
 			if (!timeStampAuthority().trim().isEmpty()) {
-				commandPrefix.add("--timestamp=\""+timeStampAuthority().trim()+"\"");
+				codesignCommandPrefix.add("--timestamp=\""+timeStampAuthority().trim()+"\"");
 			} else {
-				commandPrefix.add("--timestamp");
+				codesignCommandPrefix.add("--timestamp");
 			}
-			codesignCommandPrefix(commandPrefix.build());
+			codesignCommandPrefix(codesignCommandPrefix.build());
+
+			ImmutableList.Builder<String> productsignCommandPrefix = ImmutableList.builder();
+			productsignCommandPrefix.add("productsign", "--sign", identityInstaller(), "--keychain", keychain().toString());
+			if (!timeStampAuthority().trim().isEmpty()) {
+				productsignCommandPrefix.add("--timestamp=\""+timeStampAuthority().trim()+"\"");
+			} else {
+				productsignCommandPrefix.add("--timestamp");
+			}
+			productsignCommandPrefix(productsignCommandPrefix.build());
+
 			securityUnlockCommand(ImmutableList.of("security", "unlock", "-p", keychainPassword(), keychain().toString()));
 
 			Codesigner codesigner = autoBuild();

@@ -1,9 +1,8 @@
 package org.eclipse.cbi.maven.common.test.util;
 
-import org.eclipse.jetty.util.log.AbstractLogger;
 import org.eclipse.jetty.util.log.Logger;
 
-public class NullJettyLogger extends AbstractLogger {
+public class NullJettyLogger implements Logger {
 
 	@Override
 	public String getName() {
@@ -83,7 +82,13 @@ public class NullJettyLogger extends AbstractLogger {
 	}
 
 	@Override
-	protected Logger newLogger(String fullname) {
+	public void debug(String msg, long value) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public Logger getLogger(String name) {
 		return this;
 	}
 

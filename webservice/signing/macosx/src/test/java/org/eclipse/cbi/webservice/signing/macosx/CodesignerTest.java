@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.jimfs.Configuration;

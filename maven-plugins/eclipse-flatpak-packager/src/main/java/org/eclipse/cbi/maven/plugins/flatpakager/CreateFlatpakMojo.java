@@ -581,15 +581,6 @@ public class CreateFlatpakMojo extends AbstractMojo {
 		additionalSources
 				.add(new AdditionalSource(appdataFile, new File("/app/share/metainfo", appdataFile.getName())));
 
-		// OpenJDK module
-		Module.Builder jdkModuleBuilder = Module.builder()
-				.name("openjdk")
-				.buildSystem("simple")
-				.addbuildCommand("/usr/lib/sdk/openjdk11/installjdk.sh")
-				.addbuildCommand("mv /app/jdk /app/openjdk-11")
-				.addbuildCommand("/usr/lib/sdk/openjdk/installjdk.sh")
-				.addbuildCommand("mv /app/jdk /app/openjdk-latest");
-
 		// Eclipse module
 		Module.Builder eclipseModuleBuilder = Module.builder()
 				.name("eclipse")
@@ -633,7 +624,6 @@ public class CreateFlatpakMojo extends AbstractMojo {
 				.branch(branch)
 				.runtime(runtime)
 				.runtimeVersion(runtimeVersion)
-				.addModule(jdkModuleBuilder.build())
 				.addModule(eclipseModuleBuilder.build());
 		if (appendDefaultFinishArgs) {
 			manifestBuilder.addFinishArg("--require-version=" + minFlatpakVersion);

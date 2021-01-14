@@ -49,27 +49,6 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr: '10'))
   }
 
-  triggers { 
-    pollSCM('@daily') 
-    gerrit(
-      serverName: 'Eclipse Gerrit',
-      gerritProjects: [[
-        compareType: 'ANT',
-        pattern: 'cbi/org.eclipse.cbi',
-        branches: [[ compareType: 'ANT', pattern: '**' ]],
-        filePaths: [[ compareType: 'ANT', pattern: "*" ]],
-        disableStrictForbiddenFileVerification: false
-      ]],
-      triggerOnEvents: [
-        changeMerged(),
-        refUpdated(),
-        draftPublished(),
-        patchsetCreated(excludeDrafts: false, excludeNoCodeChange: false, excludeTrivialRebase: false),
-        commentAddedContains(commentAddedCommentContains: 'please start a build')
-      ]
-    )
-  }
-
   stages {
     stage('Prepare release') {
       when { 

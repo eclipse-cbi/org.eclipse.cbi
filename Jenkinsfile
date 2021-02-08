@@ -47,13 +47,14 @@ pipeline {
 
   options {
     buildDiscarder(logRotator(numToKeepStr: '10'))
+    disableConcurrentBuilds()
   }
 
   stages {
     stage('Prepare release') {
       when { 
         expression {
-          env.RELEASE_VERSION != '' && env.NEXT_DEVELOPMENT_VERSION != ''
+          params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != ''
         }
       }
       steps {
@@ -121,7 +122,7 @@ pipeline {
     stage('Tag and push repo') {
       when { 
         expression {
-          env.RELEASE_VERSION != '' && env.NEXT_DEVELOPMENT_VERSION != ''
+          params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != ''
         }
       }
       steps {
@@ -142,7 +143,7 @@ pipeline {
     stage('Prepare next development cycle') {
       when { 
         expression {
-          env.RELEASE_VERSION != '' && env.NEXT_DEVELOPMENT_VERSION != ''
+          params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != ''
         }
       }
       steps {

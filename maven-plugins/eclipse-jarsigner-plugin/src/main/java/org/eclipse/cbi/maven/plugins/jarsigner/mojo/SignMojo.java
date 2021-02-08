@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2016 Eclipse Foundation and others.
+ * Copyright (c) 2012, 2021 Eclipse Foundation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,6 +9,7 @@
  *   Eclipse Foundation - initial API and implementation
  *   Thanh Ha (Eclipse Foundation) - Add support for signing inner jars
  *   Mikael Barbero - Use of "try with resource"
+ *   Christoph Läubrich - support signing a file/directory of files instead of attached artifacts 
  *******************************************************************************/
 package org.eclipse.cbi.maven.plugins.jarsigner.mojo;
 
@@ -27,6 +28,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.utils.io.FileUtils;
 import org.eclipse.cbi.common.security.MessageDigestAlgorithm;
 import org.eclipse.cbi.common.security.SignatureAlgorithm;
 import org.eclipse.cbi.maven.ExceptionHandler;
@@ -291,7 +293,19 @@ public class SignMojo extends AbstractMojo {
 	 */
 	@Parameter(property = "cbi.jarsigner.sigFile", defaultValue = "")
 	private String sigFile;
-	
+
+	@Parameter(property = "cbi.jarsigner.archiveDirectory")
+	private File archiveDirectory;
+
+	@Parameter
+	private String[] includes = { "**/*.?ar" };
+
+	@Parameter(property = "cbi.jarsigner.processMainArtifact", defaultValue = "true")
+	private boolean processMainArtifact;
+
+	@Parameter(property = "cbi.jarsigner.processAttachedArtifacts", defaultValue = "true")
+	private boolean processAttachedArtifacts;
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -306,14 +320,27 @@ public class SignMojo extends AbstractMojo {
 			getLog().info("No jars to sign");
 		} else {
 			final JarSigner jarSigner = createJarSigner();
-
-			final Artifact mainArtifact = project.getArtifact();
-			if (mainArtifact != null) {
-				signArtifact(jarSigner, mainArtifact);
+			if (processMainArtifact) {
+				final Artifact mainArtifact = project.getArtifact();
+				if (mainArtifact != null) {
+					signArtifact(jarSigner, mainArtifact);
+				}
 			}
+			if (processAttachedArtifacts) {
+				for (Artifact artifact : project.getAttachedArtifacts()) {
+					signArtifact(jarSigner, artifact);
+				}
+			}
+			if (archiveDirectory != null && includes != null && includes.length > 0) {
+				try {
+					List<File> jarFiles = FileUtils.getFiles(archiveDirectory, String.join(",", includes), "");
+					for (File jarFile : jarFiles) {
+						signArtifact(jarSigner, jarFile);
+					}
+				} catch (IOException e) {
+					throw new MojoExecutionException("Failed to scan archive directory for JARs: " + e.getMessage(), e);
+				}
 
-			for (Artifact artifact : project.getAttachedArtifacts()) {
-				signArtifact(jarSigner, artifact);
 			}
 		}
 	}
@@ -321,8 +348,16 @@ public class SignMojo extends AbstractMojo {
 	private void signArtifact(final JarSigner jarSigner, final Artifact artifact) throws MojoExecutionException {
 		File artifactFile = artifact.getFile();
 		if (artifactFile != null) {
+			signArtifact(jarSigner, artifactFile);
+		} else {
+			getLog().debug("No file is associated with artifact '" + artifact.toString() + "'");
+		}
+	}
+
+	private void signArtifact(final JarSigner jarSigner, final File jarFile) throws MojoExecutionException {
+
 			try {
-				if (new EclipseJarSignerFilter(getLog()).shouldBeSigned(artifactFile.toPath())) {
+				if (new EclipseJarSignerFilter(getLog()).shouldBeSigned(jarFile.toPath())) {
 					Options options = Options.builder()
 							.signatureAlgorithm(signatureAlgorithm)
 							.digestAlgorithm(digestAlgorithm)
@@ -330,15 +365,13 @@ public class SignMojo extends AbstractMojo {
 							.timeout(Duration.ofMillis(timeoutMillis))
 							.sigFile(Strings.nullToEmpty(sigFile))
 							.build();
-					jarSigner.sign(artifactFile.toPath(), options);
+					jarSigner.sign(jarFile.toPath(), options);
 				}
 			} catch (IOException e) {
 				new ExceptionHandler(getLog(), continueOnFail())
-						.handleError("Unable to sign jar '" + artifactFile.toString() + "'", e);
+						.handleError("Unable to sign jar '" + jarFile.toString() + "'", e);
 			}
-		} else {
-			getLog().debug("No file is associated with artifact '" + artifact.toString() + "'");
-		}
+
 	}
 
 	private boolean continueOnFail() {

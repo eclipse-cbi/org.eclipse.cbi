@@ -25,7 +25,7 @@ public abstract class Manifest {
 	public static final String DEFAULT_RUNTIMEVERSION = "3.38";
 	public static final String DEFAULT_SDK = "org.gnome.Sdk";
 	public static final String DEFAULT_COMMAND = "eclipse";
-	public static final String DEFAULT_FLATPAKVERSION = "1.0.2";
+	public static final String DEFAULT_FLATPAKVERSION = "1.7.1";
 
 	// No extra SDK extensions by default
 	public static final List<String> DEFAULT_SDK_EXTENSIONS = Collections.unmodifiableList(Arrays.asList());

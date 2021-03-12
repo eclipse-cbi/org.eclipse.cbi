@@ -13,7 +13,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <maven.compiler.release>8</maven.compiler.release>
+    <maven.compiler.release>11</maven.compiler.release>
     
     <auto-value.version>1.7.4</auto-value.version>
   </properties>
@@ -186,5 +186,21 @@
       </plugins>
     </pluginManagement>
   </build>
+
+  <profiles>
+    <profile>
+      <id>ide</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+        <property>
+          <name>RUN_IN_IDE</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <directory>${project.basedir}/targetide</directory>
+      </build>
+    </profile>
+  </profiles>
 
 </project>

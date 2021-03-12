@@ -61,7 +61,7 @@ public class SignMojo extends AbstractMojo {
 	 * 
 	 * @since 1.0.4
 	 */
-	@Parameter(required = true, property = "cbi.macsigner.signerUrl", defaultValue = "http://build.eclipse.org:31338/macsign.php")
+	@Parameter(required = true, property = "cbi.macsigner.signerUrl", defaultValue = "https://cbi.eclipse.org/macos/codesign/sign")
 	private String signerUrl;
 
 	/**

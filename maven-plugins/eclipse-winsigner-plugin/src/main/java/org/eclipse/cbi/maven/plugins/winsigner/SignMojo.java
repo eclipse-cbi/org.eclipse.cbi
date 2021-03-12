@@ -21,6 +21,9 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.ObjectArrays;
+import com.google.common.collect.Sets;
+
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -32,9 +35,6 @@ import org.eclipse.cbi.maven.MavenLogger;
 import org.eclipse.cbi.maven.http.HttpClient;
 import org.eclipse.cbi.maven.http.RetryHttpClient;
 import org.eclipse.cbi.maven.http.apache.ApacheHttpClient;
-
-import com.google.common.collect.ObjectArrays;
-import com.google.common.collect.Sets;
 
 /**
  * Signs executables found in the project build directory using the
@@ -68,7 +68,7 @@ public class SignMojo extends AbstractMojo {
 	 * 
 	 * @since 1.0.4
 	 */
-	@Parameter(required = true, property = "cbi.winsigner.signerUrl", defaultValue = "http://build.eclipse.org:31338/winsign.php")
+	@Parameter(required = true, property = "cbi.winsigner.signerUrl", defaultValue = "https://cbi.eclipse.org/authenticode/sign")
 	private String signerUrl;
 
 	/**

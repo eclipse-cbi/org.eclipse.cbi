@@ -21,6 +21,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.Strings;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -43,8 +45,6 @@ import org.eclipse.cbi.maven.plugins.jarsigner.JarSigner;
 import org.eclipse.cbi.maven.plugins.jarsigner.JarSigner.Options;
 import org.eclipse.cbi.maven.plugins.jarsigner.RecursiveJarSigner;
 import org.eclipse.cbi.maven.plugins.jarsigner.RemoteJarSigner;
-
-import com.google.common.base.Strings;
 
 /**
  * Signs project main and attached artifacts using the Eclipse jarsigner
@@ -75,7 +75,7 @@ public class SignMojo extends AbstractMojo {
 	 *
 	 * @since 1.0.4
 	 */
-	@Parameter(required = true, property = "cbi.jarsigner.signerUrl", defaultValue = "http://build.eclipse.org:31338/sign")
+	@Parameter(required = true, property = "cbi.jarsigner.signerUrl", defaultValue = "https://cbi.eclipse.org/jarsigner/sign")
 	private String signerUrl;
 
 	/**

@@ -137,7 +137,7 @@ public class CreateDMGMojo extends AbstractMojo {
 	 *
 	 * @since 1.1.3
 	 */
-	@Parameter(required = true, property="cbi.dmgpackager.serviceUrl", defaultValue = "http://build.eclipse.org:31338/dmg-packager")
+	@Parameter(required = true, property="cbi.dmgpackager.serviceUrl", defaultValue = "https://cbi.eclipse.org/macos/packager/dmg/create")
 	private String serviceUrl;
 
 	/**

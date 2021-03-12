@@ -1,10 +1,10 @@
-local deployment = import "../../../deployment.libsonnet";
+local deployment = import "../../deployment.libsonnet";
 
 deployment.newDeployment("authenticode-signing", std.extVar("artifactId"), std.extVar("version")) {
   pathspec: "/authenticode/sign",
   osslsigncodeRepo: "https://github.com/mtrojnar/osslsigncode",
-  osslsigncodeTag: "2.0", # the tag of osslsigncode to build and deploy
-  preDeploy: importstr "../jar/keystore.sh",
+  osslsigncodeTag: "2.1", # the tag of osslsigncode to build and deploy
+  preDeploy: importstr "../keystore.sh",
   keystore: {
     path: "/var/run/secrets/%s/" % $.name,
     filename: "keystore.p12",
@@ -18,21 +18,9 @@ deployment.newDeployment("authenticode-signing", std.extVar("artifactId"), std.e
       {
         name: "eclipse.org",
         certificates: [
-          { pass: "IT/CBI/PKI/codesigning/digicert-root.cer", },
-          { pass: "IT/CBI/PKI/codesigning/digicert-codesigning.cer", },
-          { pass: "IT/CBI/PKI/codesigning/eclipse.org.cer", },
-        ],
-        privateKey: {
-          pass: "IT/CBI/PKI/codesigning/eclipse.org.pkcs8.pem",
-        },
-      },
-
-      {
-        name: "jce-eclipse.org",
-        certificates: [
-          { pass: "IT/CBI/PKI/codesigning/digicert-root.cer", },
-          { pass: "IT/CBI/PKI/codesigning/digicert-codesigning.cer", },
-          { pass: "IT/CBI/PKI/codesigning/eclipse.org.cer", },
+          { pass: "IT/CBI/PKI/codesigning/digicert-root.crt", },
+          { pass: "IT/CBI/PKI/codesigning/digicert-codesigning.crt", },
+          { pass: "IT/CBI/PKI/codesigning/eclipse.org.crt", },
         ],
         privateKey: {
           pass: "IT/CBI/PKI/codesigning/eclipse.org.pkcs8.pem",

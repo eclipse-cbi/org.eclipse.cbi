@@ -1,43 +1,13 @@
-local deployment = import "../../../deployment.libsonnet";
+local deployment = import "../../deployment.libsonnet";
 
-deployment.newDeployment("jar-signing", std.extVar("artifactId"), std.extVar("version")) {
-  pathspec: "/jarsigner/sign",
-  preDeploy: importstr "keystore.sh",
+local newDeployment(name, artifactId, version) = deployment.newDeployment(name, artifactId, version) {
+  pathspec: error "Must specify a pathspec for a service deploymebt",
+  preDeploy: importstr "../keystore.sh",
   keystore: {
     path: "/var/run/secrets/%s/" % $.name,
     filename: "keystore.p12",
     volumeName: "keystore",
     secretName: "%s-keystore" % $.name,
-    password: {
-      pass: "IT/CBI/PKI/codesigning/eclipse.org.keystore.passwd",
-      filename: "keystore.passwd",
-    },
-    defaultAlias: "eclipse.org",
-    entries: [
-      {
-        name: "eclipse.org",
-        certificates: [
-          { pass: "IT/CBI/PKI/codesigning/digicert-root.cer", },
-          { pass: "IT/CBI/PKI/codesigning/digicert-codesigning.cer", },
-          { pass: "IT/CBI/PKI/codesigning/eclipse.org.cer", },
-        ],
-        privateKey: {
-          pass: "IT/CBI/PKI/codesigning/eclipse.org.pkcs8.pem",
-        },
-      },
-
-      {
-        name: "jce-eclipse.org",
-        certificates: [
-          { pass: "IT/CBI/PKI/codesigning/digicert-root.cer", },
-          { pass: "IT/CBI/PKI/codesigning/digicert-codesigning.cer", },
-          { pass: "IT/CBI/PKI/codesigning/eclipse.org.cer", },
-        ],
-        privateKey: {
-          pass: "IT/CBI/PKI/codesigning/eclipse.org.pkcs8.pem",
-        },
-      },
-    ],
   },
 
   kube+: {
@@ -173,4 +143,8 @@ deployment.newDeployment("jar-signing", std.extVar("artifactId"), std.extVar("ve
       keystoreDefaultAlias: $.keystore.defaultAlias,
     },
   },
+};
+
+{
+  newDeployment:: newDeployment
 }

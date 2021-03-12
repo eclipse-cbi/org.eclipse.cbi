@@ -24,20 +24,20 @@ if [[ "$(kubectl config current-context)" != "okd" ]]; then
   exit 1
 fi
 
-if [[ ! -f "${SCRIPT_FOLDER}/.localconfig" ]] && [[ -z "${PASSWORD_STORE_DIR:-}" ]]; then
-  echo "ERROR: File '$(readlink -f "${SCRIPT_FOLDER}/.localconfig")' does not exists"
+if [[ ! -f "${SCRIPT_FOLDER}/../.localconfig" ]] && [[ -z "${PASSWORD_STORE_DIR:-}" ]]; then
+  echo "ERROR: File '$(readlink -f "${SCRIPT_FOLDER}/../.localconfig")' does not exists"
   echo "Create one to configure the location of the password store. Example:"
   echo '{"password-store": {"it-dir": "~/.password-store"}}' | jq '.'
 fi
-PASSWORD_STORE_DIR="$(jq -r '.["password-store"]["it-dir"]' "${SCRIPT_FOLDER}/.localconfig")"
+PASSWORD_STORE_DIR="$(jq -r '.["password-store"]["it-dir"]' "${SCRIPT_FOLDER}/../.localconfig")"
 PASSWORD_STORE_DIR="$(readlink -f "${PASSWORD_STORE_DIR/#~\//${HOME}/}")"
 export PASSWORD_STORE_DIR
 
 # Retrieve the version of the project from the pom.xml file
 # shellcheck disable=SC2030
-PROJECT_VERSION="$(export MAVEN_SKIP_RC=true && "${SCRIPT_FOLDER}/mvnw" -f "${SCRIPT_FOLDER}/pom.xml" help:evaluate -Dexpression=project.version -q -DforceStdout -pl "${SERVICE_PATH}")"
+PROJECT_VERSION="$(export MAVEN_SKIP_RC=true && "${SCRIPT_FOLDER}/../mvnw" -f "${SCRIPT_FOLDER}/pom.xml" help:evaluate -Dexpression=project.version -q -DforceStdout -pl "${SERVICE_PATH}")"
 # shellcheck disable=SC2031
-ARTIFACT_ID="$(export MAVEN_SKIP_RC=true && "${SCRIPT_FOLDER}/mvnw" -f "${SCRIPT_FOLDER}/pom.xml" help:evaluate -Dexpression=project.artifactId -q -DforceStdout -pl "${SERVICE_PATH}")"
+ARTIFACT_ID="$(export MAVEN_SKIP_RC=true && "${SCRIPT_FOLDER}/../mvnw" -f "${SCRIPT_FOLDER}/pom.xml" help:evaluate -Dexpression=project.artifactId -q -DforceStdout -pl "${SERVICE_PATH}")"
 
 # Generate the json from the jsonnet files
 SERVICE_JSON=$(jsonnet \
@@ -45,8 +45,10 @@ SERVICE_JSON=$(jsonnet \
   --ext-str artifactId="${ARTIFACT_ID}" \
   "${SERVICE_JSON_FILE}")
 
+echo ">> ${SERVICE_PATH}"
+
 # Build & push docker image
-jq -r '.Dockerfile' <<<"${SERVICE_JSON}" | docker build --pull --rm -t "$(jq -r '.docker.image' <<<"${SERVICE_JSON}")" -f - "${SERVICE_PATH}"
+jq -r '.Dockerfile' <<<"${SERVICE_JSON}" | docker build --pull --rm -t "$(jq -r '.docker.image' <<<"${SERVICE_JSON}")" -f - "$(dirname "${SERVICE_JSON_FILE}")"
 docker push "$(jq -r '.docker.image' <<<"${SERVICE_JSON}")"
 
 # Execute pre-deploy script
@@ -59,8 +61,9 @@ rm -f "${PRE}"
 # Deploy
 jq -r '.["kube.yml"]' <<<"${SERVICE_JSON}" | kubectl apply -f -
 DEPLOYMENT_NAME="$(jq -r '.kube.resources[] | select (.kind == "Deployment").metadata.name' <<<"${SERVICE_JSON}")"
-kubectl rollout restart deployment "${DEPLOYMENT_NAME}"
-kubectl rollout status deployment "${DEPLOYMENT_NAME}"
+DEPLOYMENT_NAMESPACE="$(jq -r '.kube.resources[] | select (.kind == "Deployment").metadata.namespace' <<<"${SERVICE_JSON}")"
+kubectl rollout restart deployment -n "${DEPLOYMENT_NAMESPACE}" "${DEPLOYMENT_NAME}"
+kubectl rollout status deployment -n "${DEPLOYMENT_NAMESPACE}" "${DEPLOYMENT_NAME}"
 
 # Execute post-deploy script
 POST=$(mktemp)

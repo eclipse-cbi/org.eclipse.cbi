@@ -62,15 +62,15 @@ pipeline {
           # set the version the the to-be released version and commit all changes made to the pom
           if [ "${DRY_RUN}" = true ]; then
             >&2 echo "DRY RUN: ${WORKSPACE}/mvnw \"${VERSIONS_MAVEN_PLUGIN}:set\" -DnewVersion=\"${RELEASE_VERSION}\" -DgenerateBackupPoms=false -f \"${POM}\""
-            >&2 echo "DRY RUN: git config --global user.email \"cbi-bot@eclipse.org\""
-            >&2 echo "DRY RUN: git config --global user.name \"CBI Bot\""
+            >&2 echo "DRY RUN: git config user.email \"cbi-bot@eclipse.org\""
+            >&2 echo "DRY RUN: git config user.name \"CBI Bot\""
             >&2 echo "DRY RUN: git add --all"
             >&2 echo "DRY RUN: git commit -m \"Prepare release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}\""
             >&2 echo "DRY RUN: git tag \"${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}\" -m \"Release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}\""
           else
             "${WORKSPACE}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:set" -DnewVersion="${RELEASE_VERSION}" -DgenerateBackupPoms=false -f "${POM}"
-            git config --global user.email "cbi-bot@eclipse.org"
-            git config --global user.name "CBI Bot"
+            git config user.email "cbi-bot@eclipse.org"
+            git config user.name "CBI Bot"
             git add --all
             git commit -m "Prepare release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}"
             git tag "${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}" -m "Release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}"
@@ -126,7 +126,7 @@ pipeline {
         }
       }
       steps {
-        sshagent(['git.eclipse.org-bot-ssh']) {
+        sshagent(['github-bot']) {
           sh '''
             if [ "${DRY_RUN}" = true ]; then
               >&2 echo "DRY RUN: git push origin \"${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}\""
@@ -147,7 +147,7 @@ pipeline {
         }
       }
       steps {
-        sshagent(['git.eclipse.org-bot-ssh']) {
+        sshagent(['github-bot']) {
           sh '''
             # clean and prepare for next iteration
             git clean -q -x -d -ff

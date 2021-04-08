@@ -119,7 +119,7 @@ public class Zips {
 
 	private static Path setPermissions(Path path, ZipArchiveEntry entry, LinkOption... linkOptions) throws IOException {
 		// This "if" cannot be removed except for macOS platform, if jdk would support such behavior
-		if (!Files.isSymbolicLink(path)) {
+		if (!Files.isSymbolicLink(path) && entry.getPlatform() == ZipArchiveEntry.PLATFORM_UNIX) {
 			PosixFileAttributeView attributes = Files.getFileAttributeView(path, PosixFileAttributeView.class, linkOptions);
 			if (attributes != null) {
 				attributes.setPermissions(MorePosixFilePermissions.fromFileMode(entry.getUnixMode() & PERM_MASK));

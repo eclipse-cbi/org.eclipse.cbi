@@ -139,8 +139,7 @@ pipeline {
             git push origin "${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}"
             git push origin HEAD:"${GIT_BRANCH}"
           fi
-          '''
-        }
+        '''
       }
     }
 

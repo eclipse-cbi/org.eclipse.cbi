@@ -170,4 +170,10 @@ pipeline {
       }
     }
   }
+  post {
+    always {
+      archiveArtifacts 'webservice/**/target/*.jar'
+      junit '**/target/surefire-reports/*.xml'
+    }
+  }
 }

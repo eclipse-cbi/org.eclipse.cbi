@@ -125,16 +125,20 @@ pipeline {
           params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != ''
         }
       }
+      environment {
+        GIT_AUTH = credentials('github-bot')
+      }
       steps {
-        sshagent(['github-bot']) {
-          sh '''
-            if [ "${DRY_RUN}" = true ]; then
-              >&2 echo "DRY RUN: git push origin \"${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}\""
-              >&2 echo "DRY RUN: git push origin \"${GIT_BRANCH}\""
-            else 
-              git push origin "${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}"
-              git push origin HEAD:"${GIT_BRANCH}"
-            fi
+        sh'''
+          git config --local credential.helper "!f() { echo username=\\$GIT_AUTH_USR; echo password=\\$GIT_AUTH_PSW; }; f"
+
+          if [ "${DRY_RUN}" = true ]; then
+            >&2 echo "DRY RUN: git push origin \"${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}\""
+            >&2 echo "DRY RUN: git push origin \"${GIT_BRANCH}\""
+          else
+            git push origin "${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}"
+            git push origin HEAD:"${GIT_BRANCH}"
+          fi
           '''
         }
       }
@@ -146,27 +150,30 @@ pipeline {
           params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != ''
         }
       }
+      environment {
+        GIT_AUTH = credentials('github-bot')
+      }
       steps {
-        sshagent(['github-bot']) {
-          sh '''
-            # clean and prepare for next iteration
-            git clean -q -x -d -ff
-            git checkout -q -f "${GIT_BRANCH}"
-            git reset -q --hard "origin/${GIT_BRANCH}"
+        sh '''
+          git config --local credential.helper "!f() { echo username=\\$GIT_AUTH_USR; echo password=\\$GIT_AUTH_PSW; }; f"
 
-            "${WORKSPACE}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:set" -DnewVersion="${NEXT_DEVELOPMENT_VERSION}" -DgenerateBackupPoms=false -f "${POM}"
-            if [ "${DRY_RUN}" = true ]; then
-              >&2 echo "DRY RUN: git add --all"
-              >&2 echo "DRY RUN: git commit -m \"Prepare for next development iteration ${GROUP_ID}:${ARTIFACT_ID}:${NEXT_DEVELOPMENT_VERSION}\""
-              >&2 echo "DRY RUN: git push origin \"${GIT_BRANCH}\""
-            else
-              # commit next iteration changes
-              git add --all
-              git commit -m "Prepare for next development iteration (${GROUP_ID}:${ARTIFACT_ID}:${NEXT_DEVELOPMENT_VERSION})"
-              git push origin "${GIT_BRANCH}"
-            fi
-          '''
-        }
+          # clean and prepare for next iteration
+          git clean -q -x -d -ff
+          git checkout -q -f "${GIT_BRANCH}"
+          git reset -q --hard "origin/${GIT_BRANCH}"
+
+          "${WORKSPACE}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:set" -DnewVersion="${NEXT_DEVELOPMENT_VERSION}" -DgenerateBackupPoms=false -f "${POM}"
+          if [ "${DRY_RUN}" = true ]; then
+            >&2 echo "DRY RUN: git add --all"
+            >&2 echo "DRY RUN: git commit -m \"Prepare for next development iteration ${GROUP_ID}:${ARTIFACT_ID}:${NEXT_DEVELOPMENT_VERSION}\""
+            >&2 echo "DRY RUN: git push origin \"${GIT_BRANCH}\""
+          else
+            # commit next iteration changes
+            git add --all
+            git commit -m "Prepare for next development iteration (${GROUP_ID}:${ARTIFACT_ID}:${NEXT_DEVELOPMENT_VERSION})"
+            git push origin "${GIT_BRANCH}"
+          fi
+        '''
       }
     }
   }

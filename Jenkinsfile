@@ -27,7 +27,6 @@ pipeline {
   environment {
     POM='pom.xml'
     MAVEN_OPTS='-Xmx1024m -Xms256m -XshowSettings:vm -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn'
-    MAVEN_CONFIG = '-B -C -U -e'
     VERSIONS_MAVEN_PLUGIN = latest_maven_release_gav('org.codehaus.mojo', 'versions-maven-plugin')
     MAVEN_DEPENDENCY_PLUGIN = latest_maven_release_gav('org.apache.maven.plugins', 'maven-dependency-plugin')
     ARTIFACT_ID = sh(
@@ -59,34 +58,27 @@ pipeline {
       }
       steps {
         sh '''
-          # set the version the the to-be released version and commit all changes made to the pom
-          if [ "${DRY_RUN}" = true ]; then
-            >&2 echo "DRY RUN: ${WORKSPACE}/mvnw \"${VERSIONS_MAVEN_PLUGIN}:set\" -DnewVersion=\"${RELEASE_VERSION}\" -DgenerateBackupPoms=false -f \"${POM}\""
-            >&2 echo "DRY RUN: git config user.email \"cbi-bot@eclipse.org\""
-            >&2 echo "DRY RUN: git config user.name \"CBI Bot\""
-            >&2 echo "DRY RUN: git add --all"
-            >&2 echo "DRY RUN: git commit -m \"Prepare release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}\""
-            >&2 echo "DRY RUN: git tag \"${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}\" -m \"Release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}\""
-          else
-            "${WORKSPACE}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:set" -DnewVersion="${RELEASE_VERSION}" -DgenerateBackupPoms=false -f "${POM}"
-            git config user.email "cbi-bot@eclipse.org"
-            git config user.name "CBI Bot"
-            git add --all
-            git commit -m "Prepare release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}"
-            git tag "${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}" -m "Release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}"
-            
-            # quick check that we don't depend on SNAPSHOT anymore
-            if "${WORKSPACE}/mvnw" "${MAVEN_DEPENDENCY_PLUGIN}:list" -f "${POM}" | grep SNAPSHOT; then
-              >&2 echo "ERROR: At least one dependency to a 'SNAPSHOT' version has been found from '${POM}'"
-              >&2 echo "ERROR: It is forbidden for releasing"
-              exit 1
-            fi
+          "${WORKSPACE}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:set" -DnewVersion="${RELEASE_VERSION}" -DgenerateBackupPoms=false -f "${POM}"
 
-            if grep SNAPSHOT "${POM}"; then
-              >&2 echo "ERROR: At least one 'SNAPSHOT' string has been found in '${POM}'"
-              >&2 echo "ERROR: It is forbidden for releasing"
-              exit 1
-            fi
+          git config user.email "cbi-bot@eclipse.org"
+          git config user.name "CBI Bot"
+          git config --local credential.helper "!f() { echo username=\\$GIT_AUTH_USR; echo password=\\$GIT_AUTH_PSW; }; f"
+
+          git add --all
+          git commit -m "Prepare release ${RELEASE_VERSION}"
+          git tag "v${RELEASE_VERSION}" -m "Release ${RELEASE_VERSION}"
+
+          # quick check that we don't depend on SNAPSHOT anymore
+          if "${WORKSPACE}/mvnw" "${MAVEN_DEPENDENCY_PLUGIN}:list" -f "${POM}" | grep SNAPSHOT; then
+            >&2 echo "ERROR: At least one dependency to a 'SNAPSHOT' version has been found from '${POM}'"
+            >&2 echo "ERROR: It is forbidden for releasing"
+            exit 1
+          fi
+
+          if grep SNAPSHOT "${POM}"; then
+            >&2 echo "ERROR: At least one 'SNAPSHOT' string has been found in '${POM}'"
+            >&2 echo "ERROR: It is forbidden for releasing"
+            exit 1
           fi
         '''
       }
@@ -104,25 +96,28 @@ pipeline {
     stage('Build') {
       steps {
         sh '"${WORKSPACE}/mvnw" clean verify -f "${POM}"'
+        archiveArtifacts 'webservice/**/target/*.jar'
+        junit '**/target/surefire-reports/*.xml'
       }
     }
 
     stage('Deploy') {
+      when {
+        expression {
+          env.DRY_RUN != 'true'
+        }
+      }
       steps {
         sh '''
-          if [ "${DRY_RUN}" = true ] && [ "${RELEASE_VERSION}" != "" ] && [ "${NEXT_DEVELOPMENT_VERSION}" != "" ]; then
-            >&2 echo "DRY RUN: ${WORKSPACE}/mvnw deploy -f \"${POM}\""
-          else
-            "${WORKSPACE}/mvnw" deploy -f "${POM}"
-          fi
+          "${WORKSPACE}/mvnw" deploy -f "${POM}"
         '''
       }
     }
 
-    stage('Tag and push repo') {
+    stage('Push tag to repository') {
       when { 
         expression {
-          params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != ''
+          params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != '' && env.DRY_RUN != 'true'
         }
       }
       environment {
@@ -130,15 +125,8 @@ pipeline {
       }
       steps {
         sh'''
-          git config --local credential.helper "!f() { echo username=\\$GIT_AUTH_USR; echo password=\\$GIT_AUTH_PSW; }; f"
-
-          if [ "${DRY_RUN}" = true ]; then
-            >&2 echo "DRY RUN: git push origin \"${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}\""
-            >&2 echo "DRY RUN: git push origin \"${GIT_BRANCH}\""
-          else
-            git push origin "${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}"
-            git push origin HEAD:"${GIT_BRANCH}"
-          fi
+          git push origin "v${RELEASE_VERSION}"
+          git push origin HEAD:"${GIT_BRANCH}"
         '''
       }
     }
@@ -154,32 +142,34 @@ pipeline {
       }
       steps {
         sh '''
-          git config --local credential.helper "!f() { echo username=\\$GIT_AUTH_USR; echo password=\\$GIT_AUTH_PSW; }; f"
-
           # clean and prepare for next iteration
           git clean -q -x -d -ff
           git checkout -q -f "${GIT_BRANCH}"
           git reset -q --hard "origin/${GIT_BRANCH}"
 
           "${WORKSPACE}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:set" -DnewVersion="${NEXT_DEVELOPMENT_VERSION}" -DgenerateBackupPoms=false -f "${POM}"
-          if [ "${DRY_RUN}" = true ]; then
-            >&2 echo "DRY RUN: git add --all"
-            >&2 echo "DRY RUN: git commit -m \"Prepare for next development iteration ${GROUP_ID}:${ARTIFACT_ID}:${NEXT_DEVELOPMENT_VERSION}\""
-            >&2 echo "DRY RUN: git push origin \"${GIT_BRANCH}\""
-          else
-            # commit next iteration changes
-            git add --all
-            git commit -m "Prepare for next development iteration (${GROUP_ID}:${ARTIFACT_ID}:${NEXT_DEVELOPMENT_VERSION})"
-            git push origin "${GIT_BRANCH}"
-          fi
+
+          # commit next iteration changes
+          git add --all
+          git commit -m "Prepare for next development iteration (${NEXT_DEVELOPMENT_VERSION})"
         '''
       }
     }
-  }
-  post {
-    always {
-      archiveArtifacts 'webservice/**/target/*.jar'
-      junit '**/target/surefire-reports/*.xml'
+
+    stage('Push next development cycle') {
+      when {
+        expression {
+          params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != '' && env.DRY_RUN != 'true'
+        }
+      }
+      environment {
+        GIT_AUTH = credentials('github-bot')
+      }
+      steps {
+        sh '''
+          git push origin "${GIT_BRANCH}"
+        '''
+      }
     }
   }
 }

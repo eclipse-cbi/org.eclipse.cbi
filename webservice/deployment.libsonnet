@@ -1,11 +1,15 @@
 local newDeployment(name, artifactId, version) = {
   name: name,
   version: version,
+  groupId: "org.eclipse.cbi",
   artifactId: artifactId,
+  mavenRepoURL: "repo.eclipse.org",
+  mavenRepoName: "cbi",
   port: 8080,
   docker: {
     registry: "docker.io",
     repository: "eclipsecbi",
+    baseImage: "adoptopenjdk:11-jdk-hotspot",
     imageName: $.name,
     tag: $.version,
     image: "%s/%s/%s:%s" % [self.registry, self.repository, self.imageName, self.tag,],
@@ -193,10 +197,9 @@ local newDeployment(name, artifactId, version) = {
       },
     ],
   },
-  Dockerfile: |||
-    FROM adoptopenjdk:11-jdk-hotspot
-
-    RUN mkdir -p /usr/local/%(name)s/
+  # we will copy artifact from target/ folder if current version is SNAPSHOT, otherwise, download it from repo.eclipse.org
+  Dockerfile: if std.endsWith($.version, "SNAPSHOT") then |||
+    FROM %(from)s
 
     COPY target/%(artifactId)s-%(version)s.jar /usr/local/%(name)s/
 
@@ -205,7 +208,19 @@ local newDeployment(name, artifactId, version) = {
       "-jar", "/usr/local/%(name)s/%(artifactId)s-%(version)s.jar", \
       "-c", "%(configurationPath)s/%(configurationFilename)s" \
     ]
-  ||| % self { configurationPath: $.configuration.path, configurationFilename: $.configuration.filename },
+  ||| % self { from: $.docker.baseImage, configurationPath: $.configuration.path, configurationFilename: $.configuration.filename }
+  else |||
+    FROM %(from)s
+
+    RUN mkdir -p /usr/local/%(name)s/ \
+      && curl -sSLf -o /usr/local/%(name)s/%(artifactId)s-%(version)s.jar "https://%(mavenRepoURL)s/service/local/artifact/maven/content?r=%(mavenRepoName)s&g=%(groupId)s&a=%(artifactId)s&v=%(version)s"
+
+    ENTRYPOINT [ "java", \
+      "-showversion", "-XshowSettings:vm", "-Xmx512m", \
+      "-jar", "/usr/local/%(name)s/%(artifactId)s-%(version)s.jar", \
+      "-c", "%(configurationPath)s/%(configurationFilename)s" \
+    ]
+  ||| % self { from: $.docker.baseImage, configurationPath: $.configuration.path, configurationFilename: $.configuration.filename },
 
   "kube.yml": std.manifestYamlStream($.kube.resources, true, c_document_end=false),
 };

@@ -18,42 +18,48 @@ IFS=$'\n\t'
 # as the file path in $1
 JSON_FILE="${1:-"/dev/stdin"}"
 SERVICE_JSON=$(<"${JSON_FILE}")
+TOOLS_IMAGE="adoptopenjdk:8-jdk-hotspot"
 
-KEYSTORE="$(mktemp)"
+TMPDIR="${TMPDIR:-/tmp}"
+mkdir -p "${TMPDIR}/${BASH_SOURCE[0]}"
+KEYSTORE="$(mktemp -p "${TMPDIR}/${BASH_SOURCE[0]}")"
 # remove the file immediately as keytool does not like empty files
 rm -f "${KEYSTORE}"
-KEYSTORE_PASSWD="$(mktemp)"
+KEYSTORE_PASSWD="$(mktemp -p "${TMPDIR}/${BASH_SOURCE[0]}")"
 
 pass "$(jq -r '.keystore.password.pass' <<<"${SERVICE_JSON}")" > "${KEYSTORE_PASSWD}"
 
 for entry in $(jq -r '.keystore.entries | map(tostring) | join("\n")' <<<"${SERVICE_JSON}"); do
   ENTRY_NAME="$(jq -r '.name' <<<"${entry}")"
   
-  PRIVATE_KEY="$(mktemp)"
+  PRIVATE_KEY="$(mktemp -p "${TMPDIR}/${BASH_SOURCE[0]}")"
   pass "$(jq -r '.privateKey.pass' <<<"${entry}")" > "${PRIVATE_KEY}"
   
-  CERTIFICATE_CHAIN="$(mktemp)"
+  CERTIFICATE_CHAIN="$(mktemp -p "${TMPDIR}/${BASH_SOURCE[0]}")"
   # concatenate all certifactes from entries.certificates inside certificateChain file
   for CERTIFICATE in $(jq -r '.certificates | map(.pass) | join("\n")' <<<"${entry}"); do 
     pass "${CERTIFICATE}" >> "${CERTIFICATE_CHAIN}"
   done;
 
   # create a proper pfx/p12 file with certificate chain + privatekey
-  ENTRY_P12="$(mktemp)"
-  openssl pkcs12 -export -in "${CERTIFICATE_CHAIN}" -inkey "${PRIVATE_KEY}" -name "${ENTRY_NAME}" > "${ENTRY_P12}" -passout "file:${KEYSTORE_PASSWD}"
+  ENTRY_P12="$(mktemp -p "${TMPDIR}/${BASH_SOURCE[0]}")"
+  docker run --pull=always --rm -v "${TMPDIR}/${BASH_SOURCE[0]}:/tmp/${BASH_SOURCE[0]}" "${TOOLS_IMAGE}" /bin/bash -c \
+    "openssl pkcs12 -export -in \"${CERTIFICATE_CHAIN}\" -inkey \"${PRIVATE_KEY}\" -name \"${ENTRY_NAME}\" > \"${ENTRY_P12}\" -passout \"file:${KEYSTORE_PASSWD}\""
 
   # print certificate expiration date
   echo -n "INFO: Certificate '${ENTRY_NAME}' expires on "
-  openssl pkcs12 -in "${ENTRY_P12}" -nodes -passin "file:${KEYSTORE_PASSWD}" | openssl x509 -noout -enddate | cut -d'=' -f2
+  docker run --pull=always --rm -v "${TMPDIR}/${BASH_SOURCE[0]}:/tmp/${BASH_SOURCE[0]}" "${TOOLS_IMAGE}" /bin/bash -c \
+    "openssl pkcs12 -in \"${ENTRY_P12}\" -nodes -passin \"file:${KEYSTORE_PASSWD}\" | openssl x509 -noout -enddate | cut -d'=' -f2"
 
   # add the p12 cert to a java p12 keystore
-  keytool -importkeystore -alias "${ENTRY_NAME}" \
-    -srckeystore "${ENTRY_P12}" \
-    -srcstoretype pkcs12 \
-    -srcstorepass:file "${KEYSTORE_PASSWD}" \
-    -destkeystore "${KEYSTORE}" \
-    -deststoretype pkcs12 \
-    -storepass:file "${KEYSTORE_PASSWD}"
+  docker run --pull=always --rm -v "${TMPDIR}/${BASH_SOURCE[0]}:/tmp/${BASH_SOURCE[0]}" "${TOOLS_IMAGE}" \
+    "keytool" -importkeystore -alias "${ENTRY_NAME}" \
+      -srckeystore "${ENTRY_P12}" \
+      -srcstoretype pkcs12 \
+      -srcstorepass:file "${KEYSTORE_PASSWD}" \
+      -destkeystore "${KEYSTORE}" \
+      -deststoretype pkcs12 \
+      -storepass:file "${KEYSTORE_PASSWD}"
 
   rm -f "${PRIVATE_KEY}" "${CERTIFICATE_CHAIN}" "${ENTRY_P12}"
 done
@@ -65,3 +71,4 @@ kubectl create secret generic "$(jq -r '.keystore.secretName' <<<"${SERVICE_JSON
   --dry-run=client -o yaml | kubectl apply -f -
 
 rm -f "${KEYSTORE}" "${KEYSTORE_PASSWD}"
+rmdir "${TMPDIR}/${BASH_SOURCE[0]}"

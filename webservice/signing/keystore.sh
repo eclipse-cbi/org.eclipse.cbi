@@ -18,7 +18,9 @@ IFS=$'\n\t'
 # as the file path in $1
 JSON_FILE="${1:-"/dev/stdin"}"
 SERVICE_JSON=$(<"${JSON_FILE}")
+TOOLS_IMAGE="adoptopenjdk:8-jdk-hotspot"
 
+TMPDIR="$(readlink -f "${TMPDIR:-/tmp}")"
 KEYSTORE="$(mktemp)"
 # remove the file immediately as keytool does not like empty files
 rm -f "${KEYSTORE}"
@@ -40,20 +42,23 @@ for entry in $(jq -r '.keystore.entries | map(tostring) | join("\n")' <<<"${SERV
 
   # create a proper pfx/p12 file with certificate chain + privatekey
   ENTRY_P12="$(mktemp)"
-  openssl pkcs12 -export -in "${CERTIFICATE_CHAIN}" -inkey "${PRIVATE_KEY}" -name "${ENTRY_NAME}" > "${ENTRY_P12}" -passout "file:${KEYSTORE_PASSWD}"
+  docker run --pull=always --rm -v "${TMPDIR}:${TMPDIR}" "${TOOLS_IMAGE}" /bin/bash -c \
+    "openssl pkcs12 -export -in \"${CERTIFICATE_CHAIN}\" -inkey \"${PRIVATE_KEY}\" -name \"${ENTRY_NAME}\" > \"${ENTRY_P12}\" -passout \"file:${KEYSTORE_PASSWD}\""
 
   # print certificate expiration date
   echo -n "INFO: Certificate '${ENTRY_NAME}' expires on "
-  openssl pkcs12 -in "${ENTRY_P12}" -nodes -passin "file:${KEYSTORE_PASSWD}" | openssl x509 -noout -enddate | cut -d'=' -f2
+  docker run --pull=always --rm -v "${TMPDIR}:${TMPDIR}" "${TOOLS_IMAGE}" /bin/bash -c \
+    "openssl pkcs12 -in \"${ENTRY_P12}\" -nodes -passin \"file:${KEYSTORE_PASSWD}\" | openssl x509 -noout -enddate | cut -d'=' -f2"
 
   # add the p12 cert to a java p12 keystore
-  keytool -importkeystore -alias "${ENTRY_NAME}" \
-    -srckeystore "${ENTRY_P12}" \
-    -srcstoretype pkcs12 \
-    -srcstorepass:file "${KEYSTORE_PASSWD}" \
-    -destkeystore "${KEYSTORE}" \
-    -deststoretype pkcs12 \
-    -storepass:file "${KEYSTORE_PASSWD}"
+  docker run --pull=always --rm -v "${TMPDIR}:${TMPDIR}" "${TOOLS_IMAGE}" \
+    "keytool" -importkeystore -alias "${ENTRY_NAME}" \
+      -srckeystore "${ENTRY_P12}" \
+      -srcstoretype pkcs12 \
+      -srcstorepass:file "${KEYSTORE_PASSWD}" \
+      -destkeystore "${KEYSTORE}" \
+      -deststoretype pkcs12 \
+      -storepass:file "${KEYSTORE_PASSWD}"
 
   rm -f "${PRIVATE_KEY}" "${CERTIFICATE_CHAIN}" "${ENTRY_P12}"
 done

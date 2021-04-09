@@ -16,7 +16,7 @@ IFS=$'\n\t'
 SCRIPT_FOLDER="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")")"
 
 SERVICE_JSON_FILE=${1}
-SERVICE_PATH="$(realpath --relative-to="${SCRIPT_FOLDER}" "$(readlink -f "$(dirname "${SERVICE_JSON_FILE}")")")"
+SERVICE_PATH="$(realpath --relative-to="${SCRIPT_FOLDER}/.." "$(readlink -f "$(dirname "${SERVICE_JSON_FILE}")")")"
 
 if [[ "$(kubectl config current-context)" != "okd" ]]; then
   echo "ERROR: bad context: not deploying to okd cluster"
@@ -35,17 +35,15 @@ export PASSWORD_STORE_DIR
 
 # Retrieve the version of the project from the pom.xml file
 # shellcheck disable=SC2030
-PROJECT_VERSION="$(export MAVEN_SKIP_RC=true && "${SCRIPT_FOLDER}/../mvnw" -f "${SCRIPT_FOLDER}/pom.xml" help:evaluate -Dexpression=project.version -q -DforceStdout -pl "${SERVICE_PATH}")"
+PROJECT_VERSION="${2:-"$(export MAVEN_SKIP_RC=true && "${SCRIPT_FOLDER}/../mvnw" -f "${SCRIPT_FOLDER}/../pom.xml" help:evaluate -Dexpression=project.version -q -DforceStdout -pl "${SERVICE_PATH}")"}"
 # shellcheck disable=SC2031
-ARTIFACT_ID="$(export MAVEN_SKIP_RC=true && "${SCRIPT_FOLDER}/../mvnw" -f "${SCRIPT_FOLDER}/pom.xml" help:evaluate -Dexpression=project.artifactId -q -DforceStdout -pl "${SERVICE_PATH}")"
+ARTIFACT_ID="$(export MAVEN_SKIP_RC=true && "${SCRIPT_FOLDER}/../mvnw" -f "${SCRIPT_FOLDER}/../pom.xml" help:evaluate -Dexpression=project.artifactId -q -DforceStdout -pl "${SERVICE_PATH}")"
 
 # Generate the json from the jsonnet files
 SERVICE_JSON=$(jsonnet \
   --ext-str version="${PROJECT_VERSION}" \
   --ext-str artifactId="${ARTIFACT_ID}" \
   "${SERVICE_JSON_FILE}")
-
-echo ">> ${SERVICE_PATH}"
 
 # Build & push docker image
 jq -r '.Dockerfile' <<<"${SERVICE_JSON}" | docker build --pull --rm -t "$(jq -r '.docker.image' <<<"${SERVICE_JSON}")" -f - "$(dirname "${SERVICE_JSON_FILE}")"
@@ -62,7 +60,6 @@ rm -f "${PRE}"
 jq -r '.["kube.yml"]' <<<"${SERVICE_JSON}" | kubectl apply -f -
 DEPLOYMENT_NAME="$(jq -r '.kube.resources[] | select (.kind == "Deployment").metadata.name' <<<"${SERVICE_JSON}")"
 DEPLOYMENT_NAMESPACE="$(jq -r '.kube.resources[] | select (.kind == "Deployment").metadata.namespace' <<<"${SERVICE_JSON}")"
-kubectl rollout restart deployment -n "${DEPLOYMENT_NAMESPACE}" "${DEPLOYMENT_NAME}"
 kubectl rollout status deployment -n "${DEPLOYMENT_NAMESPACE}" "${DEPLOYMENT_NAME}"
 
 # Execute post-deploy script

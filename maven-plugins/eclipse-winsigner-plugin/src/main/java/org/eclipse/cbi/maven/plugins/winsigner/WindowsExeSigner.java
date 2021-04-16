@@ -12,32 +12,26 @@ package org.eclipse.cbi.maven.plugins.winsigner;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
-import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.google.auto.value.AutoValue;
+
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.eclipse.cbi.maven.ExceptionHandler;
 import org.eclipse.cbi.maven.MavenLogger;
-import org.eclipse.cbi.maven.MojoExecutionIOExceptionWrapper;
 import org.eclipse.cbi.maven.http.AbstractCompletionListener;
 import org.eclipse.cbi.maven.http.HttpClient;
 import org.eclipse.cbi.maven.http.HttpRequest;
 import org.eclipse.cbi.maven.http.HttpResult;
-
-import com.google.auto.value.AutoValue;
-import com.google.common.base.Joiner;
 
 @AutoValue
 public abstract class WindowsExeSigner {
@@ -65,23 +59,6 @@ public abstract class WindowsExeSigner {
 				ret++;
 			}
     	}
-		return ret;
-	}
-
-	public int signExecutables(Path baseSearchDir, Set<PathMatcher> pathMatchers) throws MojoExecutionException {
-		Objects.requireNonNull(baseSearchDir);
-		Objects.requireNonNull(pathMatchers);
-
-		int ret = 0;
-		try {
-			WindowsBinarySignerVisitor signerVisitor = new WindowsBinarySignerVisitor(pathMatchers);
-			Files.walkFileTree(baseSearchDir, signerVisitor);
-			ret = signerVisitor.getSignedExecutableCount();
-		} catch (MojoExecutionIOExceptionWrapper e) {
-			throw e.getCause();
-		} catch (IOException e) {
-			exceptionHandler().handleError("Error occured while signing Windows binary (" + Joiner.on(", ").join(pathMatchers) + ")", e);
-		}
 		return ret;
 	}
 
@@ -137,37 +114,6 @@ public abstract class WindowsExeSigner {
     public static Builder builder() {
     	return new AutoValue_WindowsExeSigner.Builder();
     }
-
-	private final class WindowsBinarySignerVisitor extends SimpleFileVisitor<Path> {
-
-		private final Set<PathMatcher> pathMatchers;
-		private int signedExecutableCount;
-
-		WindowsBinarySignerVisitor(Set<PathMatcher> pathMatchers) {
-			this.pathMatchers = pathMatchers;
-			signedExecutableCount = 0;
-		}
-
-		@Override
-		public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-			for (PathMatcher pathMatcher : this.pathMatchers) {
-				if (pathMatcher.matches(file)) {
-					try {
-						if (signExecutable(file)) {
-							signedExecutableCount++;
-						}
-					} catch (MojoExecutionException e) {
-						throw new MojoExecutionIOExceptionWrapper(e);
-					}
-				}
-			}
-			return FileVisitResult.CONTINUE;
-		}
-
-		public int getSignedExecutableCount() {
-			return signedExecutableCount;
-		}
-	}
 
 	/**
 	 * A builder of {@link WindowsExeSigner}. Default value for options are:

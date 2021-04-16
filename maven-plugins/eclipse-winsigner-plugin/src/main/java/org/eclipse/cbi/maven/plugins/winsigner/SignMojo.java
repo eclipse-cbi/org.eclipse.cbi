@@ -11,17 +11,21 @@
  *******************************************************************************/
 package org.eclipse.cbi.maven.plugins.winsigner;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import com.google.common.collect.ObjectArrays;
 import com.google.common.collect.Sets;
 
 import org.apache.maven.plugin.AbstractMojo;
@@ -85,7 +89,7 @@ public class SignMojo extends AbstractMojo {
 	 */
 	@Deprecated
 	@Parameter(property = "signFiles")
-	private String[] deprecatedSignFiles;
+	private Set<String> deprecatedSignFiles;
 	
 	/**
 	 * The list of <b>absolute</b> paths of executables to be signed. If
@@ -96,7 +100,7 @@ public class SignMojo extends AbstractMojo {
 	 *        property).
 	 */
 	@Parameter(property = "cbi.winsigner.signFiles")
-	private String[] signFiles;
+	private Set<String> signFiles;
 
 	/**
 	 * The base directory to search for executables to sign. The executable name
@@ -241,31 +245,41 @@ public class SignMojo extends AbstractMojo {
 	@Override
 	public void execute() throws MojoExecutionException {
 		HttpClient httpClient = RetryHttpClient.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())))
-    			.maxRetries(retryLimit())
-    			.waitBeforeRetry(retryTimer(), TimeUnit.SECONDS)
-    			.log(new MavenLogger(getLog()))
-    			.build();
+			.maxRetries(retryLimit())
+			.waitBeforeRetry(retryTimer(), TimeUnit.SECONDS)
+			.log(new MavenLogger(getLog()))
+			.build();
+		ExceptionHandler exceptionHandler = new ExceptionHandler(getLog(), continueOnFail());
 		WindowsExeSigner exeSigner = WindowsExeSigner.builder()
-				.serverUri(URI.create(signerUrl))
-				.httpClient(httpClient)
-				.timeout(Duration.ofMillis(timeoutMillis))
-				.exceptionHandler(new ExceptionHandler(getLog(), continueOnFail()))
-				.log(getLog())
-				.build();
-    	
-    	if (signFiles() != null && signFiles().length != 0) {
-    		//exe paths are configured
-    		Set<Path> exePaths = new LinkedHashSet<>();
-        	for (String path : signFiles()) {
-        		exePaths.add(FileSystems.getDefault().getPath(path));
-        	}
-        	exeSigner.signExecutables(exePaths);
-    	} else { 
-    		//perform search
-    		Set<PathMatcher> pathMatchers = getPathMatchers(FileSystems.getDefault(), fileNames(), getLog());
-    		exeSigner.signExecutables(FileSystems.getDefault().getPath(baseSearchDir()), pathMatchers);
-    	}
-    }
+			.serverUri(URI.create(signerUrl))
+			.httpClient(httpClient)
+			.timeout(Duration.ofMillis(timeoutMillis))
+			.exceptionHandler(exceptionHandler)
+			.log(getLog())
+			.build();
+		
+		Set<Path> exePaths = Collections.emptySet();
+		if (signFiles() != null && !signFiles().isEmpty()) {
+			//exe paths are configured
+			exePaths = signFiles().stream().map(FileSystems.getDefault()::getPath).collect(Collectors.toSet());
+		} else { 
+			//perform search
+			Set<PathMatcher> pathMatchers = createPathMatchers(FileSystems.getDefault(), fileNames(), getLog());
+			try (Stream<Path> walk = Files.walk(FileSystems.getDefault().getPath(baseSearchDir()))) {
+				exePaths = walk.filter(path -> pathMatchers.stream()
+					.anyMatch(matcher -> matcher.matches(path)))
+					.collect(Collectors.toSet()
+				);
+			} catch (IOException e) {
+				exceptionHandler.handleError("An error happened while searching for executable to be signed in " + baseSearchDir(), e);
+			}
+		}
+
+		int signedExecutables = exeSigner.signExecutables(exePaths);
+		if (signedExecutables != exePaths.size()) {
+			exceptionHandler.handleError(signedExecutables + " executable(s) were signed while we were requesting the signature of " + exePaths.size());
+		}
+	}
 
 	private String baseSearchDir() {
 		return baseSearchDir != null ? baseSearchDir : deprecatedBaseSearchDir;
@@ -291,15 +305,15 @@ public class SignMojo extends AbstractMojo {
 		return Sets.union(fileNames, deprecatedFileNames);
 	}
 
-	private String[] signFiles() {
-		return ObjectArrays.concat(signFiles, deprecatedSignFiles, String.class);
+	private Set<String> signFiles() {
+		return Sets.union(signFiles, deprecatedSignFiles);
 	}
 
 	private boolean continueOnFail() {
 		return continueOnFail || deprecatedContinueOnFail;
 	}
 
-    static Set<PathMatcher> getPathMatchers(FileSystem fs, Set<String> fileNames, Log log) {
+    static Set<PathMatcher> createPathMatchers(FileSystem fs, Set<String> fileNames, Log log) {
 		final Set<PathMatcher> pathMatchers = new LinkedHashSet<>();
 		
 		if (fileNames == null || fileNames.isEmpty()) {

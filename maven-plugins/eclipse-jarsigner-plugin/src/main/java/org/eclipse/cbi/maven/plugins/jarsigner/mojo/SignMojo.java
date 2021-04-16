@@ -365,7 +365,10 @@ public class SignMojo extends AbstractMojo {
 							.timeout(Duration.ofMillis(timeoutMillis))
 							.sigFile(Strings.nullToEmpty(sigFile))
 							.build();
-					jarSigner.sign(jarFile.toPath(), options);
+					if (jarSigner.sign(jarFile.toPath(), options) == 0) {
+						new ExceptionHandler(getLog(), continueOnFail())
+						.handleError("Failed to sign jar file '" + jarFile.toString());
+					} 
 				}
 			} catch (IOException e) {
 				new ExceptionHandler(getLog(), continueOnFail())

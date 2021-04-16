@@ -7,7 +7,6 @@ import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -259,145 +258,145 @@ public class OSXAppSignerTest {
 		}
 	}
 
-	@Theory
-	@Test(expected=NullPointerException.class)
-	public void testSigningNullDirectory(Configuration fsConf) throws IOException, MojoExecutionException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
-			osxAppSigner.signApplications(null, new LinkedHashSet<PathMatcher>(), null);
-		}
-	}
+	// @Theory
+	// @Test(expected=NullPointerException.class)
+	// public void testSigningNullDirectory(Configuration fsConf) throws IOException, MojoExecutionException {
+	// 	try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
+	// 		OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
+	// 		osxAppSigner.signApplications(null, new LinkedHashSet<PathMatcher>(), null);
+	// 	}
+	// }
 
-	@Theory
-	@Test(expected=MojoExecutionException.class)
-	public void testSigningWithLookupInNonExistingFolder(Configuration fsConf) throws IOException, MojoExecutionException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
-			osxAppSigner.signApplications(fs.getPath("test"), new LinkedHashSet<PathMatcher>(),null);
-		}
-	}
+	// @Theory
+	// @Test(expected=MojoExecutionException.class)
+	// public void testSigningWithLookupInNonExistingFolder(Configuration fsConf) throws IOException, MojoExecutionException {
+	// 	try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
+	// 		OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
+	// 		osxAppSigner.signApplications(fs.getPath("test"), new LinkedHashSet<PathMatcher>(),null);
+	// 	}
+	// }
 
-	@Theory
-	public void testSigningWithLookup(Configuration fsConf) throws IOException, MojoExecutionException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
-			assertEquals(0, osxAppSigner.signApplications(Files.createDirectories(fs.getPath("test")), new LinkedHashSet<PathMatcher>(), null));
-		}
-	}
+	// @Theory
+	// public void testSigningWithLookup(Configuration fsConf) throws IOException, MojoExecutionException {
+	// 	try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
+	// 		OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
+	// 		assertEquals(0, osxAppSigner.signApplications(Files.createDirectories(fs.getPath("test")), new LinkedHashSet<PathMatcher>(), null));
+	// 	}
+	// }
 
-	@Theory
-	@Test(expected=NullPointerException.class)
-	public void testSigningWithLookupWithNullPatterns(Configuration fsConf) throws IOException, MojoExecutionException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
-			assertEquals(0, osxAppSigner.signApplications(Files.createDirectories(fs.getPath("test")), null, null));
-		}
-	}
+	// @Theory
+	// @Test(expected=NullPointerException.class)
+	// public void testSigningWithLookupWithNullPatterns(Configuration fsConf) throws IOException, MojoExecutionException {
+	// 	try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
+	// 		OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
+	// 		assertEquals(0, osxAppSigner.signApplications(Files.createDirectories(fs.getPath("test")), null, null));
+	// 	}
+	// }
 
-	@Theory
-	public void testSigningWithLookupWithEmptyPatterns(Configuration fsConf) throws IOException, MojoExecutionException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
-			Path baseDir = createTestAppFolders(fs.getPath("test"));
-			assertEquals(0, osxAppSigner.signApplications(baseDir, new LinkedHashSet<PathMatcher>(), null));
-		}
-	}
+	// @Theory
+	// public void testSigningWithLookupWithEmptyPatterns(Configuration fsConf) throws IOException, MojoExecutionException {
+	// 	try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
+	// 		OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
+	// 		Path baseDir = createTestAppFolders(fs.getPath("test"));
+	// 		assertEquals(0, osxAppSigner.signApplications(baseDir, new LinkedHashSet<PathMatcher>(), null));
+	// 	}
+	// }
 
-	@Theory
-	public void testSigningWithLookupWithDefaultMojoMatchers(Configuration fsConf) throws IOException, MojoExecutionException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
-			Path baseDir = createTestAppFolders(fs.getPath("test"));
-			assertEquals(2, osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, new LinkedHashSet<String>(), log), null));
-		}
-	}
+	// @Theory
+	// public void testSigningWithLookupWithDefaultMojoMatchers(Configuration fsConf) throws IOException, MojoExecutionException {
+	// 	try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
+	// 		OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
+	// 		Path baseDir = createTestAppFolders(fs.getPath("test"));
+	// 		assertEquals(2, osxAppSigner.signApplications(baseDir, SignMojo.createPathMatchers(fs, new LinkedHashSet<String>(), log), null));
+	// 	}
+	// }
 
-	@Theory
-	public void testSigningWithLookupWithMojoMatchers(Configuration fsConf) throws IOException, MojoExecutionException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
-			Path baseDir = createTestAppFolders(fs.getPath("test"));
-			assertEquals(3, osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, newSet("app1.app", "app5.app", "app3.app"), log), null));
-		}
-	}
+	// @Theory
+	// public void testSigningWithLookupWithMojoMatchers(Configuration fsConf) throws IOException, MojoExecutionException {
+	// 	try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
+	// 		OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
+	// 		Path baseDir = createTestAppFolders(fs.getPath("test"));
+	// 		assertEquals(3, osxAppSigner.signApplications(baseDir, SignMojo.createPathMatchers(fs, newSet("app1.app", "app5.app", "app3.app"), log), null));
+	// 	}
+	// }
 
-	@Theory
-	public void testSigningWithLookupWithAdvancedMojoMatchers(Configuration fsConf) throws IOException, MojoExecutionException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
-			Path baseDir = createTestAppFolders(fs.getPath("test"));
-			assertEquals(6, osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, newSet("app*.app"), log), null));
-		}
-	}
+	// @Theory
+	// public void testSigningWithLookupWithAdvancedMojoMatchers(Configuration fsConf) throws IOException, MojoExecutionException {
+	// 	try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
+	// 		OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
+	// 		Path baseDir = createTestAppFolders(fs.getPath("test"));
+	// 		assertEquals(6, osxAppSigner.signApplications(baseDir, SignMojo.createPathMatchers(fs, newSet("app*.app"), log), null));
+	// 	}
+	// }
 
-	@Theory
-	public void testSigningWithLookupWithAdvancedMojoMatchers2(Configuration fsConf) throws IOException, MojoExecutionException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
-			Path baseDir = createTestAppFolders(fs.getPath("test"));
-			assertEquals(0, osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, newSet("subFolder2/*.app"), log), null));
-		}
-	}
+	// @Theory
+	// public void testSigningWithLookupWithAdvancedMojoMatchers2(Configuration fsConf) throws IOException, MojoExecutionException {
+	// 	try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
+	// 		OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
+	// 		Path baseDir = createTestAppFolders(fs.getPath("test"));
+	// 		assertEquals(0, osxAppSigner.signApplications(baseDir, SignMojo.createPathMatchers(fs, newSet("subFolder2/*.app"), log), null));
+	// 	}
+	// }
 
-	@Theory
-	public void testSigningWithLookupWithAdvancedMojoMatchers4(Configuration fsConf) throws IOException, MojoExecutionException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
-			Path baseDir = createTestAppFolders(fs.getPath("test"));
-			assertEquals(4, osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, newSet("subSub/*.app"), log), null));
-		}
-	}
+	// @Theory
+	// public void testSigningWithLookupWithAdvancedMojoMatchers4(Configuration fsConf) throws IOException, MojoExecutionException {
+	// 	try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
+	// 		OSXAppSigner osxAppSigner = createAppSigner(HttpClients.DUMMY, false);
+	// 		Path baseDir = createTestAppFolders(fs.getPath("test"));
+	// 		assertEquals(4, osxAppSigner.signApplications(baseDir, SignMojo.createPathMatchers(fs, newSet("subSub/*.app"), log), null));
+	// 	}
+	// }
 
-	@Theory
-	@Test(expected=MojoExecutionException.class)
-	public void testSigningWithLookupWithNonSigningSigner(Configuration fsConf) throws IOException, MojoExecutionException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.FAILING, false);
-			Path baseDir = createTestAppFolders(fs.getPath("test"));
-			osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, newSet("app1.app", "app5.app", "app3.app"), log), null);
-		}
-	}
+	// @Theory
+	// @Test(expected=MojoExecutionException.class)
+	// public void testSigningWithLookupWithNonSigningSigner(Configuration fsConf) throws IOException, MojoExecutionException {
+	// 	try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
+	// 		OSXAppSigner osxAppSigner = createAppSigner(HttpClients.FAILING, false);
+	// 		Path baseDir = createTestAppFolders(fs.getPath("test"));
+	// 		osxAppSigner.signApplications(baseDir, SignMojo.createPathMatchers(fs, newSet("app1.app", "app5.app", "app3.app"), log), null);
+	// 	}
+	// }
 
-	@Theory
-	public void testSigningWithLookupWithNonSigningSignerButContinueOnFail(Configuration fsConf) throws IOException, MojoExecutionException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.FAILING, true);
-			Path baseDir = createTestAppFolders(fs.getPath("test"));
-			assertEquals(0, osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, newSet("app1.app", "app5.app", "app3.app"), log), null));
-		}
-	}
+	// @Theory
+	// public void testSigningWithLookupWithNonSigningSignerButContinueOnFail(Configuration fsConf) throws IOException, MojoExecutionException {
+	// 	try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
+	// 		OSXAppSigner osxAppSigner = createAppSigner(HttpClients.FAILING, true);
+	// 		Path baseDir = createTestAppFolders(fs.getPath("test"));
+	// 		assertEquals(0, osxAppSigner.signApplications(baseDir, SignMojo.createPathMatchers(fs, newSet("app1.app", "app5.app", "app3.app"), log), null));
+	// 	}
+	// }
 
-	@Theory
-	@Test(expected=MojoExecutionException.class)
-	public void testSigningWithLookupWithErrorSigner(Configuration fsConf) throws IOException, MojoExecutionException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.ERROR, false);
-			Path baseDir = createTestAppFolders(fs.getPath("test"));
-			osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, newSet("app1.app", "app5.app", "app3.app"), log), null);
-		}
-	}
+	// @Theory
+	// @Test(expected=MojoExecutionException.class)
+	// public void testSigningWithLookupWithErrorSigner(Configuration fsConf) throws IOException, MojoExecutionException {
+	// 	try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
+	// 		OSXAppSigner osxAppSigner = createAppSigner(HttpClients.ERROR, false);
+	// 		Path baseDir = createTestAppFolders(fs.getPath("test"));
+	// 		osxAppSigner.signApplications(baseDir, SignMojo.createPathMatchers(fs, newSet("app1.app", "app5.app", "app3.app"), log), null);
+	// 	}
+	// }
 
-	@Theory
-	public void testSigningWithLookupWithErrorSignerButContinueOnFail(Configuration fsConf) throws IOException, MojoExecutionException {
-		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
-			OSXAppSigner osxAppSigner = createAppSigner(HttpClients.ERROR, true);
-			Path baseDir = createTestAppFolders(fs.getPath("test"));
-			assertEquals(0, osxAppSigner.signApplications(baseDir, SignMojo.getPathMatchers(fs, newSet("app1.app", "app5.app", "app3.app"), log), null));
-		}
-	}
+	// @Theory
+	// public void testSigningWithLookupWithErrorSignerButContinueOnFail(Configuration fsConf) throws IOException, MojoExecutionException {
+	// 	try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
+	// 		OSXAppSigner osxAppSigner = createAppSigner(HttpClients.ERROR, true);
+	// 		Path baseDir = createTestAppFolders(fs.getPath("test"));
+	// 		assertEquals(0, osxAppSigner.signApplications(baseDir, SignMojo.createPathMatchers(fs, newSet("app1.app", "app5.app", "app3.app"), log), null));
+	// 	}
+	// }
 
-	private Path createTestAppFolders(Path baseDir) throws IOException {
-		Files.createDirectories(baseDir.resolve("app1.app"));
-		Files.createDirectories(baseDir.resolve("app1.app/subFolder/appSUB.app"));
-		Files.createDirectories(baseDir.resolve("app2.app"));
-		Files.createDirectories(baseDir.resolve("Eclipse.app"));
-		Files.createDirectories(baseDir.resolve("subFolder").resolve("app3.app"));
-		Files.createDirectories(baseDir.resolve("subFolder2").resolve("subSub").resolve("app4.app"));
-		Files.createDirectories(baseDir.resolve("subFolder2").resolve("subSub").resolve("app5.app"));
-		Files.createDirectories(baseDir.resolve("subFolder2").resolve("subSub").resolve("app6.app"));
-		Files.createDirectories(baseDir.resolve("subFolder2").resolve("subSub").resolve("Eclipse.app"));
-		return baseDir;
-	}
+	// private Path createTestAppFolders(Path baseDir) throws IOException {
+	// 	Files.createDirectories(baseDir.resolve("app1.app"));
+	// 	Files.createDirectories(baseDir.resolve("app1.app/subFolder/appSUB.app"));
+	// 	Files.createDirectories(baseDir.resolve("app2.app"));
+	// 	Files.createDirectories(baseDir.resolve("Eclipse.app"));
+	// 	Files.createDirectories(baseDir.resolve("subFolder").resolve("app3.app"));
+	// 	Files.createDirectories(baseDir.resolve("subFolder2").resolve("subSub").resolve("app4.app"));
+	// 	Files.createDirectories(baseDir.resolve("subFolder2").resolve("subSub").resolve("app5.app"));
+	// 	Files.createDirectories(baseDir.resolve("subFolder2").resolve("subSub").resolve("app6.app"));
+	// 	Files.createDirectories(baseDir.resolve("subFolder2").resolve("subSub").resolve("Eclipse.app"));
+	// 	return baseDir;
+	// }
 
 	private OSXAppSigner createAppSigner(HttpClient client, boolean continueOnFail) {
 		OSXAppSigner osxAppSigner = OSXAppSigner.builder()

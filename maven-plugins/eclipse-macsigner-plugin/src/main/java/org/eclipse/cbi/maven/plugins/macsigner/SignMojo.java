@@ -11,15 +11,20 @@
  *******************************************************************************/
 package org.eclipse.cbi.maven.plugins.macsigner;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.collect.Sets;
 
@@ -228,24 +233,33 @@ public class SignMojo extends AbstractMojo {
 		HttpClient httpClient = RetryHttpClient.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())))
 				.maxRetries(retryLimit()).waitBeforeRetry(retryTimer(), TimeUnit.SECONDS).log(new MavenLogger(getLog()))
 				.build();
+		ExceptionHandler exceptionHandler = new ExceptionHandler(getLog(), continueOnFail());
 		OSXAppSigner osxAppSigner = OSXAppSigner.builder().serverUri(URI.create(signerUrl)).httpClient(httpClient)
-				.timeout(Duration.ofMillis(timeoutMillis)).exceptionHandler(new ExceptionHandler(getLog(), continueOnFail()))
+				.timeout(Duration.ofMillis(timeoutMillis)).exceptionHandler(exceptionHandler)
 				.log(getLog()).build();
 
 		Path entitlementsFile = entitlements == null ? null : FileSystems.getDefault().getPath(entitlements);
 
+		Set<Path> filesToSign = Collections.emptySet();
 		if (signFiles() != null && !signFiles().isEmpty()) {
 			// app paths are configured
-			Set<Path> filesToSign = new LinkedHashSet<>();
-			for (String pathString : signFiles()) {
-				filesToSign.add(FileSystems.getDefault().getPath(pathString));
-			}
-			osxAppSigner.signApplications(filesToSign, entitlementsFile);
+			filesToSign = signFiles().stream().map(FileSystems.getDefault()::getPath).collect(Collectors.toSet());
 		} else {
 			// perform search
-			osxAppSigner.signApplications(FileSystems.getDefault().getPath(baseSearchDir()),
-					getPathMatchers(FileSystems.getDefault(), fileNames(), getLog()),
-					entitlementsFile);
+			Set<PathMatcher> pathMatchers = createPathMatchers(FileSystems.getDefault(), fileNames(), getLog());
+			try (Stream<Path> walk = Files.walk(FileSystems.getDefault().getPath(baseSearchDir()))) {
+				filesToSign = walk.filter(path -> pathMatchers.stream()
+					.anyMatch(matcher -> matcher.matches(path)))
+					.collect(Collectors.toSet()
+				);
+			} catch (IOException e) {
+				exceptionHandler.handleError("An error happened while searching for app to be signed in " + baseSearchDir(), e);
+			}
+		}
+
+		int signedApps = osxAppSigner.signApplications(filesToSign, entitlementsFile);
+		if (signedApps < filesToSign.size()) {
+			exceptionHandler.handleError(signedApps + " app(s) were signed, while " + filesToSign.size() + "  have been found and were supposed to be signed");
 		}
 	}
 
@@ -265,7 +279,7 @@ public class SignMojo extends AbstractMojo {
 		return continueOnFail || deprecatedContinueOnFail;
 	}
 
-	static Set<PathMatcher> getPathMatchers(FileSystem fs, Set<String> fileNames, Log log) {
+	static Set<PathMatcher> createPathMatchers(FileSystem fs, Set<String> fileNames, Log log) {
 		final Set<PathMatcher> pathMatchers = new LinkedHashSet<>();
 
 		if (fileNames == null || fileNames.isEmpty()) {

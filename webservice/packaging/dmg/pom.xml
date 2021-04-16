@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.eclipse.cbi</groupId>
     <artifactId>packaging-parent</artifactId>
-    <version>1.3.1-SNAPSHOT</version>
+    <version>1.3.1</version>
   </parent>
 
   <build>

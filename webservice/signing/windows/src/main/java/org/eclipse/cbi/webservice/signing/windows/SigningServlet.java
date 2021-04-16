@@ -13,15 +13,15 @@ package org.eclipse.cbi.webservice.signing.windows;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import com.google.auto.value.AutoValue;
 
 import org.eclipse.cbi.webservice.servlet.RequestFacade;
 import org.eclipse.cbi.webservice.servlet.ResponseFacade;
 
-import com.google.auto.value.AutoValue;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Servlet that will serve the Windows executable signing service.
@@ -52,7 +52,7 @@ public abstract class SigningServlet extends HttpServlet {
 	private void doSign(RequestFacade requestFacade, ResponseFacade responseFacade) throws IOException, ServletException {
 		if (requestFacade.hasPart(FILE_PART_NAME)) {
 			String submittedFileName = requestFacade.getSubmittedFileName(FILE_PART_NAME).get();
-			if (submittedFileName.endsWith(".exe")) {
+			if (submittedFileName.endsWith(".exe") || submittedFileName.endsWith(".dll") || submittedFileName.endsWith(".msi")) {
 				Path unsignedExe = requestFacade.getPartPath(FILE_PART_NAME, TEMP_FILE_PREFIX).get();
 				Path signedFile = osslCodesigner().sign(unsignedExe);
 				responseFacade.replyWithFile(PORTABLE_EXECUTABLE_MEDIA_TYPE, submittedFileName, signedFile);

@@ -22,6 +22,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -44,13 +45,13 @@ public abstract class Codesigner {
 
 	private static final String TEMP_FILE_PREFIX = Codesigner.class.getSimpleName() + "-";
 
-	private static final String DOT_APP_GLOB_PATTERN = "glob:**.{app,plugin,framework}";
+	private static final String SIGNABLE_GLOB_PATTERN = "glob:**.{app,plugin,framework,dylib}";
 
 	private static final String DOT_PKG_GLOB_PATTERN = "glob:**.{pkg,mpkg}";
 
 	Codesigner() {}
 
-	public long signZippedApplications(Path source, Path target, Optional<Path> entitlements) throws IOException {
+	public long signZippedApplications(Path source, Path target, Options options) throws IOException {
 		requireNonNull(source);
 		requireNonNull(target);
 		checkArgument(Files.isRegularFile(source), "Source zip must be an existing regular file");
@@ -62,7 +63,7 @@ public abstract class Codesigner {
 			unzipDirectory = Files.createTempDirectory(tempFolder(), TEMP_FILE_PREFIX);
 			// unzip the part in temp folder.
 			if (Zips.unpackZip(source, unzipDirectory) > 0) {
-				return signAndRezip(unzipDirectory, target, entitlements);
+				return signAndRezip(unzipDirectory, target, options);
 			} else {
 				throw new IOException("The provided Zip file is invalid");
 			}
@@ -72,8 +73,8 @@ public abstract class Codesigner {
 		}
 	}
 
-	private long signAndRezip(Path unzipDirectory, Path signedFile, Optional<Path> entitlements) throws IOException {
-		final long nbSignedApps = signAll(unzipDirectory, entitlements);
+	private long signAndRezip(Path unzipDirectory, Path signedFile, Options options) throws IOException {
+		final long nbSignedApps = signAll(unzipDirectory, options);
 		if (nbSignedApps > 0) {
 			if (Zips.packZip(unzipDirectory, signedFile, false) <= 0) {
 				throw new IOException("The signing was succesfull, but something wrong happened when trying to zip it back");
@@ -82,9 +83,9 @@ public abstract class Codesigner {
 		return nbSignedApps;
 	}
 
-	public long signFile(Path source, Optional<Path> entitlements) throws IOException {
+	public long signFile(Path source, Options options) throws IOException {
 		requireNonNull(source);
-		if (doSign(source, entitlements, true)) {
+		if (doSign(source, options, true)) {
 			return 1;
 		}
 		return 0;
@@ -98,7 +99,7 @@ public abstract class Codesigner {
 	 *         is signed or an error occured with at least one.
 	 * @throws IOException  if an I/O error occurs when signing
 	 */
-	private long signAll(Path directory, Optional<Path> entitlements) throws IOException {
+	private long signAll(Path directory, Options options) throws IOException {
 		requireNonNull(directory);
 		checkArgument(Files.isDirectory(directory), "Path must reference an existing directory");
 
@@ -108,7 +109,7 @@ public abstract class Codesigner {
 			try {
 				return pathStream
 					.filter(Codesigner::signable)
-					.filter(safePredicate(p -> doSign(p, entitlements, false)))
+					.filter(safePredicate(p -> doSign(p, options, false)))
 					.count();
 			} catch (WrappedException e) {
 				throwIfInstanceOf(e.getCause(), IOException.class);
@@ -120,37 +121,37 @@ public abstract class Codesigner {
 
 	private static boolean signable(Path path) {
 		final FileSystem fs = path.getFileSystem();
-		return fs.getPathMatcher(DOT_APP_GLOB_PATTERN).matches(path) || fs.getPathMatcher(DOT_PKG_GLOB_PATTERN).matches(path);
+		return fs.getPathMatcher(SIGNABLE_GLOB_PATTERN).matches(path) || fs.getPathMatcher(DOT_PKG_GLOB_PATTERN).matches(path);
 	}
 
-	private boolean doSign(Path file, Optional<Path> entitlements, boolean needUnlock) throws IOException {
+	private boolean doSign(Path file, Options options, boolean needUnlock) throws IOException {
 		if (needUnlock) {
 			unlockKeychain();
 		}
 
 		final FileSystem fs = file.getFileSystem();
 		if (Files.isDirectory(file)) {
-			if (fs.getPathMatcher(DOT_APP_GLOB_PATTERN).matches(file)) {
-				return codesign(file, entitlements, true);
+			if (fs.getPathMatcher(SIGNABLE_GLOB_PATTERN).matches(file)) {
+				return codesign(file, options);
 			} else {
-				logger.warn("Folder '"+file+"' does not match pattern "+DOT_APP_GLOB_PATTERN+" so it won't be signed");
+				logger.warn("Folder '"+file+"' does not match pattern "+SIGNABLE_GLOB_PATTERN+" so it won't be signed");
 			}
 		} else if (Files.isRegularFile(file)) {
 			if (fs.getPathMatcher(DOT_PKG_GLOB_PATTERN).matches(file)) {
 				return productsign(file);
 			} else {
-				return codesign(file, entitlements, true);
+				return codesign(file, options);
 			}
 		}
 
 		return false;
 	}
 
-	private boolean codesign(Path file, Optional<Path> entitlements, boolean deep) throws IOException {
+	private boolean codesign(Path file, Options options) throws IOException {
 		requireNonNull(file);
 
 		final StringBuilder output = new StringBuilder();
-		final int codesignExitValue = processExecutor().exec(codesignCommand(file, entitlements, deep), output, codesignTimeout(), TimeUnit.SECONDS);
+		final int codesignExitValue = processExecutor().exec(codesignCommand(file, options), output, codesignTimeout(), TimeUnit.SECONDS);
 		if (codesignExitValue == 0) {
 			return true;
 		} else {
@@ -195,16 +196,12 @@ public abstract class Codesigner {
 		}
 	}
 
-	private ImmutableList<String> codesignCommand(Path path, Optional<Path> entitlements, boolean deep) {
-		ImmutableList.Builder<String> command = ImmutableList.<String>builder().addAll(codesignCommandPrefix());
-		if (entitlements.isPresent()) {
-			command.add("--entitlements", entitlements.get().toString());
-		}
-		if (deep) {
-			command.add("--deep");
-		}
-		command.add(path.toString());
-		return command.build();
+	private ImmutableList<String> codesignCommand(Path path, Options options) {
+		return ImmutableList.<String>builder()
+			.addAll(codesignCommandPrefix())
+			.addAll(options.toArgsList())
+			.add(path.toString())
+			.build();
 	}
 
 	private ImmutableList<String> productsignCommand(Path input, Path output) {
@@ -387,6 +384,45 @@ public abstract class Codesigner {
 			checkState(Files.exists(codesigner.tempFolder()), "Temporary folder must exists");
 			checkState(Files.isDirectory(codesigner.tempFolder()), "Temporary folder must be a directory");
 			return codesigner;
+		}
+	}
+
+	@AutoValue
+	public static abstract class Options {
+
+		public abstract boolean deep();
+
+		public abstract boolean force();
+
+		public abstract Optional<Path> entitlements();
+
+		public static Options.Builder builder() {
+			return new AutoValue_Codesigner_Options.Builder()
+				.deep(true)
+				.force(true);
+		}
+
+		public List<String> toArgsList() {
+			ImmutableList.Builder<String> ret = ImmutableList.builder();
+			if (deep()) {
+				ret.add("--deep");
+			}
+			if (force()) {
+				ret.add("--force");
+			}
+			if (entitlements().isPresent()) {
+				ret.add("--entitlements", entitlements().get().toString());
+			}
+			return ret.build();
+		}
+
+		@AutoValue.Builder
+		public static abstract class Builder {
+			public abstract Options.Builder deep(boolean deep);
+			public abstract Options.Builder force(boolean force);
+			public abstract Options.Builder entitlements(Path entitlements);
+			public abstract Options.Builder entitlements(Optional<Path> entitlements);
+			public abstract Options build();
 		}
 	}
 }

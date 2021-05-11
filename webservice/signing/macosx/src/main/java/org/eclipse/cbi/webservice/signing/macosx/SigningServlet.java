@@ -15,16 +15,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 
 import org.eclipse.cbi.webservice.servlet.RequestFacade;
 import org.eclipse.cbi.webservice.servlet.ResponseFacade;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Serves OS X code signing service through POST request. It requires a "file"
@@ -68,10 +68,11 @@ public abstract class SigningServlet extends HttpServlet {
 	private void doSign(RequestFacade requestFacade, final ResponseFacade answeringMachine) throws IOException, ServletException {
 		Path fileToBeSigned = requestFacade.getPartPath(FILE_PART_NAME, TEMP_FILE_PREFIX).get();
 		Optional<Path> entitlements = requestFacade.getPartPath(ENTITLEMENTS_PART_NAME, TEMP_FILE_PREFIX);
+		Codesigner.Options codesignerOptions = Codesigner.Options.builder().entitlements(entitlements).build();
 		if ("zip".equals(com.google.common.io.Files.getFileExtension(requestFacade.getSubmittedFileName(FILE_PART_NAME).get()))) {
-			signFilesInZip(requestFacade, answeringMachine, fileToBeSigned, entitlements);
+			signFilesInZip(requestFacade, answeringMachine, fileToBeSigned, codesignerOptions);
 		} else {
-			if (codesigner().signFile(fileToBeSigned, entitlements) > 0) {
+			if (codesigner().signFile(fileToBeSigned, codesignerOptions) > 0) {
 				answeringMachine.replyWithFile(OCTET_STREAM__CONTENT_TYPE, requestFacade.getSubmittedFileName(FILE_PART_NAME).get(), fileToBeSigned);
 			} else {
 				answeringMachine.replyError(HttpServletResponse.SC_BAD_REQUEST, "Unable to sign provided file");
@@ -79,11 +80,11 @@ public abstract class SigningServlet extends HttpServlet {
 		}
 	}
 
-	private void signFilesInZip(RequestFacade requestFacade, final ResponseFacade answeringMachine, Path zipFileWithFilesToBeSigned, Optional<Path> entitlements) throws IOException, ServletException {
+	private void signFilesInZip(RequestFacade requestFacade, final ResponseFacade answeringMachine, Path zipFileWithFilesToBeSigned, Codesigner.Options codesignerOptions) throws IOException, ServletException {
 		final String submittedFilename = requestFacade.getSubmittedFileName(FILE_PART_NAME).get();
 		final Path signedFile = Files.createTempFile(tempFolder(), TEMP_FILE_PREFIX, "signed." + com.google.common.io.Files.getFileExtension(submittedFilename));
 		try {
-			if (codesigner().signZippedApplications(zipFileWithFilesToBeSigned, signedFile, entitlements) > 0) {
+			if (codesigner().signZippedApplications(zipFileWithFilesToBeSigned, signedFile, codesignerOptions) > 0) {
 				answeringMachine.replyWithFile(ZIP_CONTENT_TYPE, requestFacade.getSubmittedFileName(FILE_PART_NAME).get(), signedFile);
 			} else {
 				answeringMachine.replyError(HttpServletResponse.SC_BAD_REQUEST, "No '.app' folder can be found in the provided zip file");

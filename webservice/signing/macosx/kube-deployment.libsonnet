@@ -50,7 +50,7 @@ local newDeployment() = {
       },
       to: {
         kind: "Service",
-        name: "macos-codesign",
+        name: "macos-codesign-staging",
         weight: 100
       },
     }

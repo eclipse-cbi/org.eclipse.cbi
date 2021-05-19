@@ -45,8 +45,6 @@ public abstract class Codesigner {
 
 	private static final String TEMP_FILE_PREFIX = Codesigner.class.getSimpleName() + "-";
 
-	private static final String SIGNABLE_GLOB_PATTERN = "glob:**.{app,plugin,framework,dylib}";
-
 	private static final String DOT_PKG_GLOB_PATTERN = "glob:**.{pkg,mpkg}";
 
 	Codesigner() {}
@@ -108,7 +106,6 @@ public abstract class Codesigner {
 		try (Stream<Path> pathStream = Files.list(directory)) {
 			try {
 				return pathStream
-					.filter(Codesigner::signable)
 					.filter(safePredicate(p -> doSign(p, options, false)))
 					.count();
 			} catch (WrappedException e) {
@@ -119,11 +116,6 @@ public abstract class Codesigner {
 		}
 	}
 
-	private static boolean signable(Path path) {
-		final FileSystem fs = path.getFileSystem();
-		return fs.getPathMatcher(SIGNABLE_GLOB_PATTERN).matches(path) || fs.getPathMatcher(DOT_PKG_GLOB_PATTERN).matches(path);
-	}
-
 	private boolean doSign(Path file, Options options, boolean needUnlock) throws IOException {
 		if (needUnlock) {
 			unlockKeychain();
@@ -131,11 +123,7 @@ public abstract class Codesigner {
 
 		final FileSystem fs = file.getFileSystem();
 		if (Files.isDirectory(file)) {
-			if (fs.getPathMatcher(SIGNABLE_GLOB_PATTERN).matches(file)) {
-				return codesign(file, options);
-			} else {
-				logger.warn("Folder '"+file+"' does not match pattern "+SIGNABLE_GLOB_PATTERN+" so it won't be signed");
-			}
+			return codesign(file, options);
 		} else if (Files.isRegularFile(file)) {
 			if (fs.getPathMatcher(DOT_PKG_GLOB_PATTERN).matches(file)) {
 				return productsign(file);

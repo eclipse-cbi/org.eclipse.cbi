@@ -119,6 +119,7 @@ public class CodesignerTest {
 		}
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Test
 	public void testZipFileWithoutApp() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
@@ -128,8 +129,12 @@ public class CodesignerTest {
 			Zips.packZip(fs.getPath("folder"), source, true);
 
 			Path target = fs.getPath("signed.zip");
-			assertEquals(0, createCodesignerUnderTest(fs, processExecutor).signZippedApplications(source, target, Codesigner.Options.builder().build()));
-			verify(processExecutor).exec(eq(ImmutableList.of("security", "unlock", "-p", "password", "/path/to/keychain")), any(), anyLong(), any());
+			assertEquals(1, createCodesignerUnderTest(fs, processExecutor).signZippedApplications(source, target, Codesigner.Options.builder().build()));
+			ArgumentCaptor<ImmutableList> listCaptor = ArgumentCaptor.forClass(ImmutableList.class);
+			verify(processExecutor, times(2)).exec(listCaptor.capture(), any(), anyLong(), any());
+			assertEquals("security", listCaptor.getAllValues().get(0).get(0));
+			assertEquals("codesign", listCaptor.getAllValues().get(1).get(0));
+
 			verifyNoMoreInteractions(processExecutor);
 
 			verifyCleanedTempFolder(fs);
@@ -197,11 +202,11 @@ public class CodesignerTest {
 	@Test
 	public void testZipFileWithThreeApps() throws IOException, ServletException {
 		try(FileSystem fs = Jimfs.newFileSystem(Configuration.osX())) {
-			assertEquals(2,
+			assertEquals(3,
 				createCodesignerUnderTest(fs, processExecutor).signZippedApplications(createTestZipFile2(fs), fs.getPath("signed.zip"), Codesigner.Options.builder().build()));
 
 			ArgumentCaptor<ImmutableList> listCaptor = ArgumentCaptor.forClass(ImmutableList.class);
-			verify(processExecutor, times(3)).exec(listCaptor.capture(), any(), anyLong(), any());
+			verify(processExecutor, times(4)).exec(listCaptor.capture(), any(), anyLong(), any());
 			assertEquals("security", listCaptor.getAllValues().get(0).get(0));
 			listCaptor.getAllValues().subList(1, listCaptor.getAllValues().size()).forEach(args -> {
 				assertEquals("codesign", args.get(0));
@@ -225,7 +230,7 @@ public class CodesignerTest {
 			Zips.packZip(fs.getPath("folder"), zip, false);
 
 
-			assertEquals(2,
+			assertEquals(3,
 					createCodesignerUnderTest(fs, processExecutor).signZippedApplications(zip, fs.getPath("signed.zip"), Codesigner.Options.builder().build()));
 			verifyCleanedTempFolder(fs);
 		}
@@ -247,10 +252,10 @@ public class CodesignerTest {
 
 			Path source = createTestZipFile2(fs);
 			Path target = fs.getPath("signed.zip");
-			assertEquals(2,
+			assertEquals(3,
 				createCodesignerUnderTest(fs, processExecutor).signZippedApplications(source, target, Codesigner.Options.builder().build()));
 
-			assertEquals(2+Zips.unpackZip(source, fs.getPath("/unzipUnsigned")),
+			assertEquals(3+Zips.unpackZip(source, fs.getPath("/unzipUnsigned")),
 				Zips.unpackZip(target, fs.getPath("/unzipSigned")));
 
 			assertTrue(Files.exists(fs.getPath("/unzipSigned/MyApp.app/signed")));

@@ -53,7 +53,7 @@ local newDeployment(name, artifactId, version) = {
           selector: {
             matchLabels: labels(nameByEnv($.name)),
           },
-          replicas: if std.endsWith($.version, "SNAPSHOT") then 1 else 2,
+          replicas: if std.endsWith($.version, "SNAPSHOT") then 1 else 4,
           template: {
             metadata: {
               labels: labels(nameByEnv($.name)),

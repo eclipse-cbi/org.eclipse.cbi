@@ -212,7 +212,7 @@
       <dependency>
         <groupId>org.slf4j</groupId> <!-- Required dependency convergence enforcer rule -->
         <artifactId>slf4j-api</artifactId>
-        <version>1.7.30</version>
+        <version>1.7.31</version>
       </dependency>
       <dependency>
         <groupId>commons-io</groupId> <!-- Required dependency convergence enforcer rule -->

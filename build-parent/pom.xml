@@ -123,6 +123,11 @@
           <version>3.1.2</version>
           <dependencies>
             <dependency>
+              <groupId>com.puppycrawl.tools</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>8.44</version>
+            </dependency>
+            <dependency>
               <groupId>org.eclipse.cbi</groupId>
               <artifactId>checkstyle</artifactId>
               <version>${project.version}</version>

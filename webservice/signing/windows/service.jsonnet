@@ -85,7 +85,7 @@ deployment.newDeployment("authenticode-signing", std.extVar("artifactId"), std.e
       && make install
   ||| % $ + super.Dockerfile + |||
     RUN apt-get update && apt-get -y --no-install-recommends install \
-      libcurl4-gnutls-dev
+      libcurl4-gnutls-dev \
       libgsf-1-dev
     COPY --from=builder /osslsigncode/osslsigncode %(osslsigncodePath)s/
   ||| % $,

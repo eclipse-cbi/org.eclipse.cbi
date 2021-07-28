@@ -18,7 +18,7 @@ SCRIPT_FOLDER="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")")"
 SERVICE_JSON_FILE=${1}
 SERVICE_PATH="$(realpath --relative-to="${SCRIPT_FOLDER}/.." "$(readlink -f "$(dirname "${SERVICE_JSON_FILE}")")")"
 
-if [[ "$(kubectl config current-context)" == okd* ]]; then
+if [[ "$(kubectl config current-context)" == okd.* ]]; then
   echo "ERROR: bad context: not deploying to okd cluster"
   echo "Current context = $(kubectl config current-context)"
   exit 1

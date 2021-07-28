@@ -65,6 +65,7 @@ done
 
 # apply java p12 keystore to the cluster
 kubectl create secret generic "$(jq -r '.keystore.secretName' <<<"${SERVICE_JSON}")" \
+  --namespace "$(jq -r '.kube.namespace' <<<"${SERVICE_JSON}")" \
   --from-file="$(jq -r '.keystore.filename' <<<"${SERVICE_JSON}")"="${KEYSTORE}" \
   --from-file="$(jq -r '.keystore.password.filename' <<<"${SERVICE_JSON}")"="${KEYSTORE_PASSWD}" \
   --dry-run=client -o yaml | kubectl apply -f -

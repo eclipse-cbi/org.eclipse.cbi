@@ -18,7 +18,7 @@ SCRIPT_FOLDER="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")")"
 SERVICE_JSON_FILE=${1}
 SERVICE_PATH="$(realpath --relative-to="${SCRIPT_FOLDER}/.." "$(readlink -f "$(dirname "${SERVICE_JSON_FILE}")")")"
 
-if [[ "$(kubectl config current-context)" == okd.* ]]; then
+if [[ "$(kubectl config current-context)" != okd* ]]; then
   echo "ERROR: bad context: not deploying to okd cluster"
   echo "Current context = $(kubectl config current-context)"
   exit 1
@@ -61,6 +61,10 @@ jq -r '.["kube.yml"]' <<<"${SERVICE_JSON}" | kubectl apply -f -
 DEPLOYMENT_NAME="$(jq -r '.kube.resources[] | select (.kind == "Deployment").metadata.name' <<<"${SERVICE_JSON}")"
 DEPLOYMENT_NAMESPACE="$(jq -r '.kube.resources[] | select (.kind == "Deployment").metadata.namespace' <<<"${SERVICE_JSON}")"
 kubectl rollout status deployment -n "${DEPLOYMENT_NAMESPACE}" "${DEPLOYMENT_NAME}"
+
+if [[ "${PROJECT_VERSION}" == *-SNAPSHOT ]]; then
+  kubectl rollout restart deployment -n "${DEPLOYMENT_NAMESPACE}" "${DEPLOYMENT_NAME}"
+fi
 
 # Execute post-deploy script
 POST=$(mktemp)

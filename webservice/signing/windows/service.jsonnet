@@ -71,6 +71,7 @@ deployment.newDeployment("authenticode-signing", std.extVar("artifactId"), std.e
         ca-certificates \
         git \
         libcurl4-gnutls-dev \
+        libgsf-1-dev \
         libtool \
         libssl-dev \
         python3-pkgconfig \

@@ -122,7 +122,7 @@
         <version>3.0.0</version>
         <executions>
           <execution>
-            <id>cbi-enforcer-rules-</id>
+            <id>cbi-enforcer-rules</id>
             <goals>
               <goal>enforce</goal>
             </goals>

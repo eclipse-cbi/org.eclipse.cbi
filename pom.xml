@@ -135,9 +135,6 @@
                 <requirePluginVersions/>
                 <reactorModuleConvergence/>
                 <banDuplicatePomDependencyVersions/>
-                <dependencyConvergence>
-                  <uniqueVersions>true</uniqueVersions> 
-                </dependencyConvergence>
               </rules>
             </configuration>
           </execution>

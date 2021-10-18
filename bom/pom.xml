@@ -12,7 +12,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jetty-version>11.0.6</jetty-version>
+    <jetty-version>11.0.7</jetty-version>
     <auto-value.version>1.8.2</auto-value.version> <!-- also defined in parent pom for annotation processor -->
     <apache-httpclient-version>4.5.13</apache-httpclient-version>
     <maven-api-version>3.8.2</maven-api-version>

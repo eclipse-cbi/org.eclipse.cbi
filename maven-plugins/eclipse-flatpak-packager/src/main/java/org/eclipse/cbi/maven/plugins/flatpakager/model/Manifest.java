@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2020 Red Hat, Inc. and others.
+ * Copyright (c) 2017, 2021 Red Hat, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableSet;
 public abstract class Manifest {
 	public static final String DEFAULT_BRANCH = "master";
 	public static final String DEFAULT_RUNTIME = "org.gnome.Platform";
-	public static final String DEFAULT_RUNTIMEVERSION = "3.38";
+	public static final String DEFAULT_RUNTIMEVERSION = "41";
 	public static final String DEFAULT_SDK = "org.gnome.Sdk";
 	public static final String DEFAULT_COMMAND = "eclipse";
 	public static final String DEFAULT_FLATPAKVERSION = "1.7.1";

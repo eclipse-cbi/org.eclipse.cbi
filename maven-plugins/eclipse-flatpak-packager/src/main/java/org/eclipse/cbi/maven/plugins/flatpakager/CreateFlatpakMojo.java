@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 Red Hat, Inc. and others.
+ * Copyright (c) 2017, 2021 Red Hat, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -174,7 +174,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 
 	/**
 	 * The version of the Gnome runtime on which to build the Flatpak application.
-	 * Defaults to "3.32"
+	 * Defaults to "41"
 	 * 
 	 * @since 1.1.5
 	 */
@@ -183,7 +183,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 
 	/**
 	 * The minimum version of Flatpak needed at runtime, that this application will
-	 * support. Defaults to "1.0.2" (the version available on RHEL 7.6)
+	 * support. Defaults to "1.7.1"
 	 *
 	 * @since 1.1.5
 	 */
@@ -655,6 +655,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 			List<String> builderArgs = new ArrayList<>();
 			builderArgs.add("flatpak-builder");
 			builderArgs.add("--force-clean");
+			builderArgs.add("--disable-rofiles-fuse");
 			builderArgs.add("--disable-cache");
 			builderArgs.add("--disable-download");
 			builderArgs.add("--disable-updates");

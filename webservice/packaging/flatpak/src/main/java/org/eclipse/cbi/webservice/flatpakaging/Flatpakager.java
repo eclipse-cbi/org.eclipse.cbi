@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 Red Hat, Inc. and others.
+ * Copyright (c) 2018, 2022 Red Hat, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -27,24 +27,26 @@ public abstract class Flatpakager {
 	private static final Logger logger = LoggerFactory.getLogger(Flatpakager.class);
 
 	/**
-	 * This method does the actual work of generating the Flatpak repository.
-	 * 
-	 * @param sign
-	 *            true if the Flatpak repository should be signed
-	 * @param manifest
-	 *            path to the Flatpak application manifest file
-	 * @throws IOException
-	 *             if anything went wrong during the process
+	 * This method does the actual work of building the Flatpak application and
+	 * creating a single-file bundle for sending back to the client.
+	 *
+	 * @param flatpakId ID of the Flatpak application
+	 * @param branch    the ostree repo branch of the Flatpak application
+	 * @param sign      true if the Flatpak application should be signed
+	 * @param manifest  path to the Flatpak application manifest file
+	 * @throws IOException if anything went wrong during the process
 	 */
-	public void generateFlatpakRepo(boolean sign, Path manifest) throws IOException {
+	public void generateFlatpakBundle(String flatpakId, String branch, boolean sign, Path manifest) throws IOException {
+		// Build application and generate a ostree repo
 		ImmutableList.Builder<String> builderArgs = ImmutableList.builder();
 		builderArgs.add("flatpak-builder");
 		builderArgs.add("--force-clean");
-		builderArgs.add("--disable-rofiles-fuse");
 		builderArgs.add("--disable-cache");
 		builderArgs.add("--disable-download");
 		builderArgs.add("--disable-updates");
-		builderArgs.add("--repo=" + repository().toString());
+		builderArgs.add("--default-branch=" + branch);
+		builderArgs.add("--state-dir=" + work().resolve(".flatpak-builder").toString());
+		builderArgs.add("--repo=" + work().resolve("repo").toString());
 		if (sign) {
 			builderArgs.add("--gpg-sign=" + gpgKey());
 			builderArgs.add("--gpg-homedir=" + gpgHome());
@@ -53,16 +55,19 @@ public abstract class Flatpakager {
 		builderArgs.add(manifest.toString());
 		executeProcess(builderArgs.build());
 
-		ImmutableList.Builder<String> deltaArgs = ImmutableList.builder();
-		deltaArgs.add("flatpak");
-		deltaArgs.add("build-update-repo");
-		deltaArgs.add("--generate-static-deltas");
+		// Create single-file bundle from the application in the ostree repo
+		ImmutableList.Builder<String> bundleArgs = ImmutableList.builder();
+		bundleArgs.add("flatpak");
+		bundleArgs.add("build-bundle");
 		if (sign) {
-			deltaArgs.add("--gpg-sign=" + gpgKey());
-			deltaArgs.add("--gpg-homedir=" + gpgHome());
+			builderArgs.add("--gpg-sign=" + gpgKey());
+			builderArgs.add("--gpg-homedir=" + gpgHome());
 		}
-		deltaArgs.add(repository().toString());
-		executeProcess(deltaArgs.build());
+		bundleArgs.add(work().resolve("repo").toString());
+		bundleArgs.add(work().resolve(flatpakId + ".flatpak").toString());
+		bundleArgs.add(flatpakId);
+		bundleArgs.add(branch);
+		executeProcess(bundleArgs.build());
 	}
 
 	private void executeProcess(ImmutableList<String> args) throws IOException {
@@ -83,8 +88,6 @@ public abstract class Flatpakager {
 
 	public abstract Path gpgHome();
 
-	public abstract Path repository();
-
 	public abstract Path work();
 
 	public static Builder builder() {
@@ -100,8 +103,6 @@ public abstract class Flatpakager {
 		public abstract Builder gpgKey(String gpgKey);
 
 		public abstract Builder gpgHome(Path gpgHome);
-
-		public abstract Builder repository(Path repository);
 
 		public abstract Builder work(Path work);
 

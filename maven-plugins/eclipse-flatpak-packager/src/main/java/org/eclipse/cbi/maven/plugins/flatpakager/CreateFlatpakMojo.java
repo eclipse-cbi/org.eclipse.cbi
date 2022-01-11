@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2021 Red Hat, Inc. and others.
+ * Copyright (c) 2017, 2022 Red Hat, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -655,10 +655,10 @@ public class CreateFlatpakMojo extends AbstractMojo {
 			List<String> builderArgs = new ArrayList<>();
 			builderArgs.add("flatpak-builder");
 			builderArgs.add("--force-clean");
-			builderArgs.add("--disable-rofiles-fuse");
 			builderArgs.add("--disable-cache");
 			builderArgs.add("--disable-download");
 			builderArgs.add("--disable-updates");
+			builderArgs.add("--default-branch=" + branch);
 			builderArgs.add("--repo=" + repository.getAbsolutePath());
 			if (sign) {
 				builderArgs.add("--gpg-sign=" + gpgKey);
@@ -668,22 +668,11 @@ public class CreateFlatpakMojo extends AbstractMojo {
 			builderArgs.add(new File(targetDir, flatpakId + ".json").getAbsolutePath());
 			executeProcess(exceptionHandler, builderArgs, targetDir);
 
-			List<String> deltaArgs = new ArrayList<>();
-			deltaArgs.add("flatpak");
-			deltaArgs.add("build-update-repo");
-			deltaArgs.add("--generate-static-deltas");
-			if (sign) {
-				deltaArgs.add("--gpg-sign=" + gpgKey);
-				deltaArgs.add("--gpg-homedir=" + gpgHome);
-			}
-			deltaArgs.add(repository.getAbsolutePath());
-			executeProcess(exceptionHandler, deltaArgs, targetDir);
 		} else {
 			// Generate remotely
-			HttpClient httpClient = RetryHttpClient.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())))
-					.maxRetries(3).waitBeforeRetry(10, TimeUnit.SECONDS).log(new MavenLogger(getLog())).build();
 			Builder requestBuilder = HttpRequest.on(URI.create(serviceUrl));
-
+			requestBuilder.withParam("flatpakId", flatpakId);
+			requestBuilder.withParam("branch", branch);
 			requestBuilder.withParam("manifest", new File(targetDir, flatpakId + ".json").toPath());
 			requestBuilder.withParam("source", source.toPath());
 			requestBuilder.withParam("additionalSources", Integer.toString(additionalSources.size()));
@@ -693,8 +682,45 @@ public class CreateFlatpakMojo extends AbstractMojo {
 						Paths.get(targetDir.getAbsolutePath(), addSource.getSource().getName()));
 			}
 			requestBuilder.withParam("sign", Boolean.toString(sign));
-			executeProcessOnRemoteServer(httpClient, requestBuilder.build());
+			executeProcessOnRemoteServer(requestBuilder.build());
+
+			// The "build-import-bundle" command does not generate a repo if one does not
+			// yet exist, so we need to pre-initialise it if necessary
+			if (!Files.isDirectory(repository.toPath())) {
+				List<String> ostreeInitArgs = new ArrayList<>();
+				ostreeInitArgs.add("ostree");
+				ostreeInitArgs.add("init");
+				ostreeInitArgs.add("--mode=archive");
+				ostreeInitArgs.add("--repo=" + repository.getAbsolutePath());
+				executeProcess(exceptionHandler, ostreeInitArgs, targetDir);
+			}
+
+			// Import remotely generated Flatpak bundle into the repository
+			List<String> importArgs = new ArrayList<>();
+			importArgs.add("flatpak");
+			importArgs.add("build-import-bundle");
+			importArgs.add("--no-update-summary");
+			if (sign) {
+				importArgs.add("--gpg-sign=" + gpgKey);
+				importArgs.add("--gpg-homedir=" + gpgHome);
+			}
+			importArgs.add(repository.getAbsolutePath());
+			importArgs.add(new File(targetDir, flatpakId + ".flatpak").getAbsolutePath());
+			executeProcess(exceptionHandler, importArgs, targetDir);
 		}
+
+		// Update repository metadata (regenerates the ostree summary file and deltas)
+		List<String> deltaArgs = new ArrayList<>();
+		deltaArgs.add("flatpak");
+		deltaArgs.add("build-update-repo");
+		deltaArgs.add("--generate-static-deltas");
+		deltaArgs.add("--prune");
+		if (sign) {
+			deltaArgs.add("--gpg-sign=" + gpgKey);
+			deltaArgs.add("--gpg-homedir=" + gpgHome);
+		}
+		deltaArgs.add(repository.getAbsolutePath());
+		executeProcess(exceptionHandler, deltaArgs, targetDir);
 	}
 
 	private void generateRefFiles(String armouredGpgKey) throws IOException {
@@ -760,8 +786,10 @@ public class CreateFlatpakMojo extends AbstractMojo {
 		}
 	}
 
-	private void executeProcessOnRemoteServer(HttpClient httpClient, HttpRequest request) throws IOException {
+	private void executeProcessOnRemoteServer(HttpRequest request) throws IOException {
 		getLog().debug("Executing remotely: " + request.toString());
+		final HttpClient httpClient = RetryHttpClient.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())))
+				.maxRetries(3).waitBeforeRetry(10, TimeUnit.SECONDS).log(new MavenLogger(getLog())).build();
 		final HttpRequest.Config config = HttpRequest.Config.builder().timeout(Duration.ofMillis(timeoutMillis))
 				.build();
 		httpClient.send(request, config,
@@ -772,11 +800,10 @@ public class CreateFlatpakMojo extends AbstractMojo {
 						if (result.contentLength() == 0) {
 							throw new IOException("Length of the returned content is 0");
 						}
-						// Tarball of generated Flatpak repository is sent back to us in the reply
-						Path rPath = repository.toPath();
-						Path tarballPath = rPath.getParent().resolve(rPath.getFileName().toString() + ".tar.gz");
-						result.copyContent(tarballPath, StandardCopyOption.REPLACE_EXISTING);
-						if (Files.size(tarballPath) == 0) {
+						// Flatpak application bundle is sent back to us in the reply
+						Path bundlePath = Paths.get(project.getBuild().getDirectory(), "flatpak", flatpakId + ".flatpak");
+						result.copyContent(bundlePath, StandardCopyOption.REPLACE_EXISTING);
+						if (Files.size(bundlePath) == 0) {
 							throw new IOException("Size of the returned Flatpak repo is 0");
 						}
 					}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Red Hat, Inc. and others.
+ * Copyright (c) 2018, 2022 Red Hat, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -54,8 +54,7 @@ public class FlatpakagerServer {
 			final ProcessExecutor executor = new ProcessExecutor.BasicImpl();
 			final FlatpakagerProperties conf = new FlatpakagerProperties(PropertiesReader.create(confPath));
 			final Flatpakager packager = Flatpakager.builder().processExecutor(executor).timeout(conf.getTimeout())
-					.gpgHome(conf.getGpghome()).gpgKey(conf.getGpgkey()).repository(conf.getRepository())
-					.work(tempFolder.resolve("work")).build();
+					.gpgHome(conf.getGpghome()).gpgKey(conf.getGpgkey()).work(tempFolder.resolve("work")).build();
 
 			final FlatpakagerServlet createServlet = FlatpakagerServlet.builder().tempFolder(tempFolder)
 					.packager(packager).build();

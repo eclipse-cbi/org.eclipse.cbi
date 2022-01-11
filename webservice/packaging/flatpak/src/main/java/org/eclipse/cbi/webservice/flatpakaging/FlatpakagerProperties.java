@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018 Red Hat, Inc. and others.
+ * Copyright (c) 2018, 2022 Red Hat, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -21,14 +21,12 @@ import org.eclipse.cbi.webservice.util.PropertiesReader;
  */
 public class FlatpakagerProperties {
 
-	private static final String DEFAULT_TIMEOUT = Long.toString(TimeUnit.MINUTES.toSeconds(3));
+	private static final String DEFAULT_TIMEOUT = Long.toString(TimeUnit.MINUTES.toSeconds(5));
 	private static final String TIMEOUT = "flatpak.timeout";
 
 	private static final String DEFAULT_GPGHOME = Paths.get(System.getProperty("user.home"), ".gnupg").toString();
 	private static final String GPGHOME = "flatpak.gpghome";
 	private static final String GPGKEY = "flatpak.gpgkey";
-
-	private static final String REPO = "flatpak.repository";
 
 	private final PropertiesReader propertiesReader;
 
@@ -42,10 +40,6 @@ public class FlatpakagerProperties {
 
 	public String getGpgkey() {
 		return propertiesReader.getString(GPGKEY);
-	}
-
-	public Path getRepository() {
-		return propertiesReader.getPath(REPO);
 	}
 
 	public long getTimeout() {

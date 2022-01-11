@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2021 Red Hat, Inc. and others.
+ * Copyright (c) 2018, 2022 Red Hat, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,15 +10,10 @@
  *******************************************************************************/
 package org.eclipse.cbi.webservice.flatpakaging;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.eclipse.cbi.common.util.Paths;
 import org.eclipse.cbi.webservice.servlet.RequestFacade;
 import org.eclipse.cbi.webservice.servlet.ResponseFacade;
@@ -62,7 +57,6 @@ public abstract class FlatpakagerServlet extends HttpServlet {
 
 		try (RequestFacade facade = RequestFacade.builder(tempFolder()).request(req).build()) {
 			Files.createDirectories(packager().work());
-			Files.createDirectories(packager().repository());
 
 			// Create a directory with all of our source files with their original filenames
 			// restored, because they'll be named that way in the Flatpak manifest file
@@ -79,41 +73,16 @@ public abstract class FlatpakagerServlet extends HttpServlet {
 			path = facade.getPartPath("manifest").get();
 			Files.createSymbolicLink(packager().work().resolve(name), path);
 
-			packager().generateFlatpakRepo(facade.getBooleanParameter("sign"), packager().work().resolve(name));
+			String flatpakId = facade.getParameter("flatpakId").get();
+			packager().generateFlatpakBundle(flatpakId, facade.getParameter("branch").get(),
+					facade.getBooleanParameter("sign"), packager().work().resolve(name));
 
-			Path tarball = tarballRepository();
-			long bytes = Files.size(tarball);
+			Path bundle = packager().work().resolve(flatpakId + ".flatpak");
+			long bytes = Files.size(bundle);
 			logger.info("Reply size: " + bytes + " bytes");
-			responseFacade.replyWithFile(REPLY_MEDIA_TYPE, tarball.getFileName().toString(), tarball);
+			responseFacade.replyWithFile(REPLY_MEDIA_TYPE, bundle.getFileName().toString(), bundle);
 		} finally {
 			deleteTemporaryResource(packager().work());
-		}
-	}
-
-	private Path tarballRepository() throws IOException {
-		Path tarball = packager().work().resolve("repo.tar.gz");
-		try (TarArchiveOutputStream out = new TarArchiveOutputStream(
-				new GzipCompressorOutputStream(new FileOutputStream(tarball.toFile())))) {
-			out.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
-			int strip = packager().repository().getParent().getNameCount();
-			recursiveAddTarEntry(out, packager().repository(), strip);
-			out.finish();
-		}
-		return tarball;
-	}
-
-	private void recursiveAddTarEntry(TarArchiveOutputStream out, Path path, int strip) throws IOException {
-		out.putArchiveEntry(new TarArchiveEntry(path.toFile(), path.subpath(strip, path.getNameCount()).toString()));
-		if (Files.isDirectory(path)) {
-			out.closeArchiveEntry();
-			try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(path)) {
-				for (Path child : dirStream) {
-					recursiveAddTarEntry(out, child, strip);
-				}
-			}
-		} else {
-			Files.copy(path, out);
-			out.closeArchiveEntry();
 		}
 	}
 

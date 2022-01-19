@@ -144,6 +144,17 @@ public class CreateFlatpakMojo extends AbstractMojo {
 	private String branch;
 
 	/**
+	 * Creates an additional commit in the Flatpak repo for the application that was
+	 * just built, but under a different branch name. This is useful if, for
+	 * example, we want a branch that always points to the latest build, even if the
+	 * stream changes.
+	 * 
+	 * @since 1.3.3
+	 */
+	@Parameter
+	private String branchAlias;
+
+	/**
 	 * The filename or path to the main binary of the application, defaults to
 	 * "eclipse"
 	 * 
@@ -252,9 +263,9 @@ public class CreateFlatpakMojo extends AbstractMojo {
 	private String license;
 
 	/**
-	 * The license that the application metadata is distributed under. It should be a
-	 * valid <a href="https://spdx.org/specifications">SPDX license expression</a>.
-	 * For example, the default value is:
+	 * The license that the application metadata is distributed under. It should be
+	 * a valid <a href="https://spdx.org/specifications">SPDX license
+	 * expression</a>. For example, the default value is:
 	 * <ul>
 	 * <li>{@code CC0-1.0}</li>
 	 * </ul>
@@ -709,6 +720,23 @@ public class CreateFlatpakMojo extends AbstractMojo {
 			executeProcess(exceptionHandler, importArgs, targetDir);
 		}
 
+		if (branchAlias != null && !branchAlias.isEmpty()) {
+			// Adds a additional commit pointing to the build we just imported into the repo
+			// using the given branch alias name
+			List<String> aliasArgs = new ArrayList<>();
+			aliasArgs.add("flatpak");
+			aliasArgs.add("build-commit-from");
+			aliasArgs.add("--no-update-summary");
+			if (sign) {
+				aliasArgs.add("--gpg-sign=" + gpgKey);
+				aliasArgs.add("--gpg-homedir=" + gpgHome);
+			}
+			aliasArgs.add("--src-ref=app/" + flatpakId + "/x86_64/" + branch);
+			aliasArgs.add(repository.getAbsolutePath());
+			aliasArgs.add("app/" + flatpakId + "/x86_64/" + branchAlias);
+			executeProcess(exceptionHandler, aliasArgs, targetDir);
+		}
+
 		// Update repository metadata (regenerates the ostree summary file and deltas)
 		List<String> deltaArgs = new ArrayList<>();
 		deltaArgs.add("flatpak");
@@ -801,7 +829,8 @@ public class CreateFlatpakMojo extends AbstractMojo {
 							throw new IOException("Length of the returned content is 0");
 						}
 						// Flatpak application bundle is sent back to us in the reply
-						Path bundlePath = Paths.get(project.getBuild().getDirectory(), "flatpak", flatpakId + ".flatpak");
+						Path bundlePath = Paths.get(project.getBuild().getDirectory(), "flatpak",
+								flatpakId + ".flatpak");
 						result.copyContent(bundlePath, StandardCopyOption.REPLACE_EXISTING);
 						if (Files.size(bundlePath) == 0) {
 							throw new IOException("Size of the returned Flatpak repo is 0");

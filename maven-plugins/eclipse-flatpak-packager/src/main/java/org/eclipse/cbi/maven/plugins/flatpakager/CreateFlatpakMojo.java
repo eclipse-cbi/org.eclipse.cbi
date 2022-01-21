@@ -449,7 +449,13 @@ public class CreateFlatpakMojo extends AbstractMojo {
 				repository = new File(targetDir, "repo");
 			}
 			if (gpgHome == null) {
-				gpgHome = new File(System.getProperty("user.home"), ".gnupg");
+				// Check if GNUPGHOME is set in the environment, otherwise default to the standard location
+				String gnupgHome = System.getenv("GNUPGHOME");
+				if (gnupgHome != null) {
+					gpgHome = new File(gnupgHome);
+				} else {
+					gpgHome = new File(System.getProperty("user.home"), ".gnupg");
+				}
 			}
 
 			String armouredGpgKey = fetchGpgKey(exceptionHandler);
@@ -466,24 +472,24 @@ public class CreateFlatpakMojo extends AbstractMojo {
 			try (FileInputStream in = new FileInputStream(new File(gpgHome, "pubring.gpg"))) {
 				PGPPublicKeyRingCollection pgpKeyRings = new PGPPublicKeyRingCollection(PGPUtil.getDecoderStream(in),
 						new JcaKeyFingerprintCalculator());
-				PGPPublicKey pgpKey = null;
+				PGPPublicKeyRing pgpKeyRing = null;
 				Iterator<PGPPublicKeyRing> keyRingIter = pgpKeyRings.getKeyRings();
 				while (keyRingIter.hasNext()) {
 					PGPPublicKeyRing keyRing = keyRingIter.next();
 					Iterator<PGPPublicKey> keyIter = keyRing.getPublicKeys();
 					while (keyIter.hasNext()) {
 						PGPPublicKey key = keyIter.next();
-						if (!key.hasRevocation() && gpgKey != null
+						if (!key.hasRevocation() && gpgKey != null && !gpgKey.isEmpty()
 								&& Long.toHexString(key.getKeyID()).toLowerCase().endsWith(gpgKey.toLowerCase())) {
-							pgpKey = key;
+							pgpKeyRing = keyRing;
 						}
 					}
 				}
-				if (pgpKey == null) {
+				if (pgpKeyRing == null) {
 					exceptionHandler.handleError("Unable to locate valid GPG key");
 					sign = false;
 				} else {
-					return new String(Base64.getEncoder().encode(pgpKey.getEncoded()), StandardCharsets.UTF_8);
+					return new String(Base64.getEncoder().encode(pgpKeyRing.getEncoded()), StandardCharsets.UTF_8);
 				}
 			} catch (FileNotFoundException | PGPException e) {
 				exceptionHandler.handleError("Unable to locate valid GPG key", e);

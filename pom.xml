@@ -6,7 +6,7 @@
   <version>1.3.3-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <url>http://wiki.eclipse.org/CBI</url>
+  <url>https://wiki.eclipse.org/CBI</url>
   <description>
     The Eclipse Common Build Infrastructure (CBI) is an initiative
     combining technologies and practices for building Eclipse Software.
@@ -14,13 +14,13 @@
 
   <licenses>
     <license>
-      <name>Eclipse Public License, Version 1.0</name>
-      <url>http://www.eclipse.org/legal/epl-v10.html</url>
+      <name>Eclipse Public License v2.0</name>
+      <url>https://www.eclipse.org/legal/epl-v20.html</url>
       <distribution>repo</distribution>
     </license>
     <license>
       <name>Eclipse Distribution License, Version 1.0</name>
-      <url>http://eclipse.org/org/documents/edl-v10.html</url>
+      <url>https://eclipse.org/org/documents/edl-v10.html</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
@@ -31,25 +31,25 @@
       <subscribe>https://dev.eclipse.org/mailman/listinfo/cbi-dev</subscribe>
       <unsubscribe>https://dev.eclipse.org/mailman/listinfo/cbi-dev</unsubscribe>
       <post>cbi-dev@eclipse.org</post>
-      <archive>http://dev.eclipse.org/mhonarc/lists/cbi-dev/</archive>
+      <archive>https://dev.eclipse.org/mhonarc/lists/cbi-dev/</archive>
     </mailingList>
   </mailingLists>
 
   <issueManagement>
-    <system>Bugzilla</system>
-    <url>https://bugs.eclipse.org/bugs/enter_bug.cgi?product=CBI</url>
+    <system>GitHub</system>
+    <url>https://github.com/eclipse-cbi/org.eclipse.cbi/issues</url>
   </issueManagement>
 
   <organization>
     <name>Eclipse Foundation</name>
-    <url>http://eclipse.org/</url>
+    <url>https://eclipse.org/</url>
   </organization>
 
   <scm>
-    <connection>scm:git:https://git.eclipse.org/r/cbi/org.eclipse.cbi</connection>
-    <developerConnection>scm:git:ssh://git.eclipse.org:29418/cbi/org.eclipse.cbi</developerConnection>
-    <tag>master</tag>
-    <url>http://git.eclipse.org/c/cbi/org.eclipse.cbi.git/</url>
+    <connection>scm:git:https://github.com/eclipse-cbi/org.eclipse.cbi.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com:eclipse-cbi/org.eclipse.cbi.git</developerConnection>
+    <tag>main</tag>
+    <url>https://github.com/eclipse-cbi/org.eclipse.cbi</url>
   </scm>
 
   <modules>

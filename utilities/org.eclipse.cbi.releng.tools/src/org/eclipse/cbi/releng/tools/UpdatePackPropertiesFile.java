@@ -1,10 +1,14 @@
 /*******************************************************************************
  * Copyright (c) 2007, 2017 IBM Corporation and others. 
- * All rights reserved. This program and the accompanying materials are made
- * available under the terms of the Eclipse Public License v1.0 which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-2.0
  *
- * Contributors: David Williams - initial API and implementation This file is a modified version of similar one, created by the same
+ * SPDX-License-Identifier: EPL-2.0
+ *
+ * Contributors:
+ *   David Williams - initial API and implementation This file is a modified version of similar one, created by the same
  * author, in the WTP Project.
  *******************************************************************************/
 

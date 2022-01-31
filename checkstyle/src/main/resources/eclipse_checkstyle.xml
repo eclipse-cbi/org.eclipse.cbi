@@ -204,6 +204,6 @@
     <module name="RegexpHeader">
         <!-- See https://www.eclipse.org/legal/copyrightandlicensenotice.php for format -->
         <property name="headerFile" value="${checkstyle.header.file}"/>
-        <property name="multiLines" value="9"/>
+        <property name="multiLines" value="11"/>
     </module>
 </module>

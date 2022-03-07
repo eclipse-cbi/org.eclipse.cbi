@@ -20,6 +20,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.zip.ZipException;
@@ -27,7 +28,6 @@ import java.util.zip.ZipException;
 import org.eclipse.cbi.common.util.RecordDefinition.Field;
 import org.eclipse.cbi.common.util.ZipPosixPermissionFixer.CentralDirectoryHeader.Platform;
 
-import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedInteger;
 import com.google.common.primitives.UnsignedLong;
 
@@ -114,7 +114,7 @@ abstract class ZipPosixPermissionFixer {
 		private final long zipSize;
 
 		public ZipReader(SeekableByteChannelRecordReader reader, long zipSize) {
-			this.reader = Preconditions.checkNotNull(reader);
+			this.reader = Objects.requireNonNull(reader);
 			this.recordPositions = new HashMap<>();
 			this.zipSize = zipSize;
 		}

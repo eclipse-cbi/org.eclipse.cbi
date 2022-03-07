@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015 Eclipse Foundation and others
+ * Copyright (c) 2015, 2022 Eclipse Foundation and others
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -21,12 +21,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.ContentType;
 import org.eclipse.cbi.maven.http.HttpResult;
 
-import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 
 final class BasicHttpResult implements HttpResult {
@@ -37,10 +37,10 @@ final class BasicHttpResult implements HttpResult {
 
 	BasicHttpResult(int status, String reason, HttpEntity entity) {
 		this.status = status;
-		this.reason = Preconditions.checkNotNull(reason);
-		this.entity = Preconditions.checkNotNull(entity);
+		this.reason = Objects.requireNonNull(reason);
+		this.entity = Objects.requireNonNull(entity);
 	}
-	
+
 	@Override
 	public int statusCode() {
 		return status;
@@ -50,7 +50,7 @@ final class BasicHttpResult implements HttpResult {
 	public String reason() {
 		return reason;
 	}
-	
+
 	@Override
 	public long contentLength() {
 		return entity.getContentLength();
@@ -62,7 +62,7 @@ final class BasicHttpResult implements HttpResult {
 			return Files.copy(is, target, options);
 		}
 	}
-	
+
 	@Override
 	public long copyContent(OutputStream target) throws IOException {
 		try (InputStream is = new BufferedInputStream(entity.getContent())) {

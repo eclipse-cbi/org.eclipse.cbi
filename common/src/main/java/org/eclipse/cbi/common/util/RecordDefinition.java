@@ -16,6 +16,7 @@ import java.nio.ByteOrder;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.eclipse.cbi.common.util.RecordDefinition.Field.Type;
@@ -145,8 +146,8 @@ abstract class RecordDefinition {
 
 		BasicFieldImpl(Type size, String specname, ByteOrder endianness) {
 			this.endianness = endianness;
-			this.size = Preconditions.checkNotNull(size);
-			this.specname = Preconditions.checkNotNull(specname);
+			this.size = Objects.requireNonNull(size);
+			this.specname = Objects.requireNonNull(specname);
 		}
 
 		@Override

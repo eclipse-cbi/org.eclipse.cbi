@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015 Eclipse Foundation and others
+ * Copyright (c) 2015, 2022 Eclipse Foundation and others
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -17,6 +17,7 @@ import static com.google.common.base.Preconditions.checkState;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
@@ -27,7 +28,6 @@ import org.eclipse.cbi.webservice.util.ProcessExecutor;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 
@@ -225,8 +225,8 @@ public abstract class JarSigner {
 	}
 	
 	public Path signJar(Path jar, SignatureAlgorithm sigAlg, MessageDigestAlgorithm digestAlg, String sigFile) throws IOException {
-		Preconditions.checkNotNull(sigAlg);
-		Preconditions.checkNotNull(digestAlg);
+		Objects.requireNonNull(sigAlg);
+		Objects.requireNonNull(digestAlg);
 		final StringBuilder output = new StringBuilder();
 		int jarSignerExitValue = processExecutor().exec(createCommand(jar, sigAlg, digestAlg, sigFile), output , timeout(), TimeUnit.SECONDS);
 		if (jarSignerExitValue != 0) {

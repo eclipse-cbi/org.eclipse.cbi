@@ -14,20 +14,19 @@ package org.eclipse.cbi.common.util;
 
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
-
-import com.google.common.collect.ImmutableList;
 
 final class MorePosixFilePermissions {
 
 	// indexed by the standard binary representation of permission
-	// if permission is 644; in binary 110 100 100 
-	// the positions of the ones (little endian) give the index of the permission in the list below
-	private static final ImmutableList<PosixFilePermission> POSIX_PERMISSIONS = ImmutableList.of(
-			PosixFilePermission.OTHERS_EXECUTE, PosixFilePermission.OTHERS_WRITE, PosixFilePermission.OTHERS_READ, 
-			PosixFilePermission.GROUP_EXECUTE, PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_READ, 
-			PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_READ
-	);
+	// if permission is 644; in binary 110 100 100
+	// the positions of the ones (little endian) give the index of the permission in
+	// the list below
+	private static final List<PosixFilePermission> POSIX_PERMISSIONS = List.of(PosixFilePermission.OTHERS_EXECUTE,
+			PosixFilePermission.OTHERS_WRITE, PosixFilePermission.OTHERS_READ, PosixFilePermission.GROUP_EXECUTE,
+			PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_READ, PosixFilePermission.OWNER_EXECUTE,
+			PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_READ);
 	private static final int MAX_MODE = (1 << POSIX_PERMISSIONS.size()) - 1;
 
 	private MorePosixFilePermissions() {
@@ -49,11 +48,13 @@ final class MorePosixFilePermissions {
 
 	public static Set<PosixFilePermission> fromFileMode(final long filemode) {
 		if ((filemode & MAX_MODE) != filemode) {
-			throw new IllegalStateException("Invalid file mode '"+Integer.toOctalString((int)filemode)+"'. File mode must be between 0 and " + MAX_MODE + " ("+Integer.toOctalString(MAX_MODE)+" in octal)");
+			throw new IllegalStateException("Invalid file mode '" + Integer.toOctalString((int) filemode)
+					+ "'. File mode must be between 0 and " + MAX_MODE + " (" + Integer.toOctalString(MAX_MODE)
+					+ " in octal)");
 		}
 
 		final Set<PosixFilePermission> ret = EnumSet.noneOf(PosixFilePermission.class);
-		
+
 		for (int i = 0; i < POSIX_PERMISSIONS.size(); i++) {
 			if ((filemode & (1 << i)) != 0) {
 				ret.add(POSIX_PERMISSIONS.get(i));

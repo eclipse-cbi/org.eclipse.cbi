@@ -76,7 +76,7 @@ abstract class ZipPosixPermissionFixer {
 		}
 	}
 
-	private long firstDirectoryHeaderPositionZ64(final EndOfCentralDirectory eocdrp) throws IOException, ZipException {
+	private long firstDirectoryHeaderPositionZ64(final EndOfCentralDirectory eocdrp) throws IOException {
 		final long z64eocdrp = zipReader.position(eocdrp) - Zip64EndOfCentralDirectoryLocator.DEFINITION.size();
 		Optional<Zip64EndOfCentralDirectoryLocator> z64eocdl = zipReader
 				.readZip64EndOfCentralDirectoryLocator(z64eocdrp);

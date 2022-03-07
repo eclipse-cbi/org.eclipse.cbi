@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -27,9 +28,6 @@ import org.eclipse.cbi.common.util.RecordDefinition.Field;
 import org.eclipse.cbi.common.util.ZipPosixPermissionFixer.CentralDirectoryHeader.Platform;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.primitives.UnsignedInteger;
 import com.google.common.primitives.UnsignedLong;
 
@@ -240,11 +238,10 @@ abstract class ZipPosixPermissionFixer {
 		public static final Field FC = createLEField(Field.Type.VARIABLE, "file comment");
 
 		public static final RecordDefinition DEFINITION = RecordDefinition.builder().name("Central Directory Header")
-				.fields(ImmutableList.of(CFHS, VMB, VNTE, GPBF, CM, LMFT, LMFD, CRC32, CS, UCS, FNL, EFL, FCL, DNS, IFA,
-						EFA, ROOLH, FN, EF, FC))
-				.sizeDefinitionFields(ImmutableMap.of(FN, FNL, EF, EFL, FC, FCL))
-				.recordClass(CentralDirectoryHeader.class).signature(SIGNATURE).signatureField(Optional.of(CFHS))
-				.build();
+				.fields(List.of(CFHS, VMB, VNTE, GPBF, CM, LMFT, LMFD, CRC32, CS, UCS, FNL, EFL, FCL, DNS, IFA, EFA,
+						ROOLH, FN, EF, FC))
+				.sizeDefinitionFields(Map.of(FN, FNL, EF, EFL, FC, FCL)).recordClass(CentralDirectoryHeader.class)
+				.signature(SIGNATURE).signatureField(Optional.of(CFHS)).build();
 
 		public CentralDirectoryHeader(Record record) {
 			super(record);
@@ -331,7 +328,7 @@ abstract class ZipPosixPermissionFixer {
 			if (platform() == Platform.UNIX) {
 				return MorePosixFilePermissions.fromFileMode(((externalFileAttributes().longValue() >> 16) & 0x1FF));
 			} else {
-				return ImmutableSet.of();
+				return Set.of();
 			}
 		}
 
@@ -368,10 +365,9 @@ abstract class ZipPosixPermissionFixer {
 		public static final Field ZFC = createLEField(Field.Type.VARIABLE, "ZIP file comment");
 
 		public static final RecordDefinition DEFINITION = RecordDefinition.builder().name("End of Central Directory")
-				.fields(ImmutableList.of(EOCDLS, NOTD, NOTDWTSITCD, TNOEITCDOTD, TNOEITCD, SOTCD, OOSOCDWRTTSDN, ZFCL,
-						ZFC))
-				.sizeDefinitionFields(ImmutableMap.of(ZFC, ZFCL)).recordClass(EndOfCentralDirectory.class)
-				.signature(SIGNATURE).signatureField(Optional.of(EOCDLS)).build();
+				.fields(List.of(EOCDLS, NOTD, NOTDWTSITCD, TNOEITCDOTD, TNOEITCD, SOTCD, OOSOCDWRTTSDN, ZFCL, ZFC))
+				.sizeDefinitionFields(Map.of(ZFC, ZFCL)).recordClass(EndOfCentralDirectory.class).signature(SIGNATURE)
+				.signatureField(Optional.of(EOCDLS)).build();
 
 		public static final int MIN_SIZE = computeMinSize();
 		public static final int MAX_SIZE = MIN_SIZE + Field.UINT16_MAX_VALUE; // for ZIP file comment
@@ -416,7 +412,7 @@ abstract class ZipPosixPermissionFixer {
 
 		public static final RecordDefinition DEFINITION = RecordDefinition.builder()
 				.name("Zip64 End of Central Directory Locator")
-				.fields(ImmutableList.of(Z64EOCDLS, NODWSZ64EOCD, ROZ64EOCDR, TNOD))
+				.fields(List.of(Z64EOCDLS, NODWSZ64EOCD, ROZ64EOCDR, TNOD))
 				.recordClass(Zip64EndOfCentralDirectoryLocator.class).signature(SIGNATURE)
 				.signatureField(Optional.of(Z64EOCDLS)).build();
 
@@ -464,8 +460,8 @@ abstract class ZipPosixPermissionFixer {
 
 		public static final RecordDefinition DEFINITION = RecordDefinition.builder()
 				.name("Zip64 End of Central Directory")
-				.fields(ImmutableList.of(Z64EOCDS, SOZ64EOCDR, VMB, VNTE, NOTD, NOTDWTSOTCD, TNOEITCDOTD, TNOEITCD,
-						SOTCD, OOSOCDWRTTSDN))
+				.fields(List.of(Z64EOCDS, SOZ64EOCDR, VMB, VNTE, NOTD, NOTDWTSOTCD, TNOEITCDOTD, TNOEITCD, SOTCD,
+						OOSOCDWRTTSDN))
 				.recordClass(Zip64EndOfCentralDirectory.class).signature(SIGNATURE)
 				.signatureField(Optional.of(Z64EOCDS)).build();
 
@@ -501,7 +497,7 @@ abstract class ZipPosixPermissionFixer {
 		/* We don't need the rest of the fields in this version */
 
 		public static final RecordDefinition DEFINITION = RecordDefinition.builder().name("Local file header")
-				.fields(ImmutableList.of(LFHS, VNTE)).recordClass(LocalFileHeader.class).signature(SIGNATURE)
+				.fields(List.of(LFHS, VNTE)).recordClass(LocalFileHeader.class).signature(SIGNATURE)
 				.signatureField(Optional.of(LFHS)).build();
 
 		public LocalFileHeader(Record delegate) {

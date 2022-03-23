@@ -12,7 +12,7 @@ jarsigner.newDeployment("jar-signing-jce", std.extVar("artifactId"), std.extVar(
       {
         name: "jce-eclipse.org",
         certificates: [
-          { pass: "IT/CBI/PKI/codesigning/sun-jce-codesigning-root.crt", },
+          { pass: "IT/CBI/PKI/codesigning/oracle-jce-codesigning-root.crt", },
           { pass: "IT/CBI/PKI/codesigning/eclipse.org-jce.crt", },
         ],
         privateKey: {

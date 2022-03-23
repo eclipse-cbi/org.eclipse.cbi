@@ -16,7 +16,7 @@ jarsigner.newDeployment("jar-signing-jce", std.extVar("artifactId"), std.extVar(
           { pass: "IT/CBI/PKI/codesigning/eclipse.org-jce.crt", },
         ],
         privateKey: {
-          pass: "IT/CBI/PKI/codesigning/eclipse.org.pkcs8.pem",
+          pass: "IT/CBI/PKI/codesigning/eclipse.org-4k.pkcs8.pem",
         },
       },
     ],

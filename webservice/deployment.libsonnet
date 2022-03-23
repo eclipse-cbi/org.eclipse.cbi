@@ -9,7 +9,7 @@ local newDeployment(name, artifactId, version) = {
   docker: {
     registry: "docker.io",
     repository: "eclipsecbi",
-    baseImage: "adoptopenjdk:11-jdk-hotspot",
+    baseImage: "eclipse-temurin:11-jdk",
     imageName: $.name,
     tag: $.version,
     image: "%s/%s/%s:%s" % [self.registry, self.repository, self.imageName, self.tag,],

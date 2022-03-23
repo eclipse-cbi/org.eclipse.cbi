@@ -18,7 +18,7 @@ IFS=$'\n\t'
 # as the file path in $1
 JSON_FILE="${1:-"/dev/stdin"}"
 SERVICE_JSON=$(<"${JSON_FILE}")
-TOOLS_IMAGE="adoptopenjdk:8-jdk-hotspot"
+TOOLS_IMAGE="eclipse-temurin:11-jdk"
 
 TMPDIR="$(readlink -f "${TMPDIR:-/tmp}")"
 KEYSTORE="$(mktemp)"
@@ -30,13 +30,13 @@ pass "$(jq -r '.keystore.password.pass' <<<"${SERVICE_JSON}")" > "${KEYSTORE_PAS
 
 for entry in $(jq -r '.keystore.entries | map(tostring) | join("\n")' <<<"${SERVICE_JSON}"); do
   ENTRY_NAME="$(jq -r '.name' <<<"${entry}")"
-  
+
   PRIVATE_KEY="$(mktemp)"
   pass "$(jq -r '.privateKey.pass' <<<"${entry}")" > "${PRIVATE_KEY}"
-  
+
   CERTIFICATE_CHAIN="$(mktemp)"
   # concatenate all certifactes from entries.certificates inside certificateChain file
-  for CERTIFICATE in $(jq -r '.certificates | map(.pass) | join("\n")' <<<"${entry}"); do 
+  for CERTIFICATE in $(jq -r '.certificates | map(.pass) | join("\n")' <<<"${entry}"); do
     pass "${CERTIFICATE}" >> "${CERTIFICATE_CHAIN}"
   done;
 

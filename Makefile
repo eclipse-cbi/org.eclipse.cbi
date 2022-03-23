@@ -1,5 +1,5 @@
 
-.PHONY: clean jar-signing-service
+.PHONY: clean jar-signing-service authenticode-signing macos
 
 jar-signing:
 	./mvnw verify -am -pl webservice/signing/jar

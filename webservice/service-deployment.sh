@@ -24,12 +24,14 @@ if [[ "$(kubectl config current-context)" != okd* ]]; then
   exit 1
 fi
 
-if [[ ! -f "${SCRIPT_FOLDER}/../.localconfig" ]] && [[ -z "${PASSWORD_STORE_DIR:-}" ]]; then
-  echo "ERROR: File '$(readlink -f "${SCRIPT_FOLDER}/../.localconfig")' does not exists"
+LOCAL_CONFIG="${HOME}/.cbi/config"
+
+if [[ ! -f "${LOCAL_CONFIG}" ]] && [[ -z "${PASSWORD_STORE_DIR:-}" ]]; then
+  echo "ERROR: File '$(readlink -f "${LOCAL_CONFIG}")' does not exists"
   echo "Create one to configure the location of the password store. Example:"
   echo '{"password-store": {"it-dir": "~/.password-store"}}' | jq '.'
 fi
-PASSWORD_STORE_DIR="$(jq -r '.["password-store"]["it-dir"]' "${SCRIPT_FOLDER}/../.localconfig")"
+PASSWORD_STORE_DIR="$(jq -r '.["password-store"]["it-dir"]' "${LOCAL_CONFIG}")"
 PASSWORD_STORE_DIR="$(readlink -f "${PASSWORD_STORE_DIR/#~\//${HOME}/}")"
 export PASSWORD_STORE_DIR
 

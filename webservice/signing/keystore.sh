@@ -35,7 +35,7 @@ for entry in $(jq -r '.keystore.entries | map(tostring) | join("\n")' <<<"${SERV
   pass "$(jq -r '.privateKey.pass' <<<"${entry}")" > "${PRIVATE_KEY}"
 
   CERTIFICATE_CHAIN="$(mktemp)"
-  # concatenate all certifactes from entries.certificates inside certificateChain file
+  # concatenate all certificates from entries.certificates inside certificateChain file
   for CERTIFICATE in $(jq -r '.certificates | map(.pass) | join("\n")' <<<"${entry}"); do
     pass "${CERTIFICATE}" >> "${CERTIFICATE_CHAIN}"
   done;
@@ -51,7 +51,7 @@ for entry in $(jq -r '.keystore.entries | map(tostring) | join("\n")' <<<"${SERV
     "openssl pkcs12 -in \"${ENTRY_P12}\" -nodes -passin \"file:${KEYSTORE_PASSWD}\" | openssl x509 -noout -enddate | cut -d'=' -f2"
 
   # add the p12 cert to a java p12 keystore
-  docker run --pull=always --rm -v "${TMPDIR}:${TMPDIR}" "${TOOLS_IMAGE}" \
+  docker run --pull=always --rm -u "${UID}" -v "${TMPDIR}:${TMPDIR}" "${TOOLS_IMAGE}" \
     "keytool" -importkeystore -alias "${ENTRY_NAME}" \
       -srckeystore "${ENTRY_P12}" \
       -srcstoretype pkcs12 \

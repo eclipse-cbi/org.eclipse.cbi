@@ -23,7 +23,7 @@ deployment.newDeployment("authenticode-signing", std.extVar("artifactId"), std.e
           { pass: "IT/CBI/PKI/codesigning/eclipse.org.crt", },
         ],
         privateKey: {
-          pass: "IT/CBI/PKI/codesigning/eclipse.org.pkcs8.pem",
+          pass: "IT/CBI/PKI/codesigning/eclipse.org-4k.pkcs8.pem",
         },
       },
     ],
@@ -110,11 +110,11 @@ deployment.newDeployment("authenticode-signing", std.extVar("artifactId"), std.e
       server.temp.folder=%(tempFolder)s
 
       ##
-      # Mandatory 
-      # The path that will offer the service. The version of the 
-      # service will be appended (if server.service.pathspec.versioned 
+      # Mandatory
+      # The path that will offer the service. The version of the
+      # service will be appended (if server.service.pathspec.versioned
       # is set to true, i.e. if you set it to /service and the current
-      # version is 1.3.0-SNAPSHOT, the service will be offered on 
+      # version is 1.3.0-SNAPSHOT, the service will be offered on
       # http://server:${server.port}/service/1.3.0-SNAPSHOT
       ##
       server.service.pathspec=%(pathspec)s
@@ -161,7 +161,7 @@ deployment.newDeployment("authenticode-signing", std.extVar("artifactId"), std.e
 
       # Root logger option
       log4j.rootLogger=INFO, file
-      
+
       # Redirect log messages to a log file, support file rolling.
       log4j.appender.file=org.apache.log4j.RollingFileAppender
       log4j.appender.file.File=%(logFolder)s/server.log

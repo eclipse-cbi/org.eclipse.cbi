@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2012 Eclipse Foundation and others 
+ * Copyright (c) 2012 Eclipse Foundation and others
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-2.0
  *
  * SPDX-License-Identifier: EPL-2.0
- * 
+ *
  * Contributors:
  *   Eclipse Foundation - initial API and implementation
  *******************************************************************************/
@@ -50,7 +50,8 @@ abstract class AbstractPluginScannerMojo extends AbstractMojo {
 			if (plugins != null) {
 				Map<File, OsgiManifest> manifests = new HashMap<>();
 				for (File plugin : plugins) {
-					if (plugin.getName().endsWith(".pack.gz")) {
+					String fileName = plugin.getName();
+					if (fileName.endsWith(".pack.gz") || fileName.endsWith(".asc")) {
 						continue;
 					}
 					try {

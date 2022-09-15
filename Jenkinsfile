@@ -14,6 +14,7 @@ pipeline {
     kubernetes {
       label 'cbi-agent'
       defaultContainer 'cbi'
+      yamlMergeStrategy merge()
       yamlFile 'agentPod.yml'
     }
   }

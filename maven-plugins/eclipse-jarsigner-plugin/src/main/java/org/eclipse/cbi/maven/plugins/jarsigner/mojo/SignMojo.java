@@ -11,7 +11,7 @@
  *   Eclipse Foundation - initial API and implementation
  *   Thanh Ha (Eclipse Foundation) - Add support for signing inner jars
  *   Mikael Barbero - Use of "try with resource"
- *   Christoph Läubrich - support signing a file/directory of files instead of attached artifacts 
+ *   Christoph Läubrich - support signing a file/directory of files instead of attached artifacts
  *******************************************************************************/
 package org.eclipse.cbi.maven.plugins.jarsigner.mojo;
 
@@ -204,7 +204,7 @@ public class SignMojo extends AbstractMojo {
 	 * the one used when it has been previously signed. Thus, the
 	 * {@link #digestAlgorithm} is ignored for the already signed jars.</li>
 	 * </ul>
-	 * 
+	 *
 	 * @since 1.1.3
 	 */
 	@Parameter(property = "cbi.jarsigner.resigningStrategy", defaultValue = "RESIGN")
@@ -226,12 +226,12 @@ public class SignMojo extends AbstractMojo {
 	 * <li><strong>SHA_384</strong></li>
 	 * <li><strong>SHA_512</strong></li>
 	 * </ul>
-	 * 
+	 *
 	 * @since 1.1.3
 	 */
 	@Parameter(property = "cbi.jarsigner.digestAlgorithm", defaultValue = "DEFAULT")
 	private MessageDigestAlgorithm digestAlgorithm;
-	
+
 	/**
 	 * The signature algorithm to use for signing the jar file. Supported values
 	 * depends on the remote signing web services. Values recognized by this
@@ -239,21 +239,21 @@ public class SignMojo extends AbstractMojo {
 	 * <ul>
 	 * <li><strong>DEFAULT</strong>, tells to the remote signing webservice to use its default
 	 * digest algorithm to sign the jar</li>
-	 * 
+	 *
 	 * <li><strong>NONEwithRSA</strong></li>
 	 * <li><strong>MD2withRSA</strong></li>
 	 * <li><strong>MD5withRSA</strong></li>
-	 * 
+	 *
 	 * <li><strong>SHA1withRSA</strong></li>
 	 * <li><strong>SHA224withRSA</strong></li>
 	 * <li><strong>SHA256withRSA</strong></li>
 	 * <li><strong>SHA384withRSA</strong></li>
 	 * <li><strong>SHA512withRSA</strong></li>
-	 * 
+	 *
 	 * <li><strong>SHA1withDSA</strong></li>
 	 * <li><strong>SHA224withDSA</strong></li>
 	 * <li><strong>SHA256withDSA</strong></li>
-	 * 
+	 *
 	 * <li><strong>NONEwithECDSA</strong></li>
 	 * <li><strong>SHA1withECDSA</strong></li>
 	 * <li><strong>SHA224withECDSA</strong></li>
@@ -261,7 +261,7 @@ public class SignMojo extends AbstractMojo {
 	 * <li><strong>SHA384withECDSA</strong></li>
 	 * <li><strong>SHA512withECDSA</strong></li>
 	 * </ul>
-	 * 
+	 *
 	 * @since 1.1.3
 	 */
 	@Parameter(property = "cbi.jarsigner.signatureAlgorithm", defaultValue = "DEFAULT")
@@ -269,27 +269,27 @@ public class SignMojo extends AbstractMojo {
 
 	/**
 	 * Defines the timeout in milliseconds for establishing a TCP connection with the signing server.
-   * 
+   *
    * A timeout value of zero is interpreted as an infinite timeout.
-	 * 
+	 *
 	 * @since 1.1.4
-	 * @deprecated Use timeoutMillis instead. This one is for establishing the TCP connection only, you may 
+	 * @deprecated Use timeoutMillis instead. This one is for establishing the TCP connection only, you may
 	 * be looking for a wall timeout instead.
 	 */
 	@Deprecated
 	@Parameter(property = "cbi.jarsigner.connectTimeoutMillis", defaultValue = "5000")
 	private int connectTimeoutMillis;
-	
+
 	/**
 	 * Defines the wall timeout in milliseconds for performing the remote request.
-   * 
+   *
    * A timeout value of zero is interpreted as an infinite timeout.
-	 * 
+	 *
 	 * @since 1.1.5
 	 */
 	@Parameter(property = "cbi.jarsigner.timeoutMillis", defaultValue = "0")
 	private int timeoutMillis;
-	
+
 	/**
 	 * @since 1.1.5
 	 */
@@ -367,10 +367,10 @@ public class SignMojo extends AbstractMojo {
 							.timeout(Duration.ofMillis(timeoutMillis))
 							.sigFile(Strings.nullToEmpty(sigFile))
 							.build();
-					if (jarSigner.sign(jarFile.toPath(), options) == 0) {
+					if (jarSigner.sign(jarFile.toPath(), options) == 0 && resigningStrategy != Strategy.DO_NOT_RESIGN) {
 						new ExceptionHandler(getLog(), continueOnFail())
-						.handleError("Failed to sign jar file '" + jarFile.toString());
-					} 
+						.handleError("Jarsigner reported that the file '" + jarFile.toString() + "' has not be been signed");
+					}
 				}
 			} catch (IOException e) {
 				new ExceptionHandler(getLog(), continueOnFail())

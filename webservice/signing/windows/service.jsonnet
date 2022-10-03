@@ -3,7 +3,7 @@ local deployment = import "../../deployment.libsonnet";
 deployment.newDeployment("authenticode-signing", std.extVar("artifactId"), std.extVar("version")) {
   pathspec: "/authenticode/sign",
   osslsigncodeRepo: "https://github.com/mtrojnar/osslsigncode",
-  osslsigncodeTag: "2.1", # the tag of osslsigncode to build and deploy
+  osslsigncodeTag: "2.5", # the tag of osslsigncode to build and deploy
   preDeploy: importstr "../keystore.sh",
   keystore: {
     path: "/var/run/secrets/%s/" % $.name,
@@ -62,33 +62,29 @@ deployment.newDeployment("authenticode-signing", std.extVar("artifactId"), std.e
   },
   osslsigncodePath: "/usr/local/bin",
   Dockerfile: |||
-    FROM debian AS builder
+    FROM %(builderImage)s AS builder
 
     RUN apt-get update && apt-get -y --no-install-recommends install \
-        autoconf \
-        automake \
         build-essential \
         ca-certificates \
+        cmake \
         git \
-        libcurl4-gnutls-dev \
-        libgsf-1-dev \
-        libtool \
+        libcurl4-openssl-dev \
         libssl-dev \
-        python3-pkgconfig \
       && rm -rf /var/lib/apt/lists/*
 
     RUN git clone %(osslsigncodeRepo)s \
       && cd osslsigncode \
       && git checkout tags/%(osslsigncodeTag)s -b %(osslsigncodeTag)s \
-      && ./autogen.sh \
-      && ./configure \
-      && make \
-      && make install
-  ||| % $ + super.Dockerfile + |||
+      && mkdir build \
+      && cd build \
+      && cmake -S .. \
+      && cmake --build .
+  ||| % $ { builderImage: $.docker.baseImage } + super.Dockerfile + |||
     RUN apt-get update && apt-get -y --no-install-recommends install \
-      libcurl4-gnutls-dev \
-      libgsf-1-dev
-    COPY --from=builder /osslsigncode/osslsigncode %(osslsigncodePath)s/
+      libcurl4 \
+      libssl3
+    COPY --from=builder /osslsigncode/build/osslsigncode %(osslsigncodePath)s/
   ||| % $,
 
   configuration+: {

@@ -19,9 +19,9 @@ pipeline {
     }
   }
 
-  parameters { 
-    string(name: 'RELEASE_VERSION', defaultValue: '', description: 'The version to be released e.g., 1.3.1') 
-    string(name: 'NEXT_DEVELOPMENT_VERSION', defaultValue: '', description: 'The next version to be used e.g., 1.3.1-SNAPSHOT') 
+  parameters {
+    string(name: 'RELEASE_VERSION', defaultValue: '', description: 'The version to be released e.g., 1.3.1')
+    string(name: 'NEXT_DEVELOPMENT_VERSION', defaultValue: '', description: 'The next version to be used e.g., 1.3.1-SNAPSHOT')
     booleanParam(name: 'DRY_RUN', defaultValue: false, description: 'Whether the release steps should actually push changes to git and maven repositories, or not.')
   }
 
@@ -41,8 +41,7 @@ pipeline {
   }
 
   tools {
-    maven 'apache-maven-latest'
-    jdk 'adoptopenjdk-openj9-latest-lts'
+    jdk 'temurin-jdk17-latest'
   }
 
   options {
@@ -52,9 +51,9 @@ pipeline {
 
   stages {
     stage('Prepare release') {
-      when { 
+      when {
         expression {
-          params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != ''
+          env.BRANCH_NAME == 'main' && params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != ''
         }
       }
       steps {
@@ -105,7 +104,7 @@ pipeline {
     stage('Deploy') {
       when {
         expression {
-          env.DRY_RUN != 'true'
+          env.BRANCH_NAME == 'main' && env.DRY_RUN != 'true'
         }
       }
       steps {
@@ -116,9 +115,9 @@ pipeline {
     }
 
     stage('Push tag to repository') {
-      when { 
+      when {
         expression {
-          params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != '' && env.DRY_RUN != 'true'
+          env.BRANCH_NAME == 'main' && params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != '' && env.DRY_RUN != 'true'
         }
       }
       environment {
@@ -133,9 +132,9 @@ pipeline {
     }
 
     stage('Prepare next development cycle') {
-      when { 
+      when {
         expression {
-          params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != ''
+          env.BRANCH_NAME == 'main' && params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != ''
         }
       }
       environment {
@@ -160,7 +159,7 @@ pipeline {
     stage('Push next development cycle') {
       when {
         expression {
-          params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != '' && env.DRY_RUN != 'true'
+          env.BRANCH_NAME == 'main' &&  params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != '' && env.DRY_RUN != 'true'
         }
       }
       environment {

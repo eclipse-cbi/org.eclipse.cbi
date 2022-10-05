@@ -89,6 +89,13 @@ public class Zips {
 	private static Path unpackEntry(ZipFile zipFile, ZipArchiveEntry entry, final Path outputDir) throws IOException {
 		final Path entryPath = outputDir.resolve(entry.getName());
 
+		if (!entryPath.normalize().startsWith(outputDir)) {
+			// Potentially a malicious zip archive.
+			// https://security.snyk.io/research/zip-slip-vulnerability
+			// https://owasp.org/www-community/attacks/Path_Traversal
+			throw new IOException("Bad Zip entry  '" + entry.getName() + "'");
+		}
+
 		if (entry.isDirectory()) {
 			Files.createDirectories(entryPath);
 		} else {
@@ -172,6 +179,14 @@ public class Zips {
 	private static Path unpackEntry(TarArchiveInputStream tais, TarArchiveEntry entry, final Path outputDir)
 			throws IOException {
 		final Path entryPath = outputDir.resolve(entry.getName());
+
+		if (!entryPath.normalize().startsWith(outputDir)) {
+			// Potentially a malicious zip archive.
+			// // https://security.snyk.io/research/zip-slip-vulnerability
+			// https://owasp.org/www-community/attacks/Path_Traversal
+			throw new IOException("Bad Tar entry  '" + entry.getName() + "'");
+		}
+
 		if (entry.isDirectory()) {
 			Files.createDirectories(entryPath);
 		} else {

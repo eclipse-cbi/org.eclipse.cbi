@@ -3,7 +3,7 @@
 
   <groupId>org.eclipse.cbi</groupId>
   <artifactId>cbi-parent</artifactId>
-  <version>1.3.4</version>
+  <version>1.3.5-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <url>https://wiki.eclipse.org/CBI</url>
@@ -56,7 +56,7 @@
     <module>checkstyle</module>
     <module>bom</module>
     <module>build-parent</module>
-    
+
     <module>common</module>
     <module>webservice</module>
     <module>maven-plugins</module>

@@ -126,7 +126,6 @@ pipeline {
       steps {
         sh'''
           git push origin "v${RELEASE_VERSION}"
-          git push origin HEAD:"${GIT_BRANCH}"
         '''
       }
     }
@@ -159,7 +158,7 @@ pipeline {
     stage('Push next development cycle') {
       when {
         expression {
-          env.BRANCH_NAME == 'main' &&  params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != '' && env.DRY_RUN != 'true'
+          env.BRANCH_NAME == 'main' && params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != '' && env.DRY_RUN != 'true'
         }
       }
       environment {

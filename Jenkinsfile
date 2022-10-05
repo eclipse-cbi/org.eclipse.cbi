@@ -143,8 +143,7 @@ pipeline {
         sh '''
           # clean and prepare for next iteration
           git clean -q -x -d -ff
-          git checkout -q -f "${GIT_BRANCH}"
-          git reset -q --hard "origin/${GIT_BRANCH}"
+          git reset -q --hard HEAD
 
           "${WORKSPACE}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:set" -DnewVersion="${NEXT_DEVELOPMENT_VERSION}" -DgenerateBackupPoms=false -f "${POM}"
 

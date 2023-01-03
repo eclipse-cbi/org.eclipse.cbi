@@ -3,7 +3,7 @@
 
   <groupId>org.eclipse.cbi</groupId>
   <artifactId>cbi-parent</artifactId>
-  <version>1.3.5-SNAPSHOT</version>
+  <version>1.4.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <url>https://wiki.eclipse.org/CBI</url>

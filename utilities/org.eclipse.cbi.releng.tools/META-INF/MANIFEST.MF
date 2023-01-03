@@ -7,7 +7,7 @@ Bundle-Version: 1.0.0.qualifier
 Require-Bundle: org.apache.ant;bundle-version="[1.6.5,2.0.0)"
 Bundle-Localization: plugin
 Bundle-ClassPath: lib/cbiRelengTools.jar
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-17
 Export-Package: org.eclipse.cbi.releng.tools
 Eclipse-BundleShape: dir
 Automatic-Module-Name: org.eclipse.cbi.releng.tools

@@ -150,7 +150,7 @@ deployment.newDeployment("authenticode-signing", std.extVar("artifactId"), std.e
       ##
       # Mandatory
       ##
-      windows.osslsigncode.timestampurl=http://timestamp.comodoca.com/
+      windows.osslsigncode.timestampurl=http://timestamp.sectigo.com
 
 
       ### Log4j configuration section

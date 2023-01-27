@@ -42,7 +42,7 @@ for entry in $(jq -r '.keystore.entries | map(tostring) | join("\n")' <<<"${SERV
 
   # create a proper pfx/p12 file with certificate chain + privatekey
   ENTRY_P12="$(mktemp)"
-  docker run --pull=always --rm -v "${TMPDIR}:${TMPDIR}" "${TOOLS_IMAGE}" /bin/bash -c \
+  docker run --pull=always --rm -u $(id -u):$(id -g) -v "${TMPDIR}:${TMPDIR}" "${TOOLS_IMAGE}" /bin/bash -c \
     "openssl pkcs12 -export -in \"${CERTIFICATE_CHAIN}\" -inkey \"${PRIVATE_KEY}\" -name \"${ENTRY_NAME}\" > \"${ENTRY_P12}\" -passout \"file:${KEYSTORE_PASSWD}\""
 
   # print certificate expiration date

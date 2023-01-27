@@ -3,7 +3,7 @@ local jarsigner = import "jarsigner.libsonnet";
 jarsigner.newDeployment("jar-signing", std.extVar("artifactId"), std.extVar("version")) {
   pathspec: "/jarsigner/sign",
   docker+: {
-    baseImage: "eclipse-temurin:11-jdk",
+    baseImage: "eclipse-temurin:17-jdk",
   },
   keystore+: {
     password: {

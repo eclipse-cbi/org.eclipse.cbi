@@ -16,7 +16,7 @@
     <auto-value.version>1.10.1</auto-value.version> <!-- also defined in parent pom for annotation processor -->
     <apache-httpclient-version>4.5.14</apache-httpclient-version>
     <maven-api-version>3.8.7</maven-api-version>
-    <jackson.version>2.14.1</jackson.version>
+    <jackson.version>2.14.2</jackson.version>
   </properties>
 
   <dependencyManagement>

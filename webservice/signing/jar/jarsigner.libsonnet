@@ -1,7 +1,7 @@
 local deployment = import "../../deployment.libsonnet";
 
 local newDeployment(name, artifactId, version) = deployment.newDeployment(name, artifactId, version) {
-  pathspec: error "Must specify a pathspec for a service deploymebt",
+  pathspec: error "Must specify a pathspec for a service deployment",
   preDeploy: importstr "../keystore.sh",
   keystore: {
     path: "/var/run/secrets/%s/" % $.name,
@@ -78,12 +78,12 @@ local newDeployment(name, artifactId, version) = deployment.newDeployment(name, 
       server.service.pathspec.versioned=false
 
       ##
-      # Manadatory
+      # Mandatory
       ##
       jarsigner.bin=/opt/java/openjdk/bin/jarsigner
 
       ##
-      # Manadatory
+      # Mandatory
       ##
       jarsigner.keystore=%(keystoreFile)s
 
@@ -97,17 +97,17 @@ local newDeployment(name, artifactId, version) = deployment.newDeployment(name, 
       jarsigner.storetype=PKCS12
 
       ##
-      # Manadatory
+      # Mandatory
       ##
       jarsigner.keystore.password=%(keystorePasswdFile)s
 
       ##
-      # Manadatory
+      # Mandatory
       ##
       jarsigner.keystore.alias=%(keystoreDefaultAlias)s
 
       ##
-      # Manadatory
+      # Mandatory
       ##
       jarsigner.tsa=http://sha256timestamp.ws.symantec.com/sha256/timestamp
 

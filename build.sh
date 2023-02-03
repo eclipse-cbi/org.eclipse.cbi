@@ -31,7 +31,7 @@ export NEXT_DEVELOPMENT_VERSION="${NEXT_DEVELOPMENT_VERSION:-}"
 export POM="${2:-pom.xml}"
 
 export MAVEN_OPTS="${MAVEN_OPTS:--B -C -U -e -Xmx1024m -Xms256m -XX:MaxPermSize=256M}"
-export GIT_BRANCH="${GIT_BRANCH:-master}"
+export GIT_BRANCH="${GIT_BRANCH:-main}"
 export DRY_RUN="${DRY_RUN:-false}"
 
 latest_maven_release() {

@@ -226,6 +226,12 @@ local newDeployment(name, artifactId, version) = {
     RUN mkdir -p /usr/local/%(name)s/ \
       && curl -sSLf -o /usr/local/%(name)s/%(artifactId)s-%(version)s.jar "https://%(mavenRepoURL)s/service/local/artifact/maven/content?r=%(mavenRepoName)s&g=%(groupId)s&a=%(artifactId)s&v=%(version)s"
 
+    RUN mkdir -p /opt/java/openjdk11 \
+      && cd /opt/java/openjdk11 \
+      && curl -L -o temurin11.tar.gz 'https://api.adoptium.net/v3/binary/latest/11/ga/linux/x64/jdk/hotspot/normal/eclipse?project=jdk' \
+      && tar xzf temurin11.tar.gz --strip-components=1 \
+      && rm -f temurin11.tar.gz
+
     ENTRYPOINT [ "java", \
       "-showversion", "-XshowSettings:vm", "-Xmx512m", \
       "-jar", "/usr/local/%(name)s/%(artifactId)s-%(version)s.jar", \

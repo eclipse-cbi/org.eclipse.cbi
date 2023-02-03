@@ -208,6 +208,11 @@ local newDeployment(name, artifactId, version) = {
 
     COPY target/%(artifactId)s-%(version)s.jar /usr/local/%(name)s/
 
+    RUN mkdir -p /opt/java/openjdk11 \
+      && cd /opt/java/openjdk11 \
+      && wget "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.18%%2B10/OpenJDK11U-jdk_x64_linux_hotspot_11.0.18_10.tar.gz" \
+      && tar xzf OpenJDK11*.tar.gz --strip-components=1
+
     ENTRYPOINT [ "java", \
       "-showversion", "-XshowSettings:vm", "-Xmx512m", \
       "-jar", "/usr/local/%(name)s/%(artifactId)s-%(version)s.jar", \

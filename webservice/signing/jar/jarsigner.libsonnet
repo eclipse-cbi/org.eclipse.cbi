@@ -80,7 +80,7 @@ local newDeployment(name, artifactId, version) = deployment.newDeployment(name, 
       ##
       # Mandatory
       ##
-      jarsigner.bin=/opt/java/openjdk/bin/jarsigner
+      jarsigner.bin=/opt/java/openjdk11/bin/jarsigner
 
       ##
       # Mandatory

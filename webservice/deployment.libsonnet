@@ -210,8 +210,9 @@ local newDeployment(name, artifactId, version) = {
 
     RUN mkdir -p /opt/java/openjdk11 \
       && cd /opt/java/openjdk11 \
-      && wget "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.18%%2B10/OpenJDK11U-jdk_x64_linux_hotspot_11.0.18_10.tar.gz" \
-      && tar xzf OpenJDK11*.tar.gz --strip-components=1
+      && curl -L -o temurin11.tar.gz 'https://api.adoptium.net/v3/binary/latest/11/ga/linux/x64/jdk/hotspot/normal/eclipse?project=jdk' \
+      && tar xzf temurin11.tar.gz --strip-components=1 \
+      && rm -f temurin11.tar.gz
 
     ENTRYPOINT [ "java", \
       "-showversion", "-XshowSettings:vm", "-Xmx512m", \

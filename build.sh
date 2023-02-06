@@ -26,11 +26,11 @@ shopt -s nullglob
 
 SCRIPT_FOLDER="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
-export RELEASE_VERSION="${RELEASE_VERSION:-}"
-export NEXT_DEVELOPMENT_VERSION="${NEXT_DEVELOPMENT_VERSION:-}"
-export POM="${2:-pom.xml}"
+export RELEASE_VERSION="${2:-}"
+export NEXT_DEVELOPMENT_VERSION="${3:-}"
+export POM="${4:-pom.xml}"
 
-export MAVEN_OPTS="${MAVEN_OPTS:--B -C -U -e -Xmx1024m -Xms256m -XX:MaxPermSize=256M}"
+export MAVEN_OPTS="${MAVEN_OPTS:--Xmx1024m -Xms256m -XshowSettings:vm -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn}"
 export GIT_BRANCH="${GIT_BRANCH:-main}"
 export DRY_RUN="${DRY_RUN:-false}"
 
@@ -75,8 +75,8 @@ prepare_release() {
     git config --global user.email "cbi-bot@eclipse.org"
     git config --global user.name "CBI Bot"
     git add --all
-    git commit -m "Prepare release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}"
-    git tag "${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}" -m "Release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}"
+    git commit -m "Prepare release ${RELEASE_VERSION}"
+    git tag "v${RELEASE_VERSION}" -m "Release ${RELEASE_VERSION}"
   fi
 }
 
@@ -95,23 +95,26 @@ check_snapshot_deps() {
   fi
 }
 
-# Push all changes made to the pom and the release tag
-push_release() {
-  if [ "${DRY_RUN}" = true ]; then
-    >&2 echo "DRY RUN: git push origin \"${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}\""
-    >&2 echo "DRY RUN: git push origin \"${GIT_BRANCH}\""
-  else 
-    git push origin "${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}"
-    git push origin "${GIT_BRANCH}"
-  fi
+show_dep_updates() {
+  "${SCRIPT_FOLDER}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:display-plugin-updates" -f "${POM}"
+  "${SCRIPT_FOLDER}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:display-dependency-updates" -f "${POM}"
 }
 
 # build artifacts to be deployed
 build() {
   if [ "${DRY_RUN}" = true ]; then
-    >&2 echo "DRY RUN: ${SCRIPT_FOLDER}/mvnw -B -C -U -e clean verify -f \"${POM}\""
+    >&2 echo "DRY RUN: ${SCRIPT_FOLDER}/mvnw clean verify -f \"${POM}\""
   else
-    "${SCRIPT_FOLDER}/mvnw" -B -C -U -e clean verify -f "${POM}"
+    "${SCRIPT_FOLDER}/mvnw" clean verify -f "${POM}"
+  fi
+}
+
+# Push all changes made to the pom and the release tag
+push_release() {
+  if [ "${DRY_RUN}" = true ]; then
+    >&2 echo "DRY RUN: git push origin \"v${RELEASE_VERSION}\""
+  else 
+    git push origin "v${RELEASE_VERSION}"
   fi
 }
 
@@ -138,6 +141,29 @@ prepare_next_dev() {
     >&2 git commit -m "Prepare for next development iteration (${GROUP_ID}:${ARTIFACT_ID}:${NEXT_DEVELOPMENT_VERSION})"
     >&2 git push origin "${GIT_BRANCH}"
   fi
+}
+
+main() {
+  echo "Prepare release"
+  prepare_release
+  echo
+  echo "Check snapshots dependencies"
+  check_snapshot_deps
+  echo
+  echo "Display plugin/dependency updates"
+  show_dep_updates
+  echo
+  echo "Build"
+  build
+  echo
+  echo "Push tag to repository"
+  push_release
+  echo
+  echo "Deploy"
+  deploy
+  echo
+  echo "Prepare and push next development cycle"
+  prepare_next_dev
 }
 
 "${@}"

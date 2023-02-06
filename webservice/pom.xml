@@ -8,7 +8,7 @@
   <parent>
     <groupId>org.eclipse.cbi</groupId>
     <artifactId>cbi-parent</artifactId>
-    <version>1.4.2-SNAPSHOT</version>
+    <version>1.4.2</version>
   </parent>
 
   <modules>

@@ -17,7 +17,7 @@
   <parent>
     <groupId>org.eclipse.cbi</groupId>
     <artifactId>cbi-parent</artifactId>
-    <version>1.4.2</version>
+    <version>1.4.3-SNAPSHOT</version>
   </parent>
 
   <name>Eclipse CBI Maven Plugins</name>

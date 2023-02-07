@@ -65,15 +65,15 @@ function git-clean-reset {
 prepare_release() {
   if [ "${DRY_RUN}" = true ]; then
     >&2 echo "DRY RUN: ${SCRIPT_FOLDER}/mvnw \"${VERSIONS_MAVEN_PLUGIN}:set\" -DnewVersion=\"${RELEASE_VERSION}\" -DgenerateBackupPoms=false -f \"${POM}\""
-    >&2 echo "DRY RUN: git config --global user.email \"cbi-bot@eclipse.org\""
-    >&2 echo "DRY RUN: git config --global user.name \"CBI Bot\""
+    >&2 echo "DRY RUN: git config --local user.email \"cbi-bot@eclipse.org\""
+    >&2 echo "DRY RUN: git config --local user.name \"CBI Bot\""
     >&2 echo "DRY RUN: git add --all"
     >&2 echo "DRY RUN: git commit -m \"Prepare release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}\""
     >&2 echo "DRY RUN: git tag \"${GROUP_ID}_${ARTIFACT_ID}_${RELEASE_VERSION}\" -m \"Release ${GROUP_ID}:${ARTIFACT_ID}:${RELEASE_VERSION}\""
   else
     "${SCRIPT_FOLDER}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:set" -DnewVersion="${RELEASE_VERSION}" -DgenerateBackupPoms=false -f "${POM}"
-    git config --global user.email "cbi-bot@eclipse.org"
-    git config --global user.name "CBI Bot"
+    git config --local user.email "cbi-bot@eclipse.org"
+    git config --local user.name "CBI Bot"
     git add --all
     git commit -m "Prepare release ${RELEASE_VERSION}"
     git tag "v${RELEASE_VERSION}" -m "Release ${RELEASE_VERSION}"

@@ -57,8 +57,9 @@ GROUP_ID=$(xml sel -N mvn="http://maven.apache.org/POM/4.0.0" -t -v  "/mvn:proje
 
 function git-clean-reset {
   git clean -q -x -d -ff
-  git checkout -q -f "${GIT_BRANCH}"
-  git reset -q --hard "origin/${GIT_BRANCH}"
+  #git checkout -q -f "${GIT_BRANCH}"
+  #git reset -q --hard "origin/${GIT_BRANCH}"
+  git reset -q --hard HEAD
 }
 
 # set the version the the to-be released version and commit all changes made to the pom

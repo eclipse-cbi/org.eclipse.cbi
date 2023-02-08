@@ -43,8 +43,8 @@ pipeline {
       }
       steps {
         sh '''
-          build.sh prepare_release "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"
-          build.sh check_snapshot_deps "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"
+          ./build.sh prepare_release "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"
+          ./build.sh check_snapshot_deps "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"
         '''
       }
     }
@@ -52,14 +52,14 @@ pipeline {
     stage('Display plugin/dependency updates') {
       steps {
         sh '''
-          build.sh show_dep_updates "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"
+          ./build.sh show_dep_updates "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"
         '''
       }
     }
 
     stage('Build') {
       steps {
-        sh 'build.sh build "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"'
+        sh './build.sh build "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"'
         archiveArtifacts 'webservice/**/target/*.jar'
         junit '**/target/surefire-reports/*.xml'
       }
@@ -75,7 +75,7 @@ pipeline {
         GIT_AUTH = credentials('github-bot')
       }
       steps {
-        sh 'build.sh push_release "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"'
+        sh './build.sh push_release "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"'
       }
     }
 
@@ -86,11 +86,11 @@ pipeline {
         }
       }
       steps {
-        sh 'build.sh deploy "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"'
+        sh './build.sh deploy "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"'
       }
     }
 
-    stage('Prepare next development cycle') {
+    stage('Prepare and push next development cycle') {
       when {
         expression {
           env.BRANCH_NAME == 'main' && params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != ''
@@ -100,33 +100,7 @@ pipeline {
         GIT_AUTH = credentials('github-bot')
       }
       steps {
-        sh '''
-          # clean and prepare for next iteration
-          git clean -q -x -d -ff
-          git reset -q --hard HEAD
-
-          "${WORKSPACE}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:set" -DnewVersion="${NEXT_DEVELOPMENT_VERSION}" -DgenerateBackupPoms=false -f "${POM}"
-
-          # commit next iteration changes
-          git add --all
-          git commit -m "Prepare for next development iteration (${NEXT_DEVELOPMENT_VERSION})"
-        '''
-      }
-    }
-
-    stage('Push next development cycle') {
-      when {
-        expression {
-          env.BRANCH_NAME == 'main' && params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != '' && env.DRY_RUN != 'true'
-        }
-      }
-      environment {
-        GIT_AUTH = credentials('github-bot')
-      }
-      steps {
-        sh '''
-          git push origin "${GIT_BRANCH}"
-        '''
+        sh './build.sh prepare_next_dev "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"'
       }
     }
   }

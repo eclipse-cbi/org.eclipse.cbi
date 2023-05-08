@@ -227,7 +227,7 @@
       <dependency> <!-- Required dependency convergence enforcer rule -->
         <groupId>org.apache.maven.shared</groupId>
         <artifactId>maven-shared-utils</artifactId>
-        <version>3.3.4</version>
+        <version>3.4.1</version>
       </dependency>
       <dependency> <!-- Required dependency convergence enforcer rule -->
         <groupId>org.apache.maven</groupId>

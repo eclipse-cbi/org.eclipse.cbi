@@ -15,7 +15,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.compiler.release>17</maven.compiler.release>
 
-    <auto-value.version>1.10.1</auto-value.version>
+    <auto-value.version>1.10.2</auto-value.version>
   </properties>
 
   <dependencyManagement>

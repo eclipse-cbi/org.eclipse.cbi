@@ -18,10 +18,10 @@
   <packaging>maven-plugin</packaging>
 
   <parent>
-    <groupId>org.eclipse.cbi</groupId>
-    <artifactId>cbi-build-parent</artifactId>
+    <groupId>org.eclipse.cbi.maven.plugins</groupId>
+    <artifactId>maven-plugin-parent</artifactId>
     <version>1.4.3-SNAPSHOT</version>
-    <relativePath>../../build-parent/pom.xml</relativePath>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <dependencies>

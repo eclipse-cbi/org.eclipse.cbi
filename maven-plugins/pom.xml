@@ -16,8 +16,9 @@
 
   <parent>
     <groupId>org.eclipse.cbi</groupId>
-    <artifactId>cbi-parent</artifactId>
+    <artifactId>cbi-build-parent</artifactId>
     <version>1.4.3-SNAPSHOT</version>
+    <relativePath>../build-parent/pom.xml</relativePath>
   </parent>
 
   <name>Eclipse CBI Maven Plugins</name>
@@ -35,7 +36,7 @@
     <module>eclipse-flatpak-packager</module>
   </modules>
 
-  <!-- <reporting>
+  <reporting>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -59,7 +60,11 @@
            </reportSet>
          </reportSets>
        </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-plugin-report-plugin</artifactId>
+      </plugin>
     </plugins>
-  </reporting> -->
+  </reporting>
 
 </project>

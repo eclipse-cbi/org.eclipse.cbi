@@ -196,6 +196,7 @@ public class SignMojo extends AbstractMojo {
 	 * @since 1.1.0 (for the user property, since 1.1.3 for the parameter).
 	 */
 	@Parameter(property = "retryLimit", defaultValue = "3")
+	@Deprecated
 	private int deprecatedRetryLimit;
 
 	/**
@@ -218,6 +219,7 @@ public class SignMojo extends AbstractMojo {
 	 * @since 1.1.0 (for the user property, since 1.1.3 for the parameter).
 	 */
 	@Parameter(property = "retryTimer", defaultValue = "10")
+	@Deprecated
 	private int deprecatedRetryTimer;
 
 	/**

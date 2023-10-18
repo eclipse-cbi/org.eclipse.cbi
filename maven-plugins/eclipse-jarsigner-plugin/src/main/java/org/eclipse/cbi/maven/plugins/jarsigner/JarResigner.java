@@ -29,7 +29,6 @@ import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.apache.maven.plugin.logging.Log;
@@ -45,7 +44,7 @@ public abstract class JarResigner implements JarSigner {
 
 	private static final String DIGEST_ATTRIBUTE_SUFFIX = "-Digest";
 
-	public static enum Strategy {
+	public enum Strategy {
 		DO_NOT_RESIGN,
 		THROW_EXCEPTION,
 		RESIGN,
@@ -53,7 +52,7 @@ public abstract class JarResigner implements JarSigner {
 		OVERWRITE,
 		OVERWRITE_WITH_SAME_DIGEST_ALGORITHM,
 	}
-	
+
 	private final JarSigner delegate;
 	private final Log log;
 
@@ -65,7 +64,7 @@ public abstract class JarResigner implements JarSigner {
 	final Log log() {
 		return log;
 	}
-	
+
 	public static JarSigner create(Strategy strategy, JarSigner delegate, Log log) {
 		final JarSigner ret;
 		switch (strategy) {
@@ -92,11 +91,11 @@ public abstract class JarResigner implements JarSigner {
 		}
 		return ret;
 	}
-	
+
 	JarSigner delegate() {
 		return delegate;
 	}
-	
+
 	@Override
 	public int sign(Path jar, Options options) throws IOException {
 		final int ret;
@@ -136,15 +135,15 @@ public abstract class JarResigner implements JarSigner {
 		}
 		return false;
 	}
-	
+
 	public static JarSigner doNotResign(JarSigner jarSigner, Log log) {
 		return new DoNotResign(jarSigner, log);
 	}
-	
+
 	public static JarSigner throwException(JarSigner jarSigner, Log log) {
 		return new ThrowException(jarSigner, log);
 	}
-	
+
 	public static JarSigner resignWithSameDigestAlgorithm(JarSigner jarSigner, Log log) {
 		return new ResignWithSameDigestAlg(jarSigner, log);
 	}
@@ -152,17 +151,17 @@ public abstract class JarResigner implements JarSigner {
 	public static JarSigner resign(JarSigner jarSigner, Log log) {
 		return new Resign(jarSigner, log);
 	}
-	
+
 	public static JarSigner overwriteWithSameDigestAlgorithm(JarSigner jarSigner, Log log) {
 		return new OverwriteSignatureWithSameDigestAlg(jarSigner, log);
 	}
-	
+
 	public static JarSigner overwrite(JarSigner jarSigner, Log log) {
 		return new OverwriteSignature(jarSigner, log);
 	}
-	
+
 	private static class DoNotResign extends JarResigner {
-		
+
 		DoNotResign(JarSigner delegate, Log log) {
 			super(delegate, log);
 		}
@@ -173,9 +172,9 @@ public abstract class JarResigner implements JarSigner {
 			return 0;
 		}
 	}
-	
+
 	private static class ThrowException extends JarResigner {
-		
+
 		ThrowException(JarSigner delegate, Log log) {
 			super(delegate, log);
 		}
@@ -185,7 +184,7 @@ public abstract class JarResigner implements JarSigner {
 			throw new IllegalStateException("Jar '" + jar  + "' is already signed");
 		}
 	}
-	
+
 	private static class Resign extends JarResigner {
 
 		Resign(JarSigner delegate, Log log) {
@@ -198,10 +197,10 @@ public abstract class JarResigner implements JarSigner {
 			return delegate().sign(jar, options);
 		}
 	}
-	
+
 	private static class OverwriteSignature extends JarResigner {
 
-		
+
 		OverwriteSignature(JarSigner delegate, Log log) {
 			super(delegate, log);
 		}
@@ -216,7 +215,7 @@ public abstract class JarResigner implements JarSigner {
 				boolean manifestDigestsFound = removeManifestDigestsIfAny(metaInf.resolve("MANIFEST.MF"));
 				if (signatureFilesFound || manifestDigestsFound) {
 					log().info("Jar '" + jar.toString() + "' is already signed. The signature will be overwritten.");
-					Zips.packJar(unpackedJar, jar, false);	
+					Zips.packJar(unpackedJar, jar, false);
 				} else {
 					log().info("No signature was found in Jar '" + jar.toString() + "', it will be signed without touching it. Signature would have been overwritten otherwise.");
 				}
@@ -229,14 +228,14 @@ public abstract class JarResigner implements JarSigner {
 		private boolean removeSignatureFilesIfAny(Path metaInf) throws IOException {
 			if (Files.exists(metaInf)) {
 				try (DirectoryStream<Path> content = Files.newDirectoryStream(metaInf, "*.{SF,DSA,RSA,EC}")) {
-					List<Path> signatureFiles = StreamSupport.stream(content.spliterator(), false).collect(Collectors.toList());
-					for (Path f : signatureFiles) {
+					List<Path> signatureFiles = StreamSupport.stream(content.spliterator(), false).toList();
+                    for (Path f : signatureFiles) {
 						log().debug("Deleting signature file '" + f + "'");
 						Paths.delete(f);
 					}
-					return !signatureFiles.isEmpty();	
+					return !signatureFiles.isEmpty();
 				}
-			} 
+			}
 			return false;
 		}
 
@@ -260,10 +259,10 @@ public abstract class JarResigner implements JarSigner {
 					return e.getKey();
 				}
 				return null;
-			}).filter(Objects::nonNull).collect(Collectors.toList());
-		}
+			}).filter(Objects::nonNull).toList();
+          }
 
-		private void pruneEmptyEntries(Manifest manifest, List<String> keysOfRemovedDigests) {
+          private void pruneEmptyEntries(Manifest manifest, List<String> keysOfRemovedDigests) {
 			keysOfRemovedDigests.forEach(k -> {
 				if (manifest.getAttributes(k).isEmpty()) {
 					log().debug("Deleting manifest entry for '"+k+"' as it has no attribute anymore");
@@ -306,7 +305,7 @@ public abstract class JarResigner implements JarSigner {
 		}
 		return usedDigestAlg;
 	}
-	
+
 	@VisibleForTesting static MessageDigestAlgorithm getDigestAlgorithmToReuse(Path jar) throws IOException {
 		Set<MessageDigestAlgorithm> usedDigestAlg = getAllUsedDigestAlgorithm(jar);
 		if (usedDigestAlg.isEmpty()) {
@@ -317,13 +316,13 @@ public abstract class JarResigner implements JarSigner {
 			return usedDigestAlg.iterator().next();
 		}
 	}
-	
+
 	private static class ResignWithSameDigestAlg extends Resign {
 
 		public ResignWithSameDigestAlg(JarSigner delegate, Log log) {
 			super(delegate, log);
 		}
-		
+
 		@Override
 		protected int resign(Path jar, Options options) throws IOException {
 			log().debug("Jar signing options before change by strategy '" + Strategy.RESIGN_WITH_SAME_DIGEST_ALGORITHM + "': " + options);
@@ -333,13 +332,13 @@ public abstract class JarResigner implements JarSigner {
 			return super.resign(jar, newOptions);
 		}
 	}
-	
+
 	private static class OverwriteSignatureWithSameDigestAlg extends OverwriteSignature {
 
 		private OverwriteSignatureWithSameDigestAlg(JarSigner delegate, Log log) {
 			super(delegate, log);
 		}
-		
+
 		@Override
 		protected int resign(Path jar, Options options) throws IOException {
 			log().debug("Jar signing options before change by strategy '" + Strategy.OVERWRITE_WITH_SAME_DIGEST_ALGORITHM + "': " + options);
@@ -348,6 +347,6 @@ public abstract class JarResigner implements JarSigner {
 					.build();
 			return super.resign(jar, newOptions);
 		}
-		
+
 	}
 }

@@ -9,41 +9,54 @@
  *******************************************************************************/
 package org.eclipse.cbi.webservice.signing.windows;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import org.eclipse.cbi.webservice.util.PropertiesReader;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Path;
+import java.nio.file.FileSystem;
 import java.util.List;
+import java.util.Properties;
 
 import static org.junit.Assert.*;
 
 public class OSSLSigncodePropertiesTest {
 
     @Test
-    public void multipleTimeServerURIs() throws IOException, URISyntaxException {
-        URL resource = this.getClass().getResource("/multiple-timeservers.properties");
-        assertNotNull(resource);
-        final OSSLSigncodeProperties conf = new OSSLSigncodeProperties(PropertiesReader.create(Path.of(resource.toURI())));
+    public void multipleTimeServerURIs() throws IOException {
+        try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
+            final OSSLSigncodeProperties conf =
+                    new OSSLSigncodeProperties(new PropertiesReader(createTestPropertiesWithMultipleTimeServerURIs(), fs));
 
-        List<URI> timestampURIs = conf.getTimestampURIs();
-        assertEquals(2, timestampURIs.size());
+            List<URI> timestampURIs = conf.getTimestampURIs();
+            assertEquals(2, timestampURIs.size());
 
-        assertEquals("http://timestamp.sectigo.com", timestampURIs.get(0).toString());
-        assertEquals("http://timestamp.digicert.com", timestampURIs.get(1).toString());
+            assertEquals("http://timestamp.sectigo.com", timestampURIs.get(0).toString());
+            assertEquals("http://timestamp.digicert.com", timestampURIs.get(1).toString());
+        }
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void noTimeServerURI() throws IOException, URISyntaxException {
-        URL resource = this.getClass().getResource("/no-timeserver.properties");
-        assertNotNull(resource);
-        final OSSLSigncodeProperties conf = new OSSLSigncodeProperties(PropertiesReader.create(Path.of(resource.toURI())));
+    public void noTimeServerURI() throws IOException {
+        try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
+            final OSSLSigncodeProperties conf =
+                    new OSSLSigncodeProperties(new PropertiesReader(createEmptyTestProperties(), fs));
 
-        List<URI> timeServerURIs = conf.getTimestampURIs();
-        fail();
+            conf.getTimestampURIs();
+            fail();
+        }
     }
 
+    private static Properties createEmptyTestProperties() {
+        return new Properties();
+    }
+
+    private static Properties createTestPropertiesWithMultipleTimeServerURIs() {
+        Properties properties = new Properties();
+        properties.setProperty("windows.osslsigncode.timestampurl.1", "http://timestamp.sectigo.com");
+        properties.setProperty("windows.osslsigncode.timestampurl.2", "http://timestamp.digicert.com");
+        return properties;
+    }
 }

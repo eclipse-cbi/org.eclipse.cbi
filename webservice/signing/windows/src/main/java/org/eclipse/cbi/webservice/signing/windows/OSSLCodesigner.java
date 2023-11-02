@@ -49,7 +49,10 @@ public abstract class OSSLCodesigner {
 						"'" + osslsigncode().toString() + "' output:",
 						output));
 			}
-			logger.info(output.toString());
+			if (logger.isDebugEnabled()) {
+				logger.debug("Output from osslsigncode:");
+				logger.debug(output.toString());
+			}
 			Files.move(out, file, StandardCopyOption.REPLACE_EXISTING);
 		} finally {
 			if (out != null && Files.exists(out)) {

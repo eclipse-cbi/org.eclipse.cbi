@@ -17,6 +17,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.google.auto.value.AutoValue;
@@ -32,7 +33,7 @@ import org.slf4j.LoggerFactory;
 public abstract class OSSLCodesigner {
 
 	private static final String TEMP_FILE_PREFIX = OSSLCodesigner.class.getSimpleName() + "-";
-	private static Logger logger = LoggerFactory.getLogger(OSSLCodesigner.class);
+	private static final Logger logger = LoggerFactory.getLogger(OSSLCodesigner.class);
 
 	public Path sign(Path file) throws IOException {
 		Path out = null;
@@ -48,6 +49,7 @@ public abstract class OSSLCodesigner {
 						"'" + osslsigncode().toString() + "' output:",
 						output));
 			}
+			logger.info(output.toString());
 			Files.move(out, file, StandardCopyOption.REPLACE_EXISTING);
 		} finally {
 			if (out != null && Files.exists(out)) {
@@ -69,10 +71,10 @@ public abstract class OSSLCodesigner {
 				.add("-pass", pkcs12Password())
 				.add("-n", description())
 				.add("-i", uri().toString())
-				.add("-t", timestampURI().toString())
+				.addAll(timestampURIs().stream().map(x -> List.of("-t", x.toString())).flatMap(List::stream).toList())
 				.add("-in", in.toString())
-				.add("-out", out.toString())
-				.build();
+			    .add("-out", out.toString())
+			    .build();
 	}
 	
 	public static Builder builder() {
@@ -85,7 +87,7 @@ public abstract class OSSLCodesigner {
 	abstract String pkcs12Password();
 	abstract String description();
 	abstract URI uri();
-	abstract URI timestampURI();
+	abstract List<URI> timestampURIs();
 	abstract Path tempFolder();
 	abstract ProcessExecutor processExecutor();
 	
@@ -105,7 +107,7 @@ public abstract class OSSLCodesigner {
 
 		public abstract Builder uri(URI uri);
 
-		public abstract Builder timestampURI(URI timestampURI);
+		public abstract Builder timestampURIs(List<URI> timestampURIs);
 
 		public abstract Builder tempFolder(Path tempFolder);
 

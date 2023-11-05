@@ -65,7 +65,7 @@ public abstract class OSSLCodesigner {
 		}
 		return file;
 	}
-	
+
 	private ImmutableList<String> createCommand(Path in, Path out) {
 		return ImmutableList.<String>builder()
 				.add(osslsigncode().toString())
@@ -76,14 +76,14 @@ public abstract class OSSLCodesigner {
 				.add("-i", uri().toString())
 				.addAll(timestampURIs().stream().map(x -> List.of("-t", x.toString())).flatMap(List::stream).toList())
 				.add("-in", in.toString())
-			    .add("-out", out.toString())
-			    .build();
+				.add("-out", out.toString())
+				.build();
 	}
 	
 	public static Builder builder() {
 		return new AutoValue_OSSLCodesigner.Builder();
 	}
-	
+
 	abstract Path osslsigncode();
 	abstract long timeout();
 	abstract Path pkcs12();
@@ -115,7 +115,5 @@ public abstract class OSSLCodesigner {
 		public abstract Builder tempFolder(Path tempFolder);
 
 		public abstract Builder processExecutor(ProcessExecutor processExecutor);
-		
-		
 	}
 }

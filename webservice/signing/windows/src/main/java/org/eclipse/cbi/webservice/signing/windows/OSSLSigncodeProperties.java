@@ -15,6 +15,8 @@ package org.eclipse.cbi.webservice.signing.windows;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.cbi.webservice.util.PropertiesReader;
 
@@ -63,13 +65,29 @@ public class OSSLSigncodeProperties {
 		}
 	}
 
-	public URI getTimestampURI() {
-		String value = propertiesReader.getString(OSSLSIGNCODE_TIMESTAMPURL);
-		try {
-			return new URI(value);
-		} catch (URISyntaxException e) {
-			throw new IllegalArgumentException("Property '" + OSSLSIGNCODE_TIMESTAMPURL + "' must be a valid URI (currently '" + value + "')", e); 
+	public List<URI> getTimestampURIs() {
+		List<URI> result = new ArrayList<>();
+
+		int i = 1;
+		String value;
+
+		do {
+			String propertyKey = OSSLSIGNCODE_TIMESTAMPURL + "." + i++;
+			value = propertiesReader.getString(propertyKey, "undefined");
+			if (!value.equals("undefined")) {
+				try {
+					result.add(new URI(value));
+				} catch (URISyntaxException e) {
+					throw new IllegalArgumentException("Property '" + propertyKey + "' must be a valid URI (currently '" + value + "')", e);
+				}
+			}
+		} while (!value.equals("undefined"));
+
+		if (result.isEmpty()) {
+			throw new IllegalArgumentException("No timeserver uri configured, at least property '" + OSSLSIGNCODE_TIMESTAMPURL + ".1' is missing");
 		}
+
+		return result;
 	}
 
 }

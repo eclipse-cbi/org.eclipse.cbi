@@ -56,7 +56,7 @@ public class SigningServer {
 				.pkcs12Password(conf.getPKCS12Password())
 				.description(conf.getDescription())
 				.uri(conf.getURI())
-				.timestampURI(conf.getTimestampURI())
+				.timestampURIs(conf.getTimestampURIs())
 				.tempFolder(tempFolder)
 				.processExecutor(new ProcessExecutor.BasicImpl())
 				.build();

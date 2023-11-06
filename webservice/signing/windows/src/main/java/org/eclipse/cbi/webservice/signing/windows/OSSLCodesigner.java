@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Joiner;
@@ -74,7 +75,7 @@ public abstract class OSSLCodesigner {
 				.add("-pass", pkcs12Password())
 				.add("-n", description())
 				.add("-i", uri().toString())
-				.addAll(timestampURIs().stream().map(x -> List.of("-t", x.toString())).flatMap(List::stream).toList())
+				.addAll(timestampURIs().stream().map(x -> List.of("-t", x.toString())).flatMap(List::stream).collect(Collectors.toList()))
 				.add("-in", in.toString())
 				.add("-out", out.toString())
 				.build();

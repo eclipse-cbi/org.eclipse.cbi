@@ -71,11 +71,10 @@ pipeline {
           env.BRANCH_NAME == 'main' && params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != ''
         }
       }
-      environment {
-        GIT_AUTH = credentials('github-bot')
-      }
       steps {
-        sh './build.sh push_release "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"'
+        sshagent(['github-bot-ssh']) {
+            sh './build.sh push_release "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"'
+        }
       }
     }
 
@@ -96,11 +95,10 @@ pipeline {
           env.BRANCH_NAME == 'main' && params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != ''
         }
       }
-      environment {
-        GIT_AUTH = credentials('github-bot')
-      }
       steps {
-        sh './build.sh prepare_next_dev "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"'
+        sshagent(['github-bot-ssh']) {
+            sh './build.sh prepare_next_dev "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"'
+        }
       }
     }
   }

@@ -24,11 +24,7 @@
     <version>1.4.3-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-
-  <properties>
-    <maven.compiler.release>17</maven.compiler.release>
-  </properties>
-
+  
   <dependencies>
     <dependency>
       <groupId>org.apache.maven</groupId>

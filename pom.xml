@@ -83,6 +83,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <requireMavenVersion>3.6.3</requireMavenVersion>
+    <requireJavaVersion>17</requireJavaVersion>
   </properties>
 
   <build>
@@ -136,6 +137,9 @@
                 <requireMavenVersion>
                   <version>${requireMavenVersion}</version>
                 </requireMavenVersion>
+                <requireJavaVersion>
+                  <version>${requireJavaVersion}</version>
+                </requireJavaVersion>
                 <requireNoRepositories/>
                 <requirePluginVersions/>
                 <reactorModuleConvergence/>

@@ -1,5 +1,7 @@
 # CBI Maven plugins and digital signing services
 
+This project requires Java 17+.
+
 ## Deploy a new released version 
 
 * Build a release
@@ -23,4 +25,4 @@ VERSION="1.3.0"
 ## Deploy staging version (when version in pom is -SNAPSHOT)
 
 From a laptop with access to deployment cluster
-`make jar-signing authenticode-signing`
+`make clean jar-signing authenticode-signing`

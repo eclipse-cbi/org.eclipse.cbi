@@ -57,6 +57,7 @@ public abstract class DMGPackager {
 	private ImmutableList<String> createCommand(Path appFolder, Path targetImageFile, Options options) {
 		ImmutableList.Builder<String> command = ImmutableList.builder();
 		command.add("./create-dmg/create-dmg");
+		command.add("--skip-jenkins");
 		
 		Splitter splitter = Splitter.on(' ').trimResults().omitEmptyStrings();
 		if (options.volumeName().isPresent())

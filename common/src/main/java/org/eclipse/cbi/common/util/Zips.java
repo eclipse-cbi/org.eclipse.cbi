@@ -70,7 +70,7 @@ public class Zips {
 	 */
 	public static int unpackZip(Path source, final Path outputDir) throws IOException {
 		checkPathExists(source, "'source' path must exists");
-		try (ZipFile zipFile = new ZipFile(Files.newByteChannel(source))) {
+		try (ZipFile zipFile = ZipFile.builder().setSeekableByteChannel(Files.newByteChannel(source)).get()) {
 			return unpack(zipFile, outputDir);
 		}
 	}
@@ -153,7 +153,7 @@ public class Zips {
 	 */
 	public static int unpackJar(Path source, Path outputDir) throws IOException {
 		checkPathExists(source, "'source' path must exists");
-		try (ZipFile zipFile = new ZipFile(Files.newByteChannel(source))) {
+		try (ZipFile zipFile = ZipFile.builder().setSeekableByteChannel(Files.newByteChannel(source)).get()) {
 			return unpack(zipFile, outputDir);
 		}
 	}
@@ -168,7 +168,7 @@ public class Zips {
 	@VisibleForTesting
 	static int unpack(TarArchiveInputStream tais, Path outputDir) throws IOException {
 		int unpackedEntries = 0;
-		for (TarArchiveEntry entry = tais.getNextTarEntry(); entry != null; entry = tais.getNextTarEntry()) {
+		for (TarArchiveEntry entry = tais.getNextEntry(); entry != null; entry = tais.getNextEntry()) {
 			unpackEntry(tais, entry, outputDir);
 			unpackedEntries++;
 		}

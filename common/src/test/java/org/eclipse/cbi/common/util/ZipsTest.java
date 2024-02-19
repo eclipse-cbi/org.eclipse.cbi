@@ -361,7 +361,7 @@ public class ZipsTest {
 	}
 
 	private static void checkZip(Path zip) throws IOException {
-		try (ZipFile zipFile = new ZipFile(Files.newByteChannel(zip, StandardOpenOption.READ))) {
+		try (ZipFile zipFile = ZipFile.builder().setSeekableByteChannel(Files.newByteChannel(zip, StandardOpenOption.READ)).get()) {
 			Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
 			while (entries.hasMoreElements()) {
 				assertFalse(entries.nextElement().getName().isEmpty());

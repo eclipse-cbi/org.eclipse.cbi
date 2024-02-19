@@ -14,7 +14,6 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.eclipse.cbi.maven.plugins</groupId>
   <artifactId>eclipse-cbi-plugin</artifactId>
   <packaging>maven-plugin</packaging>
 
@@ -50,4 +49,17 @@
       <artifactId>plexus-build-api</artifactId>
     </dependency>
   </dependencies>
+  <build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-plugin-plugin</artifactId>
+				<!-- workaround for
+				https://issues.apache.org/jira/browse/MPLUGIN-450 -->
+				<configuration>
+					<goalPrefix>eclipse-cbi-plugin</goalPrefix>
+				</configuration>
+			</plugin>
+		</plugins>
+  </build>
 </project>

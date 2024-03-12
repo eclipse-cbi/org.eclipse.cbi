@@ -26,3 +26,4 @@ VERSION="1.3.0"
 
 From a laptop with access to deployment cluster
 `make clean jar-signing authenticode-signing`
+

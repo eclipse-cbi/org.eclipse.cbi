@@ -203,7 +203,7 @@
       <dependency> <!-- Required dependency convergence enforcer rule -->
         <groupId>org.codehaus.plexus</groupId>
         <artifactId>plexus-utils</artifactId>
-        <version>4.0.0</version>
+        <version>4.0.1</version>
       </dependency>
       <dependency>
         <groupId>org.codehaus.plexus</groupId> <!-- Required dependency convergence enforcer rule -->

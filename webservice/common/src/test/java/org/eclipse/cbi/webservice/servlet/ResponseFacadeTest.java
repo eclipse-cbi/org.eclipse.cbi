@@ -65,7 +65,7 @@ public class ResponseFacadeTest {
 		}
 	}
 
-	private static final class ForwardingServletOutputStream extends ServletOutputStream {
+	private static class ForwardingServletOutputStream extends ServletOutputStream {
 		private final ByteArrayOutputStream baos;
 
 		ForwardingServletOutputStream(ByteArrayOutputStream baos) { this.baos = baos; }

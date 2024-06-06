@@ -19,3 +19,5 @@ jobs:
       projectId: technology.cbi
     secrets:
       gitlabAPIToken: ${{ secrets.ECLIPSE_GITLAB_API_TOKEN }}
+    permissions:
+      pull-requests: write

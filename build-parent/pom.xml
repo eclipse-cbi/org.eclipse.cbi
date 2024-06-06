@@ -15,7 +15,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.compiler.release>${requireJavaVersion}</maven.compiler.release>
 
-    <auto-value.version>1.10.4</auto-value.version>
+    <auto-value.version>1.11.0</auto-value.version>
   </properties>
 
   <dependencyManagement>
@@ -47,7 +47,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.12.1</version>
+          <version>3.13.0</version>
           <configuration>
             <useIncrementalCompilation>false</useIncrementalCompilation>
             <annotationProcessorPaths>
@@ -70,7 +70,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
-          <version>3.3.0</version>
+          <version>3.4.1</version>
           <configuration>
             <archive>
               <manifest>
@@ -88,7 +88,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.5.2</version>
+          <version>3.6.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -110,7 +110,7 @@
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>10.14.0</version>
+              <version>10.17.0</version>
             </dependency>
             <dependency>
               <groupId>org.eclipse.cbi</groupId>
@@ -140,7 +140,7 @@
         <plugin>
           <groupId>com.github.spotbugs</groupId>
           <artifactId>spotbugs-maven-plugin</artifactId>
-          <version>4.8.3.1</version>
+          <version>4.8.5.0</version>
           <configuration>
             <threshold>High</threshold>
           </configuration>
@@ -155,7 +155,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-plugin-plugin</artifactId>
-          <version>3.11.0</version>
+          <version>3.13.1</version>
           <configuration>
             <requirements>
               <maven>3.0</maven>

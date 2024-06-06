@@ -58,7 +58,7 @@ public abstract class RecursiveJarSigner extends FilteredJarSigner {
 	private int doSignJarRecursively(final Path file, Options options, int currentDepth) throws IOException {
 		int nestedJarsSigned = 0;
 		if (currentDepth >= maxDepth()) {
-			log().info("Signing of nested jars of '" + file + "' is disabled.");
+			log().debug(String.format("Signing of nested jars within '" + file + "' is disabled (current depth = %d, max depth = %d).", currentDepth, maxDepth()));
 		} else {
 			nestedJarsSigned = signNestedJars(file, options, currentDepth);
 		}

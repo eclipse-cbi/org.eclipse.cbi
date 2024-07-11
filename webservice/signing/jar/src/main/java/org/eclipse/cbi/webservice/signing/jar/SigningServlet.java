@@ -77,24 +77,24 @@ public abstract class SigningServlet extends HttpServlet {
 
 	private MessageDigestAlgorithm getDigestAlgorithm(final RequestFacade requestFacade) throws IOException {
 		Optional<String> digestAlgorithmParameter = requestFacade.getParameter(DIGEST_ALG_PARAMETER);
-		final MessageDigestAlgorithm digestAlgorihtm;
+		final MessageDigestAlgorithm digestAlgorithm;
 		if (digestAlgorithmParameter.isPresent()) {
-			digestAlgorihtm = MessageDigestAlgorithm.fromStandardName(digestAlgorithmParameter.get());
+			digestAlgorithm = MessageDigestAlgorithm.fromStandardName(digestAlgorithmParameter.get());
 		} else {
-			digestAlgorihtm = MessageDigestAlgorithm.DEFAULT;
+			digestAlgorithm = MessageDigestAlgorithm.DEFAULT;
 		}
-		return digestAlgorihtm;
+		return digestAlgorithm;
 	}
 	
 	private SignatureAlgorithm getSignatureAlgorithm(final RequestFacade requestFacade) throws IOException {
 		Optional<String> signatureAlgorithmParameter = requestFacade.getParameter(SIGNATURE_ALG_PARAMETER);
-		final SignatureAlgorithm signatureAlgorihtm;
+		final SignatureAlgorithm signatureAlgorithm;
 		if (signatureAlgorithmParameter.isPresent()) {
-			signatureAlgorihtm = SignatureAlgorithm.fromStandardName(signatureAlgorithmParameter.get());
+			signatureAlgorithm = SignatureAlgorithm.fromStandardName(signatureAlgorithmParameter.get());
 		} else {
-			signatureAlgorihtm = SignatureAlgorithm.DEFAULT;
+			signatureAlgorithm = SignatureAlgorithm.DEFAULT;
 		}
-		return signatureAlgorihtm;
+		return signatureAlgorithm;
 	}
 	
 	abstract Path tempFolder();

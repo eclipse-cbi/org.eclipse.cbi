@@ -140,7 +140,7 @@
         <plugin>
           <groupId>com.github.spotbugs</groupId>
           <artifactId>spotbugs-maven-plugin</artifactId>
-          <version>4.8.6.1</version>
+          <version>4.8.6.2</version>
           <configuration>
             <threshold>High</threshold>
           </configuration>
@@ -157,9 +157,7 @@
           <artifactId>maven-plugin-plugin</artifactId>
           <version>3.13.1</version>
           <configuration>
-            <requirements>
-              <maven>3.0</maven>
-            </requirements>
+            <requiredMavenVersion>[3.0,)</requiredMavenVersion>
           </configuration>
         </plugin>
         <plugin>

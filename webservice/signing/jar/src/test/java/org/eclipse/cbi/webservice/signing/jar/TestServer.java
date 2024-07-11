@@ -178,6 +178,11 @@ public class TestServer {
 			return jarSignerPath;
 		}
 
+		@Override
+		public String getJavaArgs() {
+			return "";
+		}
+
 		private Path checkJarSignerPath() {
 			final Path ret;
 			
@@ -226,6 +231,26 @@ public class TestServer {
 		@Override
 		public long getTimeout() {
 			return TimeUnit.MINUTES.toSeconds(2);
+		}
+
+		@Override
+		public String getProviderClass() {
+			return null;
+		}
+
+		@Override
+		public String getProviderArg() {
+			return null;
+		}
+
+		@Override
+		public Path getCertificateChain() {
+			return null;
+		}
+
+		@Override
+		public Path getGoogleCloudCredentials() {
+			return null;
 		}
 
 		@Override

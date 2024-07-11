@@ -25,6 +25,13 @@ public interface JarSignerConfiguration {
 	Path getJarSigner();
 
 	/**
+	 * Returns extra arguments that are passed to the jarsigner binary as Java options
+	 *
+	 * @return extra java arguments
+	 */
+	String getJavaArgs();
+
+	/**
 	 * Returns the path to the keystore file.
 	 * 
 	 * @return the path to the keystore file.
@@ -53,6 +60,34 @@ public interface JarSignerConfiguration {
 	 * @return the path to the file containing the password of the keystore.
 	 */
 	String getKeystorePassword();
+
+	/**
+	 * Returns the keystore provider class.
+	 *
+	 * @return the keystore provider class.
+	 */
+	String getProviderClass();
+
+	/**
+	 * Returns the argument to the keystore provider.
+	 *
+	 * @return the argument to the keystore provider.
+	 */
+	String getProviderArg();
+
+	/**
+	 * Returns the path to the certificate chain file.
+	 *
+	 * @return the path to the certificate chain file.
+	 */
+	Path getCertificateChain();
+
+	/**
+	 * Returns the path to the Google Cloud credentials file.
+	 *
+	 * @return the path to the Google Cloud credentials file.
+	 */
+	Path getGoogleCloudCredentials();
 
 	/**
 	 * Returns the URI of the timestamping authority to be used by the

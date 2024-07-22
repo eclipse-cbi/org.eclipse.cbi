@@ -21,11 +21,12 @@ jarsigner.newDeployment("jar-signing", std.extVar("artifactId"), std.extVar("ver
       filename: "gcloud-credentials.json",
       pass: "IT/CBI/PKI/codesigning/eclipse.org.gcloud-credentials.json",
     },
-    keyRing: "projects/hsm-codesigning-test/locations/global/keyRings/test-global",
-    defaultKey: "signing-key",
+    keyRing: "projects/hsm-codesigning/locations/global/keyRings/eclipse_org",
+    defaultKey: "codesigning-key",
   },
 
   kube+: {
+    namespace: "foundation-codesigning",
     resources: [
       if resource.kind == "Deployment" then resource + {
         spec+: {

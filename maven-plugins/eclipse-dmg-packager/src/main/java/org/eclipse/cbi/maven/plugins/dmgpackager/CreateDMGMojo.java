@@ -42,7 +42,7 @@ import org.eclipse.cbi.maven.http.apache.ApacheHttpClient;
  * Create a DMG file from the file specified as argument. This plug-in requires
  * access to the Eclipse DMG packager web service.
  */
-@Mojo(name = "package-dmg", defaultPhase = LifecyclePhase.PACKAGE)
+@Mojo(name = "package-dmg", defaultPhase = LifecyclePhase.PACKAGE, threadSafe = true)
 public class CreateDMGMojo extends AbstractMojo {
 
 	/**

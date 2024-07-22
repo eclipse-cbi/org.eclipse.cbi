@@ -53,7 +53,7 @@ import org.eclipse.cbi.maven.plugins.jarsigner.RemoteJarSigner;
  * webservice. Only artifacts with {@code .jar} extension are signed, other
  * artifacts are not signed but a warning message is logged.
  */
-@Mojo(name = "sign", defaultPhase = LifecyclePhase.PACKAGE)
+@Mojo(name = "sign", defaultPhase = LifecyclePhase.PACKAGE, threadSafe = true)
 public class SignMojo extends AbstractMojo {
 
 	/**

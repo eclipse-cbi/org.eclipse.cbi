@@ -14,14 +14,18 @@ package org.eclipse.cbi.webservice.signing.jar;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.base.Splitter;
 import org.eclipse.cbi.common.security.MessageDigestAlgorithm;
 import org.eclipse.cbi.common.security.SignatureAlgorithm;
 import org.eclipse.cbi.webservice.util.ProcessExecutor;
@@ -38,59 +42,17 @@ import com.google.common.collect.ImmutableList;
 public abstract class JarSigner {
 
 	/**
-	 * Returns the path to the jar signer binary
-	 * 
-	 * @return the path to the jar signer binary
+	 * The credential holder in case Google KMS is being used as signing backend.
 	 */
-	abstract Path jarSigner();
+	private GoogleCredentials kmsCredentials = null;
 
 	/**
-	 * Returns the path to the keystore file
-	 * 
-	 * @return the path to the keystore file
+	 * Returns the configuration object for this JarSigner instance.
+	 *
+	 * @return the configuration for this JarSigner instance
 	 */
-	abstract Path keystore();
-	
-	/**
-	 * Returns the type of keystore.
-	 * @return the type of keystore.
-	 */
-	@Nullable
-	abstract String storetype();
+	abstract JarSignerConfiguration configuration();
 
-	/**
-	 * Returns the path to the file storing the keystore password
-	 * 
-	 * @return the path to the file storing the keystore password
-	 */
-	abstract String keystorePassword();
-
-	/**
-	 * Returns the alias name of the key in the keystore
-	 * 
-	 * @return the alias name of the key in the keystore
-	 */
-	abstract String keystoreAlias();
-
-	/**
-	 * Returns the timestamping authority URI
-	 * 
-	 * @return the timestamping authority URI
-	 */
-	abstract URI timestampingAuthority();
-
-	abstract String httpProxyHost();
-	abstract int httpProxyPort();
-	abstract String httpsProxyHost();
-	abstract int httpsProxyPort();
-	
-	/**
-	 * Returns the digest algorithm to be used by the {@link #jarSigner()}.
-	 * @return the digest algorithm to be used by the {@link #jarSigner()}.
-	 */
-	@Nullable
-	abstract MessageDigestAlgorithm digestAlgorithm();
-	
 	/**
 	 * Returns the executor that will execute the native command
 	 * 
@@ -99,116 +61,14 @@ public abstract class JarSigner {
 	abstract ProcessExecutor processExecutor();
 
 	/**
-	 * Returns the timeout of the jarsigner command
-	 * 
-	 * @return the timeout of the jarsigner command
-	 */
-	abstract long timeout();
-	
-	/**
 	 * Creates and returns a new builder for this class.
 	 * 
 	 * @return a new builder for this class.
 	 */
 	public static Builder builder() {
-		return new AutoValue_JarSigner.Builder()
-			.httpProxyHost("")
-			.httpProxyPort(0)
-			.httpsProxyHost("")
-			.httpsProxyPort(0)
-			.storetype(null)
-			.digestAlgorithm(null);
+		return new AutoValue_JarSigner.Builder();
 	}
 	
-	/**
-	 * A builder of JarSigner.
-	 */
-	@AutoValue.Builder
-	public static abstract class Builder {
-	
-		/**
-		 * Sets the path to the jarsigner command.
-		 * 
-		 * @return this builder for daisy-chaining.
-		 */
-		public abstract Builder jarSigner(Path jarSigner);
-		
-		/**
-		 * Sets the path to the keystore file.
-		 * 
-		 * @return this builder for daisy-chaining.
-		 */
-		public abstract Builder keystore(Path keystore);
-		
-		/**
-		 * Sets the typeto of keystore to use.
-		 * 
-		 * @return this builder for daisy-chaining.
-		 */
-		public abstract Builder storetype(String storetype);
-		
-		/**
-		 * Sets the path to the file storing the password of the keystore.
-		 * 
-		 * @return this builder for daisy-chaining.
-		 */
-		public abstract Builder keystorePassword(String keystorePassword);
-		
-		/**
-		 * Sets the alias name of the key in the keystore.
-		 * 
-		 * @return this builder for daisy-chaining.
-		 */
-		public abstract Builder keystoreAlias(String keystoreAlias);
-		
-		/**
-		 * Sets the URI of the timestamping authority used by jarsigner.
-		 * 
-		 * @return this builder for daisy-chaining.
-		 */
-		public abstract Builder timestampingAuthority(URI timeStampingAuthority);
-		
-		/**
-		 * Sets the process executor that will execute the native jarsigner command. 
-		 * 
-		 * @return this builder for daisy-chaining.
-		 */
-		public abstract Builder processExecutor(ProcessExecutor executor);
-		
-		/**
-		 * Sets the timeout before which the jarsigner process will be killed.
-		 * 
-		 * @return this builder for daisy-chaining.
-		 */
-		public abstract Builder timeout(long timeout);
-		
-		public abstract Builder digestAlgorithm(@Nullable MessageDigestAlgorithm digestAlg);
-		
-		public abstract Builder httpProxyHost(String proxyHost);
-		public abstract Builder httpProxyPort(int proxyPort);
-		public abstract Builder httpsProxyHost(String proxyHost);
-		public abstract Builder httpsProxyPort(int proxyPort);
-		
-		abstract JarSigner autoBuild();
-		
-		/**
-		 * Creates and returns a new JarSigner object with the state of this
-		 * builder.
-		 * 
-		 * @return a new JarSigner object with the state of this builder.
-		 */
-		public JarSigner build() {
-			JarSigner jarSigner = autoBuild();
-			checkState(jarSigner.timeout() > 0, "The timeout must be strictly positive");
-			if (!Strings.isNullOrEmpty(jarSigner.httpProxyHost())) {
-				checkState(jarSigner.httpProxyPort() > 0, "The HTTP proxy port must be specified and stricly positive when HTTP proxy host is");
-			}
-			if (!Strings.isNullOrEmpty(jarSigner.httpsProxyHost())) {
-				checkState(jarSigner.httpsProxyPort() > 0, "The HTTPS proxy port must be specified and stricly positive when HTTPS proxy host is");
-			}
-			return jarSigner;
-		}
-	}
 
 	/**
 	 * Sign the given jar file with the configured jarsigner command.
@@ -223,18 +83,20 @@ public abstract class JarSigner {
 	public Path signJar(Path jar) throws IOException {
 		return signJar(jar, SignatureAlgorithm.DEFAULT, MessageDigestAlgorithm.DEFAULT, "");
 	}
-	
-	public Path signJar(Path jar, SignatureAlgorithm sigAlg, MessageDigestAlgorithm digestAlg, String sigFile) throws IOException {
+
+	public Path signJar(Path jar, SignatureAlgorithm sigAlg, MessageDigestAlgorithm digestAlg, String sigFile)
+			throws IOException {
 		Objects.requireNonNull(sigAlg);
 		Objects.requireNonNull(digestAlg);
 		final StringBuilder output = new StringBuilder();
-		int jarSignerExitValue = processExecutor().exec(createCommand(jar, sigAlg, digestAlg, sigFile), output , timeout(), TimeUnit.SECONDS);
+		int jarSignerExitValue =
+				processExecutor().exec(createCommand(jar, sigAlg, digestAlg, sigFile), output, configuration().getTimeout(), TimeUnit.SECONDS);
 		if (jarSignerExitValue != 0) {
 			throw new IOException(Joiner.on('\n').join(
-					"The '" + jarSigner().toString() + "' command exited with value '" + jarSignerExitValue + "'",
-					"'" + jarSigner().toString() + "' output:",
-					output));
-		}
+				"The '" + configuration().getJarSigner().toString() + "' command exited with value '" + jarSignerExitValue + "'",
+				"'" + configuration().getJarSigner().toString() + "' output:",
+				output));
+	}
 		return jar;
 	}
 	
@@ -255,14 +117,28 @@ public abstract class JarSigner {
 	 *         {@link ProcessBuilder} for format).
 	 */
 	private ImmutableList<String> createCommand(Path jar, SignatureAlgorithm sigAlg, MessageDigestAlgorithm digestAlg, String sigFile) {
-		ImmutableList.Builder<String> command = ImmutableList.<String>builder().add(jarSigner().toString());
-		
-		if (!Strings.isNullOrEmpty(httpProxyHost())) {
-			command.add("-J-Dhttp.proxyHost=" + httpProxyHost()).add("-J-Dhttp.proxyPort=" + httpProxyPort());
+		ImmutableList.Builder<String> command = ImmutableList.<String>builder().add(configuration().getJarSigner().toString());
+
+		if (!Strings.isNullOrEmpty(configuration().getJavaArgs())) {
+			Iterable<String> arguments =
+				Splitter.on(' ')
+						.trimResults()
+						.omitEmptyStrings()
+						.split(configuration().getJavaArgs());
+
+			for (String arg : arguments) {
+				command.add("-J" + arg);
+			}
+		}
+
+		if (!Strings.isNullOrEmpty(configuration().getHttpProxyHost())) {
+			command.add("-J-Dhttp.proxyHost=" + configuration().getHttpProxyHost())
+				   .add("-J-Dhttp.proxyPort=" + configuration().getHttpProxyPort());
 		}
 		
-		if (!Strings.isNullOrEmpty(httpsProxyHost())) {
-			command.add("-J-Dhttps.proxyHost=" + httpsProxyHost()).add("-J-Dhttps.proxyPort=" + httpsProxyPort());
+		if (!Strings.isNullOrEmpty(configuration().getHttpsProxyHost())) {
+			command.add("-J-Dhttps.proxyHost=" + configuration().getHttpsProxyHost())
+				   .add("-J-Dhttps.proxyPort=" + configuration().getHttpsProxyPort());
 		}
 		
 		if (sigAlg != SignatureAlgorithm.DEFAULT) {
@@ -273,24 +149,120 @@ public abstract class JarSigner {
 			command.add("-digestalg", digestAlg.standardName());
 		}
 		
-		String tsa = timestampingAuthority().toString();
+		String tsa = configuration().getTimeStampingAuthority().toString();
 		if (!Strings.isNullOrEmpty(tsa)) {
 			command.add("-tsa", tsa);
 		}
 
-		if (!Strings.isNullOrEmpty(storetype())) {
-			command.add("-storetype", storetype());
+		if (!Strings.isNullOrEmpty(configuration().getStoreType())) {
+			command.add("-storetype", configuration().getStoreType());
 		}
-		
+
+		if (!Strings.isNullOrEmpty(configuration().getProviderClass())) {
+			command.add("-providerClass", configuration().getProviderClass());
+		}
+
+		if (!Strings.isNullOrEmpty(configuration().getProviderArg())) {
+			command.add("-providerArg", configuration().getProviderArg());
+		}
+
+		if (configuration().getCertificateChain() != null) {
+			command.add("-certchain", configuration().getCertificateChain().toString());
+		}
+
 		if (!Strings.isNullOrEmpty(sigFile)) {
 			command.add("-sigfile", sigFile);
 		}
-		
-		command.add("-keystore", keystore().toString())
-			.add("-storepass", keystorePassword())
+
+		if (configuration().getKeystore() == null) {
+			command.add("-keystore", "NONE");
+		} else {
+			command.add("-keystore", configuration().getKeystore().toString());
+		}
+
+		if (configuration().getKeystorePassword() != null) {
+			command.add("-storepass", configuration().getKeystorePassword());
+		} else if ("GOOGLECLOUD".equals(configuration().getStoreType())) {
+			command.add("-storepass", googleAccessToken());
+		}
+
+		command
 			.add(jar.toString())
-			.add(keystoreAlias());
+			.add(configuration().getKeystoreAlias());
 		
 		return command.build();
 	}
+
+	private void initKmsCredentialsIfNeeded() {
+		if (configuration().getGoogleCloudCredentials() != null) {
+			try {
+				kmsCredentials =
+					GoogleCredentials.fromStream(new FileInputStream(configuration().getGoogleCloudCredentials().toString()))
+								     .createScoped(List.of("https://www.googleapis.com/auth/cloudkms"));
+			} catch (IOException ex) {
+				// should not happen
+				throw new RuntimeException(ex);
+			}
+		}
+	}
+
+	private String googleAccessToken() {
+		if (kmsCredentials != null) {
+			try {
+				kmsCredentials.refreshIfExpired();
+				return kmsCredentials.getAccessToken().getTokenValue();
+			} catch (IOException ex) {
+				throw new RuntimeException(ex);
+			}
+		} else {
+			throw new RuntimeException("Tried to retrieve a Google Cloud Access Token while no credentials have been provided");
+		}
+	}
+
+	/**
+	 * A builder of JarSigner.
+	 */
+	@AutoValue.Builder
+	public static abstract class Builder {
+
+		/**
+		 * Sets the configuration to use.
+		 *
+		 * @return this builder for daisy-chaining.
+		 */
+		public abstract Builder configuration(JarSignerConfiguration configuration);
+
+		/**
+		 * Sets the process executor that will execute the native jarsigner command.
+		 *
+		 * @return this builder for daisy-chaining.
+		 */
+		public abstract Builder processExecutor(ProcessExecutor executor);
+
+		abstract JarSigner autoBuild();
+
+		/**
+		 * Creates and returns a new JarSigner object with the state of this
+		 * builder.
+		 *
+		 * @return a new JarSigner object with the state of this builder.
+		 */
+		public JarSigner build() {
+			JarSigner jarSigner = autoBuild();
+
+			JarSignerConfiguration configuration = jarSigner.configuration();
+
+			checkState(configuration.getTimeout() > 0, "The timeout must be strictly positive");
+			if (!Strings.isNullOrEmpty(configuration.getHttpProxyHost())) {
+				checkState(configuration.getHttpProxyPort() > 0, "The HTTP proxy port must be specified and stricly positive when HTTP proxy host is");
+			}
+			if (!Strings.isNullOrEmpty(configuration.getHttpsProxyHost())) {
+				checkState(configuration.getHttpsProxyPort() > 0, "The HTTPS proxy port must be specified and stricly positive when HTTPS proxy host is");
+			}
+
+			jarSigner.initKmsCredentialsIfNeeded();
+			return jarSigner;
+		}
+	}
+
 }

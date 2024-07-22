@@ -17,6 +17,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.base.Strings;
 import org.eclipse.cbi.webservice.util.PropertiesReader;
 
 /**
@@ -25,14 +26,21 @@ import org.eclipse.cbi.webservice.util.PropertiesReader;
 public class JarSignerProperties implements JarSignerConfiguration {
 
 	private static final long JARSIGNER_TIMEOUT_DEFAULT = TimeUnit.MINUTES.toSeconds(2);
+
 	private static final String JARSIGNER_TIMEOUT = "jarsigner.timeout";
 	private static final String JARSIGNER_TSA = "jarsigner.tsa";
 	private static final String JARSIGNER_KEYSTORE_PASSWORD = "jarsigner.keystore.password";
 	private static final String JARSIGNER_KEYSTORE_ALIAS = "jarsigner.keystore.alias";
 	private static final String JARSIGNER_KEYSTORE = "jarsigner.keystore";
 	private static final String JARSIGNER_STORETYPE = "jarsigner.storetype";
+	private static final String JARSIGNER_KMS_CERTCHAIN = "jarsigner.kms.certchain";
+	private static final String JARSIGNER_KMS_CREDENTIALS = "jarsigner.kms.credentials";
+	private static final String JARSIGNER_PROVIDER_CLASS = "jarsigner.provider.class";
+	private static final String JARSIGNER_PROVIDER_ARG = "jarsigner.provider.arg";
+
 	private static final String JARSIGNER_BIN = "jarsigner.bin";
-	
+	private static final String JARSIGNER_JAVA_ARGS = "jarsigner.javaargs";
+
 	private static final String JARSIGNER_HTTP_PROXY_HOST = "jarsigner.http.proxy.host";
 	private static final String JARSIGNER_HTTPS_PROXY_HOST = "jarsigner.https.proxy.host";
 	
@@ -62,6 +70,11 @@ public class JarSignerProperties implements JarSignerConfiguration {
 		return propertiesReader.getRegularFile(JARSIGNER_BIN);
 	}
 
+	@Override
+	public String getJavaArgs() {
+		return propertiesReader.getString(JARSIGNER_JAVA_ARGS, "");
+	}
+
 	/**
 	 * Reads and returns the path to the keystore file.
 	 * 
@@ -69,7 +82,12 @@ public class JarSignerProperties implements JarSignerConfiguration {
 	 */
 	@Override
 	public Path getKeystore() {
-		return propertiesReader.getRegularFile(JARSIGNER_KEYSTORE);
+		String keystore = propertiesReader.getString(JARSIGNER_KEYSTORE, "");
+		if (!Strings.isNullOrEmpty(keystore)) {
+			return propertiesReader.getRegularFile(JARSIGNER_KEYSTORE);
+		} else {
+			return null;
+		}
 	}
 
 	@Override
@@ -96,7 +114,42 @@ public class JarSignerProperties implements JarSignerConfiguration {
 	 */
 	@Override
 	public String getKeystorePassword() {
-		return propertiesReader.getFileContent(JARSIGNER_KEYSTORE_PASSWORD);
+		String keystore = propertiesReader.getString(JARSIGNER_KEYSTORE_PASSWORD, "");
+		if (!Strings.isNullOrEmpty(keystore)) {
+			return propertiesReader.getFileContent(JARSIGNER_KEYSTORE_PASSWORD);
+		} else {
+			return null;
+		}
+	}
+
+	@Override
+	public String getProviderClass() {
+		return propertiesReader.getString(JARSIGNER_PROVIDER_CLASS, "");
+	}
+
+	@Override
+	public String getProviderArg() {
+		return propertiesReader.getString(JARSIGNER_PROVIDER_ARG, "");
+	}
+
+	@Override
+	public Path getCertificateChain() {
+		String certchain = propertiesReader.getString(JARSIGNER_KMS_CERTCHAIN, "");
+		if (!Strings.isNullOrEmpty(certchain)) {
+			return propertiesReader.getRegularFile(JARSIGNER_KMS_CERTCHAIN);
+		} else {
+			return null;
+		}
+	}
+
+	@Override
+	public Path getGoogleCloudCredentials() {
+		String credentials = propertiesReader.getString(JARSIGNER_KMS_CREDENTIALS, "");
+		if (!Strings.isNullOrEmpty(credentials)) {
+			return propertiesReader.getRegularFile(JARSIGNER_KMS_CREDENTIALS);
+		} else {
+			return null;
+		}
 	}
 
 	/**

@@ -57,35 +57,28 @@ public class SigningServer {
 	public void startServer(final EmbeddedServerConfiguration serverConf, final JarSignerConfiguration jarSignerConf) throws Exception {
 		final Path tempFolder = serverConf.getTempFolder();
 
-		final JarSigner jarSigner = JarSigner.builder()
-			.jarSigner(jarSignerConf.getJarSigner())
-			.keystore(jarSignerConf.getKeystore())
-			.storetype(jarSignerConf.getStoreType())
-			.keystoreAlias(jarSignerConf.getKeystoreAlias())
-			.keystorePassword(jarSignerConf.getKeystorePassword())
-			.timestampingAuthority(jarSignerConf.getTimeStampingAuthority())
-			.httpProxyHost(jarSignerConf.getHttpProxyHost())
-			.httpProxyPort(jarSignerConf.getHttpProxyPort())
-			.httpsProxyHost(jarSignerConf.getHttpsProxyHost())
-			.httpsProxyPort(jarSignerConf.getHttpsProxyPort())
-			.processExecutor(new ProcessExecutor.BasicImpl())
-			.timeout(jarSignerConf.getTimeout())
-			.build();
-		
-		final SigningServlet codeSignServlet = SigningServlet.builder()
-			.jarSigner(jarSigner)
-			.tempFolder(tempFolder)
-			.build();
-		
-		final EmbeddedServer server = EmbeddedServer.builder()
-			.port(serverConf.getServerPort())
-			.accessLogFile(serverConf.getAccessLogFile())
-			.servicePathSpec(serverConf.getServicePathSpec())
-			.appendServiceVersionToPathSpec(serverConf.isServiceVersionAppendedToPathSpec())
-			.servlet(codeSignServlet)
-			.tempFolder(tempFolder)
-			.log4jConfiguration(serverConf.getLog4jProperties())
-			.build();
+		final JarSigner jarSigner =
+			JarSigner.builder()
+				.configuration(jarSignerConf)
+				.processExecutor(new ProcessExecutor.BasicImpl())
+				.build();
+
+		final SigningServlet codeSignServlet =
+			SigningServlet.builder()
+				.jarSigner(jarSigner)
+				.tempFolder(tempFolder)
+				.build();
+
+		final EmbeddedServer server =
+			EmbeddedServer.builder()
+				.port(serverConf.getServerPort())
+				.accessLogFile(serverConf.getAccessLogFile())
+				.servicePathSpec(serverConf.getServicePathSpec())
+				.appendServiceVersionToPathSpec(serverConf.isServiceVersionAppendedToPathSpec())
+				.servlet(codeSignServlet)
+				.tempFolder(tempFolder)
+				.log4jConfiguration(serverConf.getLog4jProperties())
+				.build();
 
 		server.start();
 	}

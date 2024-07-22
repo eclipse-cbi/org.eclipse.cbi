@@ -62,9 +62,6 @@ local newDeployment(name, artifactId, version) = {
               },
             },
             spec: {
-              nodeSelector: {
-                "org.eclipse.cbi": "hsm",
-              },
               affinity: {
                 nodeAffinity: {
                   preferredDuringSchedulingIgnoredDuringExecution: [{

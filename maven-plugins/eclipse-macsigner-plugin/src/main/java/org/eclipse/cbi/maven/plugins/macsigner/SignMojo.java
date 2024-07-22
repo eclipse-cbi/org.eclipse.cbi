@@ -46,7 +46,7 @@ import org.eclipse.cbi.maven.http.apache.ApacheHttpClient;
  * Signs OS X applications found in the project build directory using the
  * Eclipse OS X application signer webservice.
  */
-@Mojo(name = "sign", defaultPhase = LifecyclePhase.PACKAGE)
+@Mojo(name = "sign", defaultPhase = LifecyclePhase.PACKAGE, threadSafe = true)
 public class SignMojo extends AbstractMojo {
 
 	/**

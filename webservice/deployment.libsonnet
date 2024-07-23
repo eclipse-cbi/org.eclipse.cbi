@@ -203,7 +203,7 @@ local newDeployment(name, artifactId, version) = {
     ],
   },
   # we will copy artifact from target/ folder if current version is SNAPSHOT, otherwise, download it from repo.eclipse.org
-  Dockerfile: if std.endsWith($.version, "SNAPSHOT") then |||
+  Dockerfile: if std.endsWith($.version, "SNAPSHOT") || std.length(std.findSubstr("-RC", $.version)) > 0 then |||
     FROM %(from)s
 
     COPY target/%(artifactId)s-%(version)s.jar /usr/local/%(name)s/

@@ -37,7 +37,14 @@ public interface JarSignerConfiguration {
 	 * @return the path to the keystore file.
 	 */
 	Path getKeystore();
-	
+
+	/**
+	 * Returns the default sigfile name if none is provided.
+	 *
+	 * @return the default sigfile name.
+	 */
+	String getSigFileDefault();
+
 	/**
 	 * Returns the type of keystore.
 	 * 

@@ -172,6 +172,8 @@ public abstract class JarSigner {
 
 		if (!Strings.isNullOrEmpty(sigFile)) {
 			command.add("-sigfile", sigFile);
+		} else if (!Strings.isNullOrEmpty(configuration().getSigFileDefault())) {
+			command.add("-sigfile", configuration().getSigFileDefault());
 		}
 
 		if (configuration().getKeystore() == null) {

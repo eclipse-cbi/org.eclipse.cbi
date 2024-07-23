@@ -105,6 +105,13 @@ jarsigner.newDeployment("jar-signing", std.extVar("artifactId"), std.extVar("ver
 
       ##
       # Optional
+      # Force the sigfile to be named ECLIPSE_ for backwards compatibility
+      # unless the sigfile is specified in the incoming request
+      ##
+      jarsigner.sigfile.default=ECLIPSE_
+
+      ##
+      # Optional
       # The default keystore type is the one that is specified as the value
       # of the keystore.type property in the security properties file. The
       # security properties file is called java.security, and it resides in

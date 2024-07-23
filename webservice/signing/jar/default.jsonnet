@@ -3,12 +3,6 @@ local jarsigner = import "jarsigner.libsonnet";
 jarsigner.newDeployment("jar-signing", std.extVar("artifactId"), std.extVar("version")) {
   pathspec: "/jarsigner/sign",
 
-  docker+: {
-    registry: "ghcr.io",
-    repository: "eclipse-cbi",
-    baseImage: "eclipse-temurin:17-jdk",
-  },
-
   kms: {
     path: "/var/run/secrets/%s/" % $.name,
     volumeName: "kms",
@@ -26,7 +20,6 @@ jarsigner.newDeployment("jar-signing", std.extVar("artifactId"), std.extVar("ver
   },
 
   kube+: {
-    namespace: "foundation-codesigning",
     resources: [
       if resource.kind == "Deployment" then resource + {
         spec+: {

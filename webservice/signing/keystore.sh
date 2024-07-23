@@ -68,7 +68,7 @@ if [ "${HAS_KEYSTORE}" = true ] ; then
       rm -f "${PRIVATE_KEY}" "${CERTIFICATE_CHAIN}" "${ENTRY_P12}"
     done
 
-     apply java p12 keystore to the cluster
+    # apply java p12 keystore to the cluster
     kubectl create secret generic "$(jq -r '.keystore.secretName' <<<"${SERVICE_JSON}")" \
       --namespace "$(jq -r '.kube.namespace' <<<"${SERVICE_JSON}")" \
       --from-file="$(jq -r '.keystore.filename' <<<"${SERVICE_JSON}")"="${KEYSTORE}" \

@@ -145,7 +145,11 @@ jarsigner.newDeployment("jar-signing-jce", std.extVar("artifactId"), std.extVar(
       ### Log4j configuration section
 
       # Root logger option
-      log4j.rootLogger=INFO, file
+      log4j.rootLogger=INFO, console, file
+
+      log4j.appender.console=org.apache.log4j.ConsoleAppender
+      log4j.appender.console.layout=org.apache.log4j.PatternLayout
+      log4j.appender.console.layout.ConversionPattern=%%d{yyyy-MM-dd HH:mm:ss} %%-5p %%c{1}:%%L - %%m%%n
 
       # Redirect log messages to a log file, support file rolling.
       log4j.appender.file=org.apache.log4j.RollingFileAppender

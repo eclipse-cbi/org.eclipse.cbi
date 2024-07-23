@@ -41,6 +41,8 @@ public class JarSignerProperties implements JarSignerConfiguration {
 	private static final String JARSIGNER_BIN = "jarsigner.bin";
 	private static final String JARSIGNER_JAVA_ARGS = "jarsigner.javaargs";
 
+	private static final String JARSIGNER_SIGFILE_DEFAULT = "jarsigner.sigfile.default";
+
 	private static final String JARSIGNER_HTTP_PROXY_HOST = "jarsigner.http.proxy.host";
 	private static final String JARSIGNER_HTTPS_PROXY_HOST = "jarsigner.https.proxy.host";
 	
@@ -73,6 +75,11 @@ public class JarSignerProperties implements JarSignerConfiguration {
 	@Override
 	public String getJavaArgs() {
 		return propertiesReader.getString(JARSIGNER_JAVA_ARGS, "");
+	}
+
+	@Override
+	public String getSigFileDefault() {
+		return propertiesReader.getString(JARSIGNER_SIGFILE_DEFAULT, "");
 	}
 
 	/**

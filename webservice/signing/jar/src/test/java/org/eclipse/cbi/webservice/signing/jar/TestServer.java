@@ -183,6 +183,11 @@ public class TestServer {
 			return "";
 		}
 
+		@Override
+		public String getSigFileDefault() {
+			return null;
+		}
+
 		private Path checkJarSignerPath() {
 			final Path ret;
 			

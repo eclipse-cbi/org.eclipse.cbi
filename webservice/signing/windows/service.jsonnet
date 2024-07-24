@@ -2,34 +2,39 @@ local deployment = import "../../deployment.libsonnet";
 
 deployment.newDeployment("authenticode-signing", std.extVar("artifactId"), std.extVar("version")) {
   pathspec: "/authenticode/sign",
-  osslsigncodeRepo: "https://github.com/mtrojnar/osslsigncode",
-  osslsigncodeTag: "2.5", # the tag of osslsigncode to build and deploy
   preDeploy: importstr "../keystore.sh",
+
+  docker+: {
+    registry: "ghcr.io",
+    repository: "eclipse-cbi",
+  },
+
   keystore: {
-    path: "/var/run/secrets/%s/" % $.name,
-    filename: "keystore.p12",
+    type: "GOOGLECLOUD",
+    path: "/var/run/secrets/%s/" % $.kube.serviceName,
     volumeName: "keystore",
-    secretName: "%s-keystore" % $.name,
+    secretName: "%s-keystore" % $.kube.serviceName,
+    filename: "certchain.pem",
     password: {
-      pass: "IT/CBI/PKI/codesigning/eclipse.org.keystore.passwd",
-      filename: "keystore.passwd",
+      pass: "IT/CBI/PKI/codesigning/eclipse.org.gcloud-credentials.json",
+      filename: "gcloud-credentials.json",
     },
+    keyRing: "projects/hsm-codesigning/locations/global/keyRings/eclipse_org",
+    defaultAlias: "codesigning-key",
     entries: [
       {
         name: "eclipse.org",
         certificates: [
+          { pass: "IT/CBI/PKI/codesigning/eclipse.org.crt-2024-2025-KMS", },
+          { pass: "IT/CBI/PKI/codesigning/digicert-codesigning.crt-2024-2026", },
           { pass: "IT/CBI/PKI/codesigning/digicert-root.crt", },
-          { pass: "IT/CBI/PKI/codesigning/digicert-codesigning.crt", },
-          { pass: "IT/CBI/PKI/codesigning/eclipse.org.crt", },
         ],
-        privateKey: {
-          pass: "IT/CBI/PKI/codesigning/eclipse.org-4k.pkcs8.pem",
-        },
       },
     ],
   },
 
   kube+: {
+    namespace: "foundation-codesigning",
     resources: [
       if resource.kind == "Deployment" then resource + {
         spec+: {
@@ -60,32 +65,6 @@ deployment.newDeployment("authenticode-signing", std.extVar("artifactId"), std.e
       } else resource for resource in super.resources
     ],
   },
-  osslsigncodePath: "/usr/local/bin",
-  Dockerfile: |||
-    FROM %(builderImage)s AS builder
-
-    RUN apt-get update && apt-get -y --no-install-recommends install \
-        build-essential \
-        ca-certificates \
-        cmake \
-        git \
-        libcurl4-openssl-dev \
-        libssl-dev \
-      && rm -rf /var/lib/apt/lists/*
-
-    RUN git clone %(osslsigncodeRepo)s \
-      && cd osslsigncode \
-      && git checkout tags/%(osslsigncodeTag)s -b %(osslsigncodeTag)s \
-      && mkdir build \
-      && cd build \
-      && cmake -S .. \
-      && cmake --build .
-  ||| % $ { builderImage: $.docker.baseImage } + super.Dockerfile + |||
-    RUN apt-get update && apt-get -y --no-install-recommends install \
-      libcurl4 \
-      libssl3
-    COPY --from=builder /osslsigncode/build/osslsigncode %(osslsigncodePath)s/
-  ||| % $,
 
   configuration+: {
     content: |||
@@ -125,40 +104,58 @@ deployment.newDeployment("authenticode-signing", std.extVar("artifactId"), std.e
       ##
       # Mandatory
       ##
-      windows.osslsigncode=%(osslsigncodePath)s/osslsigncode
+      windows.jsign.description=Eclipse Foundation, Inc.
 
       ##
       # Mandatory
       ##
-      windows.osslsigncode.pkcs12=%(keystoreFile)s
+      windows.jsign.url=http://www.eclipse.org/
+
+      ##
+      # Mandatory
+      # The actual codesigner implementation to use
+      windows.codesigner=JSIGN
+
+      ##
+      # Mandatory
+      # The storetype to use
+      windows.jsign.storetype=GOOGLECLOUD
+
+      ##
+      # Mandatory
+      # The path to the keystore to use
+      windows.jsign.keystore=%(keyRing)s
+
+      ##
+      # Mandatory
+      # the actual key name
+      windows.jsign.keyalias=%(defaultKey)s
+
+      ##
+      # Mandatory
+      # the actual path of the certificate
+      windows.jsign.certchain=%(certChainFile)s
+
+      ##
+      # Mandatory
+      # the credentials to connect to Google KMS
+      windows.jsign.kms.credentials=%(credentialsFile)s
 
       ##
       # Mandatory
       ##
-      windows.osslsigncode.pkc12.password=%(keystorePasswdFile)s
-
-      ##
-      # Mandatory
-      ##
-      windows.osslsigncode.description=Eclipse Foundation, Inc.
-
-      ##
-      # Mandatory
-      ##
-      windows.osslsigncode.url=http://www.eclipse.org/
-
-      ##
-      # Mandatory
-      ##
-      windows.osslsigncode.timestampurl.1=http://timestamp.sectigo.com
-      windows.osslsigncode.timestampurl.2=http://timestamp.digicert.com
-      windows.osslsigncode.timestampurl.3=http://timestamp.globalsign.com/?signature=sha2
-
+      windows.jsign.timestampurl.1=http://timestamp.digicert.com
+      windows.jsign.timestampurl.2=http://timestamp.sectigo.com
+      windows.jsign.timestampurl.3=http://timestamp.globalsign.com/?signature=sha2
 
       ### Log4j configuration section
 
       # Root logger option
-      log4j.rootLogger=INFO, file
+      log4j.rootLogger=INFO, console, file
+
+      log4j.appender.console=org.apache.log4j.ConsoleAppender
+      log4j.appender.console.layout=org.apache.log4j.PatternLayout
+      log4j.appender.console.layout.ConversionPattern=%%d{yyyy-MM-dd HH:mm:ss} %%-5p %%c{1}:%%L - %%m%%n
 
       # Redirect log messages to a log file, support file rolling.
       log4j.appender.file=org.apache.log4j.RollingFileAppender
@@ -167,6 +164,11 @@ deployment.newDeployment("authenticode-signing", std.extVar("artifactId"), std.e
       log4j.appender.file.MaxBackupIndex=10
       log4j.appender.file.layout=org.apache.log4j.PatternLayout
       log4j.appender.file.layout.ConversionPattern=%%d{yyyy-MM-dd HH:mm:ss} %%-5p %%c{1}:%%L - %%m%%n
-    ||| % $ {keystoreFile: "%s/%s" % [ $.keystore.path, $.keystore.filename ], keystorePasswdFile: "%s/%s" % [ $.keystore.path, $.keystore.password.filename ] },
+    ||| % $ {
+      credentialsFile: "%s/%s" % [ $.keystore.path, $.keystore.password.filename ],
+      certChainFile: "%s/%s" % [ $.keystore.path, $.keystore.filename ],
+      keyRing: $.keystore.keyRing,
+      defaultKey: $.keystore.defaultAlias,
+    },
   },
 }

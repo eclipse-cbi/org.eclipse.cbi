@@ -3,51 +3,24 @@ local jarsigner = import "jarsigner.libsonnet";
 jarsigner.newDeployment("jar-signing", std.extVar("artifactId"), std.extVar("version")) {
   pathspec: "/jarsigner/sign",
 
-  kms: {
-    path: "/var/run/secrets/%s/" % $.name,
-    volumeName: "kms",
-    secretName: "%s-kms" % $.name,
-    certchain: {
-      filename: "certchain.pem",
-      pass: "IT/CBI/PKI/codesigning/eclipse.org.certchain.pem",
-    },
-    credentials: {
-      filename: "gcloud-credentials.json",
+  keystore+: {
+    type: "GOOGLECLOUD",
+    filename: "certchain.pem",
+    password: {
       pass: "IT/CBI/PKI/codesigning/eclipse.org.gcloud-credentials.json",
+      filename: "gcloud-credentials.json",
     },
     keyRing: "projects/hsm-codesigning/locations/global/keyRings/eclipse_org",
-    defaultKey: "codesigning-key",
-  },
-
-  kube+: {
-    resources: [
-      if resource.kind == "Deployment" then resource + {
-        spec+: {
-          template+: {
-            spec+: {
-              containers: [
-                if container.name == "service" then container + {
-                  volumeMounts+: [
-                    {
-                      mountPath: $.kms.path,
-                      name: $.kms.volumeName,
-                      readOnly: true
-                    },
-                  ],
-                } else container for container in super.containers
-              ],
-              volumes+: [
-                {
-                  name: $.kms.volumeName,
-                  secret: {
-                    secretName: $.kms.secretName,
-                  },
-                },
-              ],
-            },
-          },
-        },
-      } else resource for resource in super.resources
+    defaultAlias: "codesigning-key",
+    entries: [
+      {
+        name: "eclipse.org",
+        certificates: [
+          { pass: "IT/CBI/PKI/codesigning/eclipse.org.crt-2024-2025-KMS", },
+          { pass: "IT/CBI/PKI/codesigning/digicert-codesigning.crt-2024-2026", },
+          { pass: "IT/CBI/PKI/codesigning/digicert-root.crt", },
+        ],
+      },
     ],
   },
 
@@ -116,8 +89,8 @@ jarsigner.newDeployment("jar-signing", std.extVar("artifactId"), std.extVar("ver
       jarsigner.provider.class=net.jsign.jca.JsignJcaProvider
       jarsigner.provider.arg=%(keyRing)s
 
-      jarsigner.kms.credentials=%(kmsCredentialsFile)s
-      jarsigner.kms.certchain=%(kmsCertChainFile)s
+      jarsigner.kms.credentials=%(credentialsFile)s
+      jarsigner.kms.certchain=%(certChainFile)s
 
       ##
       # Mandatory
@@ -162,10 +135,10 @@ jarsigner.newDeployment("jar-signing", std.extVar("artifactId"), std.extVar("ver
       log4j.appender.file.layout.ConversionPattern=%%d{yyyy-MM-dd HH:mm:ss} %%-5p %%c{1}:%%L - %%m%%n
     ||| % $ {
       jarFile: "/usr/local/%s/%s-%s.jar" % [ $.name, $.artifactId, $.version ],
-      kmsCredentialsFile: "%s/%s" % [ $.kms.path, $.kms.credentials.filename ],
-      kmsCertChainFile: "%s/%s" % [ $.kms.path, $.kms.certchain.filename ],
-      keyRing: $.kms.keyRing,
-      defaultKey: $.kms.defaultKey,
+      credentialsFile: "%s/%s" % [ $.keystore.path, $.keystore.password.filename ],
+      certChainFile: "%s/%s" % [ $.keystore.path, $.keystore.filename ],
+      keyRing: $.keystore.keyRing,
+      defaultKey: $.keystore.defaultAlias,
     },
   },
 }

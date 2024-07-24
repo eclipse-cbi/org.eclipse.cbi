@@ -4,10 +4,6 @@ jarsigner.newDeployment("jar-signing-jce", std.extVar("artifactId"), std.extVar(
   pathspec: "/jarsigner/jce/sign",
 
   keystore+: {
-    path: "/var/run/secrets/%s/" % $.name,
-    filename: "keystore.p12",
-    volumeName: "keystore",
-    secretName: "%s-keystore" % $.name,
     password: {
       pass: "IT/CBI/PKI/codesigning/eclipse.org.keystore.passwd",
       filename: "keystore.passwd",
@@ -24,38 +20,6 @@ jarsigner.newDeployment("jar-signing-jce", std.extVar("artifactId"), std.extVar(
           pass: "IT/CBI/PKI/codesigning/eclipse.org-4k.pkcs8.pem",
         },
       },
-    ],
-  },
-
-  kube+: {
-    resources: [
-      if resource.kind == "Deployment" then resource + {
-        spec+: {
-          template+: {
-            spec+: {
-              containers: [
-                if container.name == "service" then container + {
-                  volumeMounts+: [
-                    {
-                      mountPath: $.keystore.path,
-                      name: $.keystore.volumeName,
-                      readOnly: true
-                    },
-                  ],
-                } else container for container in super.containers
-              ],
-              volumes+: [
-                {
-                  name: $.keystore.volumeName,
-                  secret: {
-                    secretName: $.keystore.secretName,
-                  },
-                },
-              ],
-            },
-          },
-        },
-      } else resource for resource in super.resources
     ],
   },
 

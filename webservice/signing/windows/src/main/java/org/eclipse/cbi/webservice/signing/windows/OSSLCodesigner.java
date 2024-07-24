@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @AutoValue
-public abstract class OSSLCodesigner {
+public abstract class OSSLCodesigner implements CodeSigner {
 
 	private static final String TEMP_FILE_PREFIX = OSSLCodesigner.class.getSimpleName() + "-";
 	private static final Logger logger = LoggerFactory.getLogger(OSSLCodesigner.class);

@@ -13,6 +13,7 @@
 package org.eclipse.cbi.webservice.signing.windows;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.nio.file.Path;
 
 import com.google.auto.value.AutoValue;
@@ -31,6 +32,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @AutoValue
 public abstract class SigningServlet extends HttpServlet {
 
+	@Serial
 	private static final long serialVersionUID = -7811488782781658819L;
 
 	private static final String FILE_PART_NAME = "file";
@@ -56,7 +58,7 @@ public abstract class SigningServlet extends HttpServlet {
 			String submittedFileName = requestFacade.getSubmittedFileName(FILE_PART_NAME).get();
 			if (submittedFileName.endsWith(".exe") || submittedFileName.endsWith(".dll") || submittedFileName.endsWith(".msi")) {
 				Path unsignedExe = requestFacade.getPartPath(FILE_PART_NAME, TEMP_FILE_PREFIX).get();
-				Path signedFile = osslCodesigner().sign(unsignedExe);
+				Path signedFile = codesigner().sign(unsignedExe);
 				responseFacade.replyWithFile(PORTABLE_EXECUTABLE_MEDIA_TYPE, submittedFileName, signedFile);
 			} else {
 				responseFacade.replyError(HttpServletResponse.SC_BAD_REQUEST, "Submitted '" + FILE_PART_NAME + "' '" + submittedFileName + "' must ends with '.exe' ");
@@ -70,14 +72,14 @@ public abstract class SigningServlet extends HttpServlet {
 		return new AutoValue_SigningServlet.Builder();
 	}
 	
-	abstract OSSLCodesigner osslCodesigner();
+	abstract CodeSigner codesigner();
 	abstract Path tempFolder();
 	
 	@AutoValue.Builder
 	public static abstract class Builder {
 		public abstract SigningServlet build();
 
-		public abstract Builder osslCodesigner(OSSLCodesigner codesigner);
+		public abstract Builder codesigner(CodeSigner codesigner);
 
 		public abstract Builder tempFolder(Path tempFolder);
 	}

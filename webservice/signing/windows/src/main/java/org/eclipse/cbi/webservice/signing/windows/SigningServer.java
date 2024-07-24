@@ -32,6 +32,8 @@ import org.kohsuke.args4j.OptionHandlerFilter;
 
 public class SigningServer {
 
+	private static final String CODESIGNER_TYPE = "windows.codesigner";
+
 	@Option(name="-c",usage="configuration file")
 	private String configurationFilePath = "windows-signing-service.properties";
 	
@@ -46,23 +48,48 @@ public class SigningServer {
 		if (parseCmdLineArguments(fs, args)) {
 			final Path confPath = fs.getPath(configurationFilePath);
 			final EmbeddedServerConfiguration serverConf = new EmbeddedServerProperties(PropertiesReader.create(confPath));
-			final OSSLSigncodeProperties conf = new OSSLSigncodeProperties(PropertiesReader.create(confPath));
 			final Path tempFolder = serverConf.getTempFolder();
 
-			final OSSLCodesigner codesigner = OSSLCodesigner.builder()
-				.osslsigncode(conf.getOSSLSigncode())
-				.timeout(conf.getTimeout())
-				.pkcs12(conf.getPKCS12())
-				.pkcs12Password(conf.getPKCS12Password())
-				.description(conf.getDescription())
-				.uri(conf.getURI())
-				.timestampURIs(conf.getTimestampURIs())
-				.tempFolder(tempFolder)
-				.processExecutor(new ProcessExecutor.BasicImpl())
-				.build();
-			
+			final PropertiesReader reader = PropertiesReader.create(confPath);
+
+			String codeSignerType = reader.getString(CODESIGNER_TYPE, "");
+			CodeSigner codeSigner;
+
+			switch (codeSignerType.toUpperCase()) {
+				case "JSIGN":
+				{
+					final JSignerProperties conf = new JSignerProperties(PropertiesReader.create(confPath));
+					codeSigner =
+							JSigner.builder()
+									.configuration(conf)
+									.tempFolder(tempFolder)
+									.build();
+				}
+					break;
+
+				case "OSSLSIGNCODE": {
+					final OSSLSigncodeProperties conf = new OSSLSigncodeProperties(PropertiesReader.create(confPath));
+
+					codeSigner = OSSLCodesigner.builder()
+							.osslsigncode(conf.getOSSLSigncode())
+							.timeout(conf.getTimeout())
+							.pkcs12(conf.getPKCS12())
+							.pkcs12Password(conf.getPKCS12Password())
+							.description(conf.getDescription())
+							.uri(conf.getURI())
+							.timestampURIs(conf.getTimestampURIs())
+							.tempFolder(tempFolder)
+							.processExecutor(new ProcessExecutor.BasicImpl())
+							.build();
+				}
+					break;
+
+				default:
+					throw new IllegalArgumentException("Property '" + CODESIGNER_TYPE + "' must be set to either 'JSIGN' or 'OSSLSIGNCODE'");
+			}
+
 			final SigningServlet codeSignServlet = SigningServlet.builder()
-				.osslCodesigner(codesigner)
+				.codesigner(codeSigner)
 				.tempFolder(tempFolder)
 				.build();
 			

@@ -90,7 +90,7 @@ jarsigner.newDeployment("jar-signing-jce", std.extVar("artifactId"), std.extVar(
       ##
       # Mandatory
       ##
-      jarsigner.tsa=http://sha256timestamp.ws.symantec.com/sha256/timestamp
+      jarsigner.tsa=http://timestamp.digicert.com
 
       ##
       # Proxies: optional, default = none

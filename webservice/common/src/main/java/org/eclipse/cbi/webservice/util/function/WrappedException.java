@@ -12,15 +12,18 @@
  *******************************************************************************/
 package org.eclipse.cbi.webservice.util.function;
 
+import java.io.Serial;
+
 /**
  * A {@link RuntimeException} that wrapped another exception.
  */
 public class WrappedException extends RuntimeException {
 
+	@Serial
 	private static final long serialVersionUID = 4165005396665474198L;
 
 	/**
-	 * Default construtor
+	 * Default constructor
 	 *
 	 * @param wrapped
 	 *            the wrapped exception.

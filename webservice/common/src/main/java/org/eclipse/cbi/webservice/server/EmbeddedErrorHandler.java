@@ -30,12 +30,14 @@ import org.eclipse.jetty.server.Dispatcher;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.handler.ErrorHandler;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class EmbeddedErrorHandler extends ErrorHandler {
 
-	private static final Logger LOG = Log.getLogger(EmbeddedErrorHandler.class);
+	private static final Logger LOG = LoggerFactory.getLogger(EmbeddedErrorHandler.class);
 
 	@Override
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -58,9 +60,9 @@ public class EmbeddedErrorHandler extends ErrorHandler {
 							dispatcher.error(request, response);
 							return;
 						}
-						LOG.warn("No error page " + error_page);
+                        LOG.warn("No error page {}", error_page);
 					} catch (ServletException e) {
-						LOG.warn(Log.EXCEPTION, e);
+						LOG.warn("EXCEPTION", e);
 						return;
 					}
 				}

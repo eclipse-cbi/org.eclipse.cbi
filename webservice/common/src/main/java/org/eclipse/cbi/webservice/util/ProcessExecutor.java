@@ -45,12 +45,12 @@ public interface ProcessExecutor {
 	/**
 	 * Execute the given command as a forked process. It will gather the
 	 * standard output and standard err in the given {@link StringBuffer}. The
-	 * process will be stopped after the given given timeout.
+	 * process will be stopped after the given timeout.
 	 *
 	 * @param command
 	 *            the command to execute
 	 * @param processOutput
-	 *            where the stdout and sterr will be written to
+	 *            where the stdout and stderr will be written to
 	 * @param timeout
 	 *            the amount of time to wait before killing the subprocess
 	 * @param timeoutUnit
@@ -66,7 +66,7 @@ public interface ProcessExecutor {
 
 	/**
 	 * Execute the given command as a forked process. The process will be
-	 * stopped after the given given timeout. The stdout and stderr will not be
+	 * stopped after the given timeout. The stdout and stderr will not be
 	 * retrievable with this method. If you need it, use 
 	 * {@link #exec(ImmutableList, StringBuilder, long, TimeUnit)}
 	 *
@@ -88,7 +88,7 @@ public interface ProcessExecutor {
 	/**
 	 * A basic implementation that will use a {@link ProcessBuilder} to build and run the {@link Process}.
 	 */
-	public class BasicImpl implements ProcessExecutor {
+	class BasicImpl implements ProcessExecutor {
 
 		private static final Logger logger = LoggerFactory.getLogger(BasicImpl.class);
 
@@ -105,13 +105,13 @@ public interface ProcessExecutor {
 			Preconditions.checkArgument(!command.isEmpty(), "Command must not be empty");
 			Objects.requireNonNull(processOutput);
 
-			logger.debug("Will execute '" + command.stream().collect(Collectors.joining(" ")) + "'");
+            logger.debug("Will execute '{}'", String.join(" ", command));
 			final String arg0 = command.iterator().next();
 
 			ProcessBuilder pb = new ProcessBuilder(command);
 			pb.redirectErrorStream(true);
 
-			logger.debug("Process '" + arg0 + "' starts");
+            logger.debug("Process '{}' starts", arg0);
 
 			Process p = pb.start();
 
@@ -130,9 +130,14 @@ public interface ProcessExecutor {
 			} catch (InterruptedException e) { // we've been interrupted
 				p.destroyForcibly(); // kill the subprocess
 
-				logger.error("Thread '" + Thread.currentThread().getName() + "' has been interrupted while waiting for the process '" + arg0 + "' to complete.", e);
-				processOutput.append("Thread '" + Thread.currentThread().getName() + "' has been interrupted while waiting for the process '" + arg0 + "' to complete.\n");
-				printStrackTrace(e, processOutput);
+                logger.error("Thread '{}' has been interrupted while waiting for the process '{}' to complete.", Thread.currentThread().getName(), arg0, e);
+				processOutput
+						.append("Thread '")
+						.append(Thread.currentThread().getName())
+						.append("' has been interrupted while waiting for the process '")
+						.append(arg0)
+						.append("' to complete.\n");
+				printStackTrace(e, processOutput);
 
 				try {
 					gatherOutput(processOutput, streamGobbler);
@@ -143,7 +148,7 @@ public interface ProcessExecutor {
 				if (!p.isAlive()) {
 					logOutput(arg0, p.exitValue(), processOutput);
 				} else {
-					logger.error("Process '" + arg0 + "' output: " + processOutput.toString());
+                    logger.error("Process '{}' output: {}", arg0, processOutput);
 				}
 
 				// Restore the interrupted status
@@ -153,7 +158,7 @@ public interface ProcessExecutor {
 			return logOutput(arg0, p.exitValue(), processOutput);
 		}
 
-		private static void printStrackTrace(Exception e, StringBuilder output) {
+		private static void printStackTrace(Exception e, StringBuilder output) {
 			StringWriter stackTrace = new StringWriter();
 			e.printStackTrace(new PrintWriter(stackTrace));
 			output.append(stackTrace.getBuffer().toString());
@@ -165,7 +170,7 @@ public interface ProcessExecutor {
 				processOutput.append(streamGobbler.get(STREAM_GLOBBER_GRACETIME, TimeUnit.SECONDS));
 			} catch (TimeoutException | InterruptedException | ExecutionException e) {
 				processOutput.append("Process output can not be gathered'");
-				printStrackTrace(e, processOutput);
+				printStackTrace(e, processOutput);
 				streamGobbler.cancel(true);
 				if (e instanceof InterruptedException) {
 					throw new InterruptedException();
@@ -176,18 +181,18 @@ public interface ProcessExecutor {
 		private static int logOutput(String arg0, final int exitValue, StringBuilder processOutput) {
 			String output = processOutput.toString();
 			if (exitValue == 0) {
-				logger.debug("Process '" + arg0 + "' exited with value '" + exitValue + "'");
+                logger.debug("Process '{}' exited with value '{}'", arg0, exitValue);
 				if (!output.isEmpty()) {
-					logger.debug("Process '" + arg0 + "' output:\n" + output);
+                    logger.debug("Process '{}' output:\n{}", arg0, output);
 				} else {
-					logger.debug("Process '" + arg0 + "' exited with no output");
+                    logger.debug("Process '{}' exited with no output", arg0);
 				}
 			} else {
-				logger.error("Process '" + arg0 + "' exited with value '" + exitValue + "'");
+                logger.error("Process '{}' exited with value '{}'", arg0, exitValue);
 				if (!output.isEmpty()) {
-					logger.error("Process '" + arg0 + "' output:\n" + output);
+                    logger.error("Process '{}' output:\n{}", arg0, output);
 				} else {
-					logger.error("Process '" + arg0 + "' exited with no output");
+                    logger.error("Process '{}' exited with no output", arg0);
 				}
 			}
 			return exitValue;
@@ -206,7 +211,7 @@ public interface ProcessExecutor {
 		 */
 		private static final class StreamRedirection implements Callable<String> {
 
-			private static final String NL = System.getProperty("line.separator");
+			private static final String NL = System.lineSeparator();
 			private final InputStream is;
 
 			/**

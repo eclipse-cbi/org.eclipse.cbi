@@ -198,7 +198,7 @@ public class PropertiesReader {
 		if (propertyValue == null) {
 			return defaultValue;
 		} else {
-			return Boolean.valueOf(propertyValue);
+			return Boolean.parseBoolean(propertyValue);
 		}
 	}
 
@@ -208,7 +208,7 @@ public class PropertiesReader {
 	 */
 	public Map<String, String> toMap() {
 		Builder<String, String> ret = ImmutableMap.builder();
-		properties.entrySet().forEach(e -> ret.put(e.getKey().toString(), e.getValue().toString()));
+		properties.forEach((key, value) -> ret.put(key.toString(), value.toString()));
 		return ret.build();
 	}
 }

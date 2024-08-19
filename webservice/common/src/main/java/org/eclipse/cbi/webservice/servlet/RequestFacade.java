@@ -290,7 +290,7 @@ public abstract class RequestFacade implements Closeable {
 	public boolean getBooleanParameter(String parameterName) {
 		Optional<String> parameter = getParameter(parameterName);
 		if (parameter.isPresent()) {
-			return Boolean.valueOf(parameter.get());
+			return Boolean.parseBoolean(parameter.get());
 		}
 		return false;
 	}

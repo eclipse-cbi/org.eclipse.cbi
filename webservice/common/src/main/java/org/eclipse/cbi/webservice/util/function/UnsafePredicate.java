@@ -18,7 +18,7 @@ import static com.google.common.base.Throwables.throwIfUnchecked;
 
 /**
  * Functional interface similar to {@link Predicate} but its
- * {@link #test(Object)} method can throws exception.
+ * {@link #test(Object)} method can throw an exception.
  *
  * @param <T>
  *            the type of the input to the predicate

@@ -13,6 +13,7 @@
 package org.eclipse.cbi.webservice.signing.jar;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -34,6 +35,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class SigningServlet extends HttpServlet {
 
+	@Serial
 	private static final long serialVersionUID = -4790172921268575018L;
 
 	private static final String JAR_CONTENT_TYPE = "application/java-archive";

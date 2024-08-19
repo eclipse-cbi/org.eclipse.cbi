@@ -13,6 +13,7 @@
 package org.eclipse.cbi.webservice.server;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
@@ -55,9 +56,9 @@ public abstract class EmbeddedServer {
 	EmbeddedServer() {} // prevents instantiation and subclassing outside the package
 
 	/**
-	 * Returns the servlet that will served the single service of this server.
+	 * Returns the servlet that will serve the single service of this server.
 	 *
-	 * @return the servlet that will served the single service of this server.
+	 * @return the servlet that will serve the single service of this server.
 	 */
 	abstract Servlet servlet();
 
@@ -255,7 +256,7 @@ public abstract class EmbeddedServer {
 			fullPathSpec = servicePathSpec();
 		}
 		contextHandler.addServlet(servletHolder, fullPathSpec);
-		contextHandler.addServlet(createHearbeatServlet(), "/heartbeat");
+		contextHandler.addServlet(createHeartbeatServlet(), "/heartbeat");
 		contextHandler.addServlet(createVersionServlet(), "/version");
 
 		RequestLogHandler requestLogHandler = new RequestLogHandler();
@@ -263,6 +264,10 @@ public abstract class EmbeddedServer {
 		logWriter.setRetainDays(90);
 		logWriter.setAppend(true);
 		CustomRequestLog requestLog = new CustomRequestLog(logWriter, CustomRequestLog.NCSA_FORMAT);
+
+		// do not log requests for the heartbeat servlet
+		requestLog.setIgnorePaths(new String[] {"/heartbeat"});
+
 		requestLogHandler.setRequestLog(requestLog);
 
 		HandlerCollection handlers = new HandlerCollection();
@@ -278,11 +283,12 @@ public abstract class EmbeddedServer {
 	}
 
 	private ServletHolder createVersionServlet() {
-		ServletHolder versionServlet = new ServletHolder(new HttpServlet() {
+		return new ServletHolder(new HttpServlet() {
+			@Serial
 			private static final long serialVersionUID = -6359788282999575281L;
 
 			@Override
-			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 				String version = servlet().getClass().getPackage().getImplementationVersion();
 				if (Strings.isNullOrEmpty(version)) {
 					version = "dev";
@@ -295,11 +301,11 @@ public abstract class EmbeddedServer {
 				resp.getWriter().println(version);
 			}
 		});
-		return versionServlet;
 	}
 
-	private ServletHolder createHearbeatServlet() {
-		ServletHolder hearbeatServlet = new ServletHolder(new HttpServlet() {
+	private ServletHolder createHeartbeatServlet() {
+		return new ServletHolder(new HttpServlet() {
+			@Serial
 			private static final long serialVersionUID = -6359788282999575281L;
 
 			@Override
@@ -316,7 +322,6 @@ public abstract class EmbeddedServer {
 				resp.addHeader(HttpHeaders.PRAGMA, "no-cache");
 			}
 		});
-		return hearbeatServlet;
 	}
 
 	/**

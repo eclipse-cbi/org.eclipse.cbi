@@ -22,7 +22,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.net.HttpHeaders;
 
 /**
- * An utility class to fill {@link HttpServletResponse} fields.
+ * A utility class to fill {@link HttpServletResponse} fields.
  */
 @AutoValue
 public abstract class ResponseFacade {

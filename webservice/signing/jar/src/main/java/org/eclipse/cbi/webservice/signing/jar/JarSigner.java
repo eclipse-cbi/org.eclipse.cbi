@@ -16,13 +16,10 @@ import static com.google.common.base.Preconditions.checkState;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-
-import javax.annotation.Nullable;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Splitter;
@@ -256,10 +253,10 @@ public abstract class JarSigner {
 
 			checkState(configuration.getTimeout() > 0, "The timeout must be strictly positive");
 			if (!Strings.isNullOrEmpty(configuration.getHttpProxyHost())) {
-				checkState(configuration.getHttpProxyPort() > 0, "The HTTP proxy port must be specified and stricly positive when HTTP proxy host is");
+				checkState(configuration.getHttpProxyPort() > 0, "The HTTP proxy port must be specified and strictly positive when HTTP proxy host is");
 			}
 			if (!Strings.isNullOrEmpty(configuration.getHttpsProxyHost())) {
-				checkState(configuration.getHttpsProxyPort() > 0, "The HTTPS proxy port must be specified and stricly positive when HTTPS proxy host is");
+				checkState(configuration.getHttpsProxyPort() > 0, "The HTTPS proxy port must be specified and strictly positive when HTTPS proxy host is");
 			}
 
 			jarSigner.initKmsCredentialsIfNeeded();

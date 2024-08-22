@@ -143,9 +143,9 @@ jarsigner.newDeployment("jar-signing", std.extVar("artifactId"), std.extVar("ver
       log4j.appender.access-log=org.apache.log4j.rolling.RollingFileAppender
       log4j.appender.access-log.RollingPolicy = org.apache.log4j.rolling.TimeBasedRollingPolicy
       log4j.appender.access-log.RollingPolicy.ActiveFileName = %(logFolder)s/access.log
-      log4j.appender.access-log.RollingPolicy.FileNamePattern = %(logFolder)s/access-%d{yyyy-MM-dd}.log
+      log4j.appender.access-log.RollingPolicy.FileNamePattern = %(logFolder)s/access-%%d{yyyy-MM-dd}.log
       log4j.appender.access-log.layout=org.apache.log4j.PatternLayout
-      log4j.appender.access-log.layout.ConversionPattern=%m%n
+      log4j.appender.access-log.layout.ConversionPattern=%%m%%n
     ||| % $ {
       jarFile: "/usr/local/%s/%s-%s.jar" % [ $.name, $.artifactId, $.version ],
       credentialsFile: "%s/%s" % [ $.keystore.path, $.keystore.password.filename ],

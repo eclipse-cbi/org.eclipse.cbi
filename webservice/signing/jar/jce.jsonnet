@@ -132,9 +132,9 @@ jarsigner.newDeployment("jar-signing-jce", std.extVar("artifactId"), std.extVar(
       log4j.appender.access-log=org.apache.log4j.rolling.RollingFileAppender
       log4j.appender.access-log.RollingPolicy = org.apache.log4j.rolling.TimeBasedRollingPolicy
       log4j.appender.access-log.RollingPolicy.ActiveFileName = %(logFolder)s/access.log
-      log4j.appender.access-log.RollingPolicy.FileNamePattern = %(logFolder)s/access-%d{yyyy-MM-dd}.log
+      log4j.appender.access-log.RollingPolicy.FileNamePattern = %(logFolder)s/access-%%d{yyyy-MM-dd}.log
       log4j.appender.access-log.layout=org.apache.log4j.PatternLayout
-      log4j.appender.access-log.layout.ConversionPattern=%m%n
+      log4j.appender.access-log.layout.ConversionPattern=%%m%%n
     ||| % $ {
       keystoreFile: "%s/%s" % [ $.keystore.path, $.keystore.filename ],
       keystorePasswdFile: "%s/%s" % [ $.keystore.path, $.keystore.password.filename ],

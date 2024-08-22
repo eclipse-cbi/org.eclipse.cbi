@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
+import com.google.common.base.Strings;
 import org.eclipse.cbi.webservice.util.PropertiesReader;
 
 /**
@@ -61,21 +62,25 @@ public final class EmbeddedServerProperties implements EmbeddedServerConfigurati
 	 *
 	 * @return the path to the access log file
 	 * @throws IllegalStateException
-	 *             if the property is not specified or if the parent folder
-	 *             doesn't exist and can't be created.
+	 *             if the parent folder doesn't exist and can't be created.
 	 */
 	@Override
 	public Path getAccessLogFile() {
-		final Path logFilePath = propertiesReader.getPath(ACCESS_LOG_FILE);
-		final Path logFileParent = logFilePath.getParent();
-		if (!Files.exists(logFileParent)) {
-			try {
-				Files.createDirectories(logFileParent);
-			} catch (IOException e) {
-				throw new IllegalStateException("Folder '" + logFileParent + "' can not be created to contain the log files", e);
+		String accessLogFile = propertiesReader.getString(ACCESS_LOG_FILE, "");
+		if (!Strings.isNullOrEmpty(accessLogFile)) {
+			final Path logFilePath = propertiesReader.getPath(ACCESS_LOG_FILE);
+			final Path logFileParent = logFilePath.getParent();
+			if (!Files.exists(logFileParent)) {
+				try {
+					Files.createDirectories(logFileParent);
+				} catch (IOException e) {
+					throw new IllegalStateException("Folder '" + logFileParent + "' can not be created to contain the log files", e);
+				}
 			}
+			return logFilePath;
+		} else {
+			return null;
 		}
-		return logFilePath;
 	}
 
 	/**

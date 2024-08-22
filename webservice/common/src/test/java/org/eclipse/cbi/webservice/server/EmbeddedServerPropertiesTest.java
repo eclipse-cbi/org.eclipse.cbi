@@ -12,9 +12,6 @@
  *******************************************************************************/
 package org.eclipse.cbi.webservice.server;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -27,14 +24,16 @@ import org.junit.Test;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 
+import static org.junit.Assert.*;
+
 @SuppressWarnings("javadoc")
 public class EmbeddedServerPropertiesTest {
 
-	@Test(expected=IllegalStateException.class)
+	@Test
 	public void testEmptyPropertiesGetAccessLog() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			EmbeddedServerConfiguration propertiesReader = new EmbeddedServerProperties(new PropertiesReader(new Properties(), fs));
-			propertiesReader.getAccessLogFile();
+			assertNull(propertiesReader.getAccessLogFile());
 		}
 	}
 

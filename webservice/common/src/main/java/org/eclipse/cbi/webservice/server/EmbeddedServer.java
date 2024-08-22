@@ -26,10 +26,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.PropertyConfigurator;
-import org.eclipse.jetty.server.CustomRequestLog;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.RequestLogWriter;
-import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
@@ -40,6 +37,8 @@ import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.net.HttpHeaders;
+
+import javax.annotation.Nullable;
 
 /**
  * Base class to create a simple (one servlet) embedded Jetty server.
@@ -97,7 +96,7 @@ public abstract class EmbeddedServer {
 	 *
 	 * @return the file where this server will log all access.
 	 */
-	abstract Path accessLogFile();
+	@Nullable abstract Path accessLogFile();
 
 	/**
 	 * Returns the properties containing the log4j configuration, e.g.:
@@ -197,7 +196,7 @@ public abstract class EmbeddedServer {
 		 *            Must not be null.
 		 * @return this builder for daisy chaining.
 		 */
-		public abstract Builder accessLogFile(Path accessLogFile);
+		public abstract Builder accessLogFile(@Nullable Path accessLogFile);
 
 		/**
 		 * Sets the file containing the log4j configuration of the to-be build
@@ -224,11 +223,15 @@ public abstract class EmbeddedServer {
 		 */
 		public EmbeddedServer build() {
 			EmbeddedServer server = autoBuild();
-			Preconditions.checkState(server.port() > 0, "Server port must be stricly positive");
+			Preconditions.checkState(server.port() > 0, "Server port must be strictly positive");
 			Preconditions.checkState(!server.servicePathSpec().trim().isEmpty(), "Service path spec must not be empty");
 			Preconditions.checkState(Files.exists(server.tempFolder()), "Temp folder must exists");
 			Preconditions.checkState(Files.isDirectory(server.tempFolder()), "Temp folder must be a directory");
-			Preconditions.checkState(Files.exists(server.accessLogFile().normalize().getParent()), "Parent folder of access log file must exists");
+
+			if (server.accessLogFile() != null) {
+				   Preconditions.checkState(Files.exists(server.accessLogFile().normalize().getParent()), "Parent folder of access log file must exists");
+			}
+
 			return server;
 		}
 	}
@@ -260,9 +263,17 @@ public abstract class EmbeddedServer {
 		contextHandler.addServlet(createVersionServlet(), "/version");
 
 		RequestLogHandler requestLogHandler = new RequestLogHandler();
-		RequestLogWriter logWriter = new RequestLogWriter(accessLogFile().toString());
-		logWriter.setRetainDays(90);
-		logWriter.setAppend(true);
+
+		final RequestLog.Writer logWriter;
+		if (accessLogFile() != null) {
+			RequestLogWriter myLogWriter = new RequestLogWriter(accessLogFile().toString());
+			myLogWriter.setRetainDays(90);
+			myLogWriter.setAppend(true);
+			logWriter = myLogWriter;
+		} else {
+			logWriter = new Slf4jRequestLogWriter();
+		}
+
 		CustomRequestLog requestLog = new CustomRequestLog(logWriter, CustomRequestLog.NCSA_FORMAT);
 
 		// do not log requests for the heartbeat servlet

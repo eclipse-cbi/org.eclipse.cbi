@@ -177,7 +177,7 @@ public class PropertiesReader {
 			path = path.toAbsolutePath();
 		}
 		if (!Files.isRegularFile(path)) {
-			throw new IllegalStateException("Property '" + propertyName + "' does not reference an existing regular file '" + path.toString() + "'");
+			throw new IllegalStateException("Property '" + propertyName + "' does not reference an existing regular file '" + path + "'");
 		}
 		return path;
 	}

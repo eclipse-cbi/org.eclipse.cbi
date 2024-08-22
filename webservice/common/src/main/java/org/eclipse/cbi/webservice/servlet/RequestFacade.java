@@ -296,12 +296,12 @@ public abstract class RequestFacade implements Closeable {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		partToDelete.forEach(p -> {
 			try {
 				p.delete();
 			} catch (Exception e) {
-				logger.error("Error occured while deleting a temporary resource", e);
+				logger.error("Error occurred while deleting a temporary resource", e);
 			}
 		});
 	}
@@ -320,7 +320,7 @@ public abstract class RequestFacade implements Closeable {
 
 	/**
 	 * Generates a valid random path in {@link #tempFolder() the temporary
-	 * folder}. It is valid in the sense that it does not exists when returned.
+	 * folder}. It is valid in the sense that it does not exist when returned.
 	 */
 	private Path generatePath(String prefix, String suffix) {
 		Path ret = null;

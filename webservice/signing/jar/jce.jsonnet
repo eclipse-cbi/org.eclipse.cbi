@@ -31,9 +31,10 @@ jarsigner.newDeployment("jar-signing-jce", std.extVar("artifactId"), std.extVar(
       server.port=%(port)s
 
       ##
-      # Mandatory
+      # Optional
+      # Capture access log using log4j
       ##
-      server.access.log=%(logFolder)s/access-yyyy_mm_dd.log
+      # server.access.log=%(logFolder)s/access-yyyy_mm_dd.log
 
       ##
       # Mandatory
@@ -111,6 +112,10 @@ jarsigner.newDeployment("jar-signing-jce", std.extVar("artifactId"), std.extVar(
       # Root logger option
       log4j.rootLogger=INFO, console, file
 
+      # Capture jetty requests
+      log4j.logger.org.eclipse.jetty.server.RequestLog=INFO, console, access-log
+      log4j.additivity.org.eclipse.jetty.server.RequestLog=false
+
       log4j.appender.console=org.apache.log4j.ConsoleAppender
       log4j.appender.console.layout=org.apache.log4j.PatternLayout
       log4j.appender.console.layout.ConversionPattern=%%d{yyyy-MM-dd HH:mm:ss} %%-5p %%c{1}:%%L - %%m%%n
@@ -122,6 +127,14 @@ jarsigner.newDeployment("jar-signing-jce", std.extVar("artifactId"), std.extVar(
       log4j.appender.file.MaxBackupIndex=10
       log4j.appender.file.layout=org.apache.log4j.PatternLayout
       log4j.appender.file.layout.ConversionPattern=%%d{yyyy-MM-dd HH:mm:ss} %%-5p %%c{1}:%%L - %%m%%n
+
+      # Redirect requests to a separate access log file, support time based file rolling.
+      log4j.appender.access-log=org.apache.log4j.rolling.RollingFileAppender
+      log4j.appender.access-log.RollingPolicy = org.apache.log4j.rolling.TimeBasedRollingPolicy
+      log4j.appender.access-log.RollingPolicy.ActiveFileName = %(logFolder)s/access.log
+      log4j.appender.access-log.RollingPolicy.FileNamePattern = %(logFolder)s/access-%d{yyyy-MM-dd}.log
+      log4j.appender.access-log.layout=org.apache.log4j.PatternLayout
+      log4j.appender.access-log.layout.ConversionPattern=%m%n
     ||| % $ {
       keystoreFile: "%s/%s" % [ $.keystore.path, $.keystore.filename ],
       keystorePasswdFile: "%s/%s" % [ $.keystore.path, $.keystore.password.filename ],

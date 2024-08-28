@@ -14,6 +14,30 @@ deployment.newDeployment("macosx-signing", std.extVar("artifactId"), std.extVar(
     path: "/var/run/secrets/%s/" % $.kube.serviceName,
     volumeName: "keystore",
     secretName: "%s-keystore" % $.kube.serviceName,
+    entries: [
+      {
+        name: "Application Certificate",
+        keychain: {
+          pass: "IT/CBI/PKI/mac.developer@eclipse.org/Eclipse Foundation, Inc./application-keychain.p12",
+          filename: "application-keychain.p12",
+        },
+        password: {
+          pass: "IT/CBI/PKI/mac.developer@eclipse.org/Eclipse Foundation, Inc./application-keychain.passphrase",
+          filename: "application-keychain.passphrase",
+        },
+      },
+      {
+        name: "Installer Certificate",
+        keychain: {
+          pass: "IT/CBI/PKI/mac.developer@eclipse.org/Eclipse Foundation, Inc./application-keychain.p12",
+          filename: "installer-keychain.p12",
+        },
+        password: {
+          pass: "IT/CBI/PKI/mac.developer@eclipse.org/Eclipse Foundation, Inc./application-keychain.passphrase",
+          filename: "installer-keychain.passphrase",
+        },
+      },
+    ],
   },
 
   kube+: {
@@ -53,7 +77,7 @@ deployment.newDeployment("macosx-signing", std.extVar("artifactId"), std.extVar(
 
   Dockerfile: super.Dockerfile + |||
     RUN cd /usr/local/bin \
-      && curl -L -o codesign.tar.gz 'https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.27.0/apple-codesign-0.27.0-x86_64-unknown-linux-musl.tar.gz' \
+      && curl -L -o codesign.tar.gz 'https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%%2F0.27.0/apple-codesign-0.27.0-x86_64-unknown-linux-musl.tar.gz' \
       && tar xzf codesign.tar.gz --strip-components=1 \
       && rm -f codesign.tar.gz
   ||| % $,
@@ -152,10 +176,10 @@ deployment.newDeployment("macosx-signing", std.extVar("artifactId"), std.extVar(
       log4j.appender.access-log.layout=org.apache.log4j.PatternLayout
       log4j.appender.access-log.layout.ConversionPattern=%%m%%n
     ||| % $ {
-      credentialsFile: "%s/%s" % [ $.keystore.path, $.keystore.password.filename ],
-      certChainFile: "%s/%s" % [ $.keystore.path, $.keystore.filename ],
-      keyRing: $.keystore.keyRing,
-      defaultKey: $.keystore.defaultAlias,
+      applicationKeychain: "%s/%s" % [ $.keystore.path, $.keystore.entries[0].keychain.filename ],
+      applicationPasswordFile: "%s/%s" % [ $.keystore.path, $.keystore.entries[0].password.filename ],
+      installerKeychain: "%s/%s" % [ $.keystore.path, $.keystore.entries[1].keychain.filename ],
+      installerPasswordFile: "%s/%s" % [ $.keystore.path, $.keystore.entries[1].password.filename ],
     },
   },
 }

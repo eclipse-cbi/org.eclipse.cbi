@@ -29,6 +29,8 @@ public abstract class RCodeSigner extends CodeSigner {
 	public abstract ProcessExecutor processExecutor();
 	public abstract long codeSignTimeout();
 
+	abstract Path rCodeSign();
+
 	abstract Path identityApplicationKeyChain();
 	abstract Path identityApplicationKeyChainPasswordFile();
 	abstract Path identityInstallerKeyChain();

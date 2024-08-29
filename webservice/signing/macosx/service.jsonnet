@@ -45,6 +45,7 @@ deployment.newDeployment("macosx-signing", std.extVar("artifactId"), std.extVar(
     resources: [
       if resource.kind == "Deployment" then resource + {
         spec+: {
+          replicas: if std.endsWith($.version, "SNAPSHOT") then 1 else 2,
           template+: {
             spec+: {
               containers: [

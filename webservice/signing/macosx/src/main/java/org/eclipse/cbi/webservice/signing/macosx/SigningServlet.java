@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015 Eclipse Foundation and others
+ * Copyright (c) 2015, 2024 Eclipse Foundation and others
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -13,6 +13,7 @@
 package org.eclipse.cbi.webservice.signing.macosx;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -20,6 +21,7 @@ import java.util.Optional;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 
+import org.eclipse.cbi.common.util.Paths;
 import org.eclipse.cbi.webservice.servlet.RequestFacade;
 import org.eclipse.cbi.webservice.servlet.ResponseFacade;
 
@@ -42,9 +44,9 @@ public abstract class SigningServlet extends HttpServlet {
 	private static final String OCTET_STREAM__CONTENT_TYPE = "application/octet-stream";
 
 	private static final String FILE_PART_NAME = "file";
-
 	private static final String ENTITLEMENTS_PART_NAME = "entitlements";
 
+	@Serial
 	private static final long serialVersionUID = 523028904959736808L;
 
 	SigningServlet() {}
@@ -62,7 +64,8 @@ public abstract class SigningServlet extends HttpServlet {
 			if (requestFacade.hasPart(FILE_PART_NAME)) {
 				doSign(requestFacade, responseFacade);
 			} else {
-				responseFacade.replyError(HttpServletResponse.SC_BAD_REQUEST, "POST request must contain a part named '" + FILE_PART_NAME + "'");
+				responseFacade.replyError(HttpServletResponse.SC_BAD_REQUEST,
+						"POST request must contain a part named '" + FILE_PART_NAME + "'");
 			}
 		}
 	}
@@ -70,11 +73,15 @@ public abstract class SigningServlet extends HttpServlet {
 	private void doSign(RequestFacade requestFacade, final ResponseFacade answeringMachine) throws IOException, ServletException {
 		Path fileToBeSigned = requestFacade.getPartPath(FILE_PART_NAME, TEMP_FILE_PREFIX).get();
 		Optional<Path> entitlements = requestFacade.getPartPath(ENTITLEMENTS_PART_NAME, TEMP_FILE_PREFIX);
-		Codesigner.Options codesignerOptions = Codesigner.Options.builder().entitlements(entitlements).build();
+
+		CodeSigner.Options.Builder builder = CodeSigner.Options.builder();
+        entitlements.ifPresent(builder::entitlements);
+		CodeSigner.Options codesignerOptions = builder.build();
+
 		if ("zip".equals(com.google.common.io.Files.getFileExtension(requestFacade.getSubmittedFileName(FILE_PART_NAME).get()))) {
 			signFilesInZip(requestFacade, answeringMachine, fileToBeSigned, codesignerOptions);
 		} else {
-			if (codesigner().signFile(fileToBeSigned, codesignerOptions) > 0) {
+			if (codeSigner().signFile(fileToBeSigned, codesignerOptions) > 0) {
 				answeringMachine.replyWithFile(OCTET_STREAM__CONTENT_TYPE, requestFacade.getSubmittedFileName(FILE_PART_NAME).get(), fileToBeSigned);
 			} else {
 				answeringMachine.replyError(HttpServletResponse.SC_BAD_REQUEST, "Unable to sign provided file");
@@ -82,21 +89,25 @@ public abstract class SigningServlet extends HttpServlet {
 		}
 	}
 
-	private void signFilesInZip(RequestFacade requestFacade, final ResponseFacade answeringMachine, Path zipFileWithFilesToBeSigned, Codesigner.Options codesignerOptions) throws IOException, ServletException {
+	private void signFilesInZip(RequestFacade requestFacade, final ResponseFacade answeringMachine, Path zipFileWithFilesToBeSigned, CodeSigner.Options codesignerOptions) throws IOException, ServletException {
 		final String submittedFilename = requestFacade.getSubmittedFileName(FILE_PART_NAME).get();
 		final Path signedFile = Files.createTempFile(tempFolder(), TEMP_FILE_PREFIX, "signed." + com.google.common.io.Files.getFileExtension(submittedFilename));
 		try {
-			if (codesigner().signZippedApplications(zipFileWithFilesToBeSigned, signedFile, codesignerOptions) > 0) {
+			if (codeSigner().signZippedApplications(zipFileWithFilesToBeSigned, signedFile, codesignerOptions) > 0) {
 				answeringMachine.replyWithFile(ZIP_CONTENT_TYPE, requestFacade.getSubmittedFileName(FILE_PART_NAME).get(), signedFile);
 			} else {
 				answeringMachine.replyError(HttpServletResponse.SC_BAD_REQUEST, "No '.app' folder can be found in the provided zip file");
 			}
 		} finally {
-			Codesigner.cleanTemporaryResource(signedFile);
+			try {
+				if (signedFile != null && Files.exists(signedFile)) {
+					Paths.delete(signedFile);
+				}
+			} catch (IOException ignored) {}
 		}
 	}
 
-	abstract Codesigner codesigner();
+	abstract CodeSigner codeSigner();
 
 	/**
 	 * Returns the temporary folder to use during intermediate step of
@@ -118,7 +129,7 @@ public abstract class SigningServlet extends HttpServlet {
 	public static abstract class Builder {
 		Builder() {}
 
-		public abstract Builder codesigner(Codesigner codesigner);
+		public abstract Builder codeSigner(CodeSigner codeSigner);
 
 		/**
 		 * Sets the temporary folder for intermediate step during signing.
@@ -135,17 +146,16 @@ public abstract class SigningServlet extends HttpServlet {
 		 * Creates and returns a new instance of {@link SigningServlet} as
 		 * configured by this builder. The following checks are made:
 		 * <ul>
-		 * <li>The temporary folder must exists.</li>
+		 * <li>The temporary folder must exist.</li>
 		 * </ul>
 		 *
-		 * @return a new instance of {@link Codesigner} as configured by this
-		 *         builder.
+		 * @return a new instance of {@link CodeSigner} as configured by this builder.
 		 */
 		public SigningServlet build() {
-			SigningServlet codesignerServlet = autoBuild();
-			Preconditions.checkState(Files.exists(codesignerServlet.tempFolder()), "Temporary folder must exists");
-			Preconditions.checkState(Files.isDirectory(codesignerServlet.tempFolder()), "Temporary folder must be a directory");
-			return codesignerServlet;
+			SigningServlet servlet = autoBuild();
+			Preconditions.checkState(Files.exists(servlet.tempFolder()), "Temporary folder must exist");
+			Preconditions.checkState(Files.isDirectory(servlet.tempFolder()), "Temporary folder must be a directory");
+			return servlet;
 		}
 	}
 }

@@ -16,12 +16,12 @@ import org.eclipse.cbi.webservice.util.PropertiesReader;
 import org.junit.Test;
 
 @SuppressWarnings("javadoc")
-public class CodesignerPropertiesTest {
+public class AppleCodeSignerPropertiesTest {
 
 	@Test(expected=IllegalStateException.class)
-	public void testEmptyPropertiesgetIdentityApplication() throws IOException {
+	public void testEmptyPropertiesGetIdentityApplication() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			CodesignerProperties propertiesReader = new CodesignerProperties(new PropertiesReader(new Properties(), fs));
+			AppleCodeSignerProperties propertiesReader = new AppleCodeSignerProperties(new PropertiesReader(new Properties(), fs));
 			propertiesReader.getIdentityApplication();
 		}
 	}
@@ -29,23 +29,23 @@ public class CodesignerPropertiesTest {
 	@Test(expected=IllegalStateException.class)
 	public void testEmptyPropertiesGetKeychain() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			CodesignerProperties propertiesReader = new CodesignerProperties(new PropertiesReader(new Properties(), fs));
-			propertiesReader.getKeychain();
+			AppleCodeSignerProperties propertiesReader = new AppleCodeSignerProperties(new PropertiesReader(new Properties(), fs));
+			propertiesReader.getKeyChain();
 		}
 	}
 
 	@Test(expected=IllegalStateException.class)
 	public void testEmptyPropertiesGetKeychainPassword() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			CodesignerProperties propertiesReader = new CodesignerProperties(new PropertiesReader(new Properties(), fs));
-			propertiesReader.getKeychainPassword();
+			AppleCodeSignerProperties propertiesReader = new AppleCodeSignerProperties(new PropertiesReader(new Properties(), fs));
+			propertiesReader.getKeyChainPassword();
 		}
 	}
 
 	@Test
 	public void testgetIdentityApplication() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			CodesignerProperties propertiesReader = new CodesignerProperties(new PropertiesReader(createTestProperties(), fs));
+			AppleCodeSignerProperties propertiesReader = new AppleCodeSignerProperties(new PropertiesReader(createTestProperties(), fs));
 			assertEquals("Certificate Corporation, Inc.", propertiesReader.getIdentityApplication());
 		}
 	}
@@ -53,54 +53,54 @@ public class CodesignerPropertiesTest {
 	@Test
 	public void testGetKeychain() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			CodesignerProperties propertiesReader = new CodesignerProperties(new PropertiesReader(createTestProperties(), fs));
+			AppleCodeSignerProperties propertiesReader = new AppleCodeSignerProperties(new PropertiesReader(createTestProperties(), fs));
 			Path keychainPath = fs.getPath("/path/to/keychain");
 			Files.createDirectories(keychainPath.normalize().getParent());
 			Files.createFile(keychainPath);
-			assertEquals(keychainPath, propertiesReader.getKeychain());
+			assertEquals(keychainPath, propertiesReader.getKeyChain());
 		}
 	}
 
 	@Test(expected=IllegalStateException.class)
 	public void testGetNonExistingKeychain() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			CodesignerProperties propertiesReader = new CodesignerProperties(new PropertiesReader(createTestProperties(), fs));
-			propertiesReader.getKeychain();
+			AppleCodeSignerProperties propertiesReader = new AppleCodeSignerProperties(new PropertiesReader(createTestProperties(), fs));
+			propertiesReader.getKeyChain();
 		}
 	}
 
 	@Test(expected=IllegalStateException.class)
 	public void testNonExistingGetKeychainPassword() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			CodesignerProperties propertiesReader = new CodesignerProperties(new PropertiesReader(createTestProperties(), fs));
-			propertiesReader.getKeychainPassword();
+			AppleCodeSignerProperties propertiesReader = new AppleCodeSignerProperties(new PropertiesReader(createTestProperties(), fs));
+			propertiesReader.getKeyChainPassword();
 		}
 	}
 
 	@Test
 	public void testGetKeychainPassword() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			CodesignerProperties propertiesReader = new CodesignerProperties(new PropertiesReader(createTestProperties(), fs));
+			AppleCodeSignerProperties propertiesReader = new AppleCodeSignerProperties(new PropertiesReader(createTestProperties(), fs));
 			SampleFilesGenerators.writeFile(fs.getPath("/path", "to", "keychain", "password"), "the.password");
-			assertEquals("the.password", propertiesReader.getKeychainPassword());
+			assertEquals("the.password", propertiesReader.getKeyChainPassword());
 		}
 	}
 
 	@Test
 	public void testGetEmptyKeychainPassword() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			CodesignerProperties propertiesReader = new CodesignerProperties(new PropertiesReader(createTestProperties(), fs));
+			AppleCodeSignerProperties propertiesReader = new AppleCodeSignerProperties(new PropertiesReader(createTestProperties(), fs));
 			SampleFilesGenerators.writeFile(fs.getPath("/path", "to", "keychain", "password"), "");
-			assertEquals("", propertiesReader.getKeychainPassword());
+			assertEquals("", propertiesReader.getKeyChainPassword());
 		}
 	}
 
 	@Test
 	public void testGetTrimmedKeychainPassword() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-			CodesignerProperties propertiesReader = new CodesignerProperties(new PropertiesReader(createTestProperties(), fs));
+			AppleCodeSignerProperties propertiesReader = new AppleCodeSignerProperties(new PropertiesReader(createTestProperties(), fs));
 			SampleFilesGenerators.writeFile(fs.getPath("/path", "to", "keychain", "password"), "  password   ");
-			assertEquals("password", propertiesReader.getKeychainPassword());
+			assertEquals("password", propertiesReader.getKeyChainPassword());
 		}
 	}
 

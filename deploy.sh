@@ -27,6 +27,7 @@ git checkout "tags/v${VERSION}" -b "v${VERSION}-branch"
 ./webservice/service-deployment.sh webservice/signing/jar/default.jsonnet "${VERSION}"
 ./webservice/service-deployment.sh webservice/signing/jar/jce.jsonnet "${VERSION}"
 ./webservice/service-deployment.sh webservice/signing/windows/service.jsonnet "${VERSION}"
+./webservice/service-deployment.sh webservice/signing/macosx/service.jsonnet "${VERSION}"
 
 git checkout main
 git branch -d "v${VERSION}-branch"

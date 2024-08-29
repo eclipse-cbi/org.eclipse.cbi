@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015 Eclipse Foundation and others
+ * Copyright (c) 2015, 2024 Eclipse Foundation and others
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -35,7 +35,9 @@ import org.kohsuke.args4j.OptionHandlerFilter;
  */
 public class SigningServer {
 
-	@Option(name="-c",usage="configuration file")
+	private static final String CODESIGNER_TYPE = "macosx.codesigner";
+
+	@Option(name="-c", usage="configuration file")
 	private String configurationFilePath = "macosx-signing-service.properties";
 
 	@Argument
@@ -45,28 +47,57 @@ public class SigningServer {
     	new SigningServer().doMain(FileSystems.getDefault(), args);
     }
 
-	private void doMain(FileSystem fs, String[] args) throws Exception, InterruptedException {
+	private void doMain(FileSystem fs, String[] args) throws Exception {
 		if (parseCmdLineArguments(fs, args)) {
 			final Path confPath = fs.getPath(configurationFilePath);
 			final EmbeddedServerConfiguration serverConf = new EmbeddedServerProperties(PropertiesReader.create(confPath));
-			final CodesignerProperties conf = new CodesignerProperties(PropertiesReader.create(confPath));
 			final Path tempFolder = serverConf.getTempFolder();
 
-			final Codesigner codesigner = Codesigner.builder()
-				.identityApplication(conf.getIdentityApplication())
-				.identityInstaller(conf.getIdentityInstaller())
-				.keychain(conf.getKeychain())
-				.keychainPassword(conf.getKeychainPassword())
-				.tempFolder(tempFolder)
-				.codesignTimeout(conf.getCodesignTimeout())
-				.timeStampAuthority(conf.getTimeStampAuthority())
-				.securityUnlockTimeout(conf.getSecurityUnlockTimeout())
-				.processExecutor(new ProcessExecutor.BasicImpl())
-				.build();
+			final PropertiesReader reader = PropertiesReader.create(confPath);
+
+			String codeSignerType = reader.getString(CODESIGNER_TYPE, "");
+			CodeSigner codeSigner;
+
+			switch (codeSignerType.toUpperCase()) {
+				case "APPLE": {
+					final AppleCodeSignerProperties conf = new AppleCodeSignerProperties(PropertiesReader.create(confPath));
+					codeSigner = AppleCodeSigner.builder()
+						.codeSignTimeout(conf.getCodesignTimeout())
+						.securityUnlockTimeout(conf.getSecurityUnlockTimeout())
+						.keyChain(conf.getKeyChain())
+						.keyChainPassword(conf.getKeyChainPassword())
+						.identityApplication(conf.getIdentityApplication())
+						.identityInstaller(conf.getIdentityInstaller())
+						.timeStampAuthority(conf.getTimeStampAuthority())
+						.tempFolder(tempFolder)
+						.processExecutor(new ProcessExecutor.BasicImpl())
+						.build();
+				}
+					break;
+
+				case "RCODESIGNER": {
+					final RCodeSignerProperties conf = new RCodeSignerProperties(PropertiesReader.create(confPath));
+					codeSigner = RCodeSigner.builder()
+						.rCodeSign(conf.getRCodeSign())
+						.codeSignTimeout(conf.getCodesignTimeout())
+						.identityApplicationKeyChain(conf.getIdentityApplicationKeychainPath())
+						.identityApplicationKeyChainPasswordFile(conf.getIdentityApplicationKeychainPasswordFile())
+						.identityInstallerKeyChain(conf.getIdentityInstallerKeychainPath())
+						.identityInstallerKeyChainPasswordFile(conf.getIdentityInstallerKeychainPasswordFile())
+						.timeStampAuthority(conf.getTimeStampAuthority())
+						.tempFolder(tempFolder)
+						.processExecutor(new ProcessExecutor.BasicImpl())
+						.build();
+				}
+					break;
+
+				default:
+					throw new IllegalArgumentException("Property '" + CODESIGNER_TYPE + "' must be set to either 'APPLE' or 'RCODESIGNER'");
+			}
 
 			final SigningServlet codeSignServlet = SigningServlet.builder()
 				.tempFolder(tempFolder)
-				.codesigner(codesigner)
+				.codeSigner(codeSigner)
 				.build();
 
 			final EmbeddedServer server = EmbeddedServer.builder()

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015 Eclipse Foundation and others
+ * Copyright (c) 2015, 2024 Eclipse Foundation and others
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -22,11 +22,12 @@ import org.eclipse.cbi.webservice.util.PropertiesReader;
  * A reader of {@link Properties} of {@link SigningServer}. It provides
  * sanity checks and sensible default values for optional properties.
  */
-public class CodesignerProperties {
+public class AppleCodeSignerProperties {
 
 	private static final long DEFAULT_SECURITY_UNLOCK_TIMEOUT = 20;
 	private static final long DEFAULT_CODESIGN_TIMEOUT = TimeUnit.MINUTES.toSeconds(10);
 	private static final String DEFAULT_CODESIGN_TIMESTAMP_AUTHORITY = "";
+
 	private static final String IDENTITY_NAME_APPLICATION = "macosx.identity.application";
 	private static final String IDENTITY_NAME_INSTALLER = "macosx.identity.installer";
 	private static final String KEYCHAIN_PASSWORD_FILE = "macosx.keychain.password";
@@ -37,15 +38,15 @@ public class CodesignerProperties {
 
 	private final PropertiesReader propertiesReader;
 
-	public CodesignerProperties(PropertiesReader propertiesReader) {
+	public AppleCodeSignerProperties(PropertiesReader propertiesReader) {
 		this.propertiesReader = propertiesReader;
 	}
 
-	public Path getKeychain() {
+	public Path getKeyChain() {
 		return propertiesReader.getRegularFile(KEYCHAIN_PATH);
 	}
 
-	public String getKeychainPassword() {
+	public String getKeyChainPassword() {
 		return propertiesReader.getFileContent(KEYCHAIN_PASSWORD_FILE);
 	}
 
@@ -64,7 +65,7 @@ public class CodesignerProperties {
 	public long getCodesignTimeout() {
 		return propertiesReader.getLong(CODESIGN_TIMEOUT, DEFAULT_CODESIGN_TIMEOUT);
 	}
-	
+
 	public String getTimeStampAuthority() {
 		return propertiesReader.getString(CODESIGN_TIMESTAMP_AUTHORITY, DEFAULT_CODESIGN_TIMESTAMP_AUTHORITY);
 	}

@@ -3,6 +3,7 @@ local deployment = import "../../deployment.libsonnet";
 local newDeployment(name, artifactId, version) = deployment.newDeployment(name, artifactId, version) {
   pathspec: error "Must specify a pathspec for a service deployment",
   preDeploy: importstr "../keystore.sh",
+  replicas: 4,
 
   docker+: {
     registry: "ghcr.io",
@@ -21,6 +22,7 @@ local newDeployment(name, artifactId, version) = deployment.newDeployment(name, 
     resources: [
       if resource.kind == "Deployment" then resource + {
         spec+: {
+          replicas: if std.endsWith($.version, "SNAPSHOT") then 1 else $.replicas,
           template+: {
             spec+: {
               containers: [

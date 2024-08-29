@@ -2,6 +2,7 @@ local jarsigner = import "jarsigner.libsonnet";
 
 jarsigner.newDeployment("jar-signing-jce", std.extVar("artifactId"), std.extVar("version")) {
   pathspec: "/jarsigner/jce/sign",
+  replicas: 2,
 
   keystore+: {
     password: {

@@ -18,22 +18,21 @@ import java.util.Properties;
 
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.eclipse.tycho.core.osgitools.OsgiManifest;
 
 @Mojo(name = "plugin-versions", threadSafe = true)
 public class PluginVersionsMojo extends AbstractPluginScannerMojo {
-	@Parameter(defaultValue = "${project.build.directory}/plugin-versions.properties")
-	protected File destination;
+  @Parameter(defaultValue = "${project.build.directory}/plugin-versions.properties")
+  protected File destination;
 
-	@Override
-	protected void processPlugins(Properties properties, Map<File, OsgiManifest> plugins) {
-		for (OsgiManifest manifest : plugins.values()) {
-			properties.put(manifest.getBundleSymbolicName(), manifest.getBundleVersion());
-		}
-	}
+  @Override
+  protected void processPlugins(Properties properties, Map<File, OsgiManifest> plugins) {
+    for (OsgiManifest manifest : plugins.values()) {
+      properties.put(manifest.getBundleSymbolicName(), manifest.getBundleVersion());
+    }
+  }
 
-	@Override
-	protected File getDestination() {
-		return destination;
-	}
+  @Override
+  protected File getDestination() {
+    return destination;
+  }
 }

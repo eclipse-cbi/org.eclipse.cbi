@@ -30,7 +30,7 @@ local newDeployment(name, namespace) = {
       },
       to: {
         kind: "Service",
-        name: "macos-dmg-packaging",
+        name: name,
         weight: 100
       },
     }

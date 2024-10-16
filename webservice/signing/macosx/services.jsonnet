@@ -1,5 +1,3 @@
 local deployment = import "kube-deployment.libsonnet";
 
-deployment.newDeployment() {
-
-}
+deployment.newDeployment("macos-codesign", "foundation-codesigning") {}

@@ -1,14 +1,25 @@
-local newDeployment() = {
+local newDeployment(name, namespace) = {
+  name: name,
+  namespace: namespace,
+
+  local stagingName(name) = "%s-staging" % name,
+  local labels(name) = {
+    "org.eclipse.cbi.service/name": name,
+  },
+  local metaData(name) = {
+    name: name,
+    labels: labels(name),
+    namespace: namespace,
+  },
+
   route: {
     apiVersion: "route.openshift.io/v1",
     kind: "Route",
-    metadata: {
+    metadata: metaData(name) + {
       annotations: {
         "haproxy.router.openshift.io/timeout": "600s",
         "haproxy.router.openshift.io/rewrite-target": "/macosx-signing-service"
       },
-      name: "macos-codesign",
-      namespace: "foundation-codesigning"
     },
     spec: {
       host: "cbi.eclipse.org",
@@ -22,7 +33,7 @@ local newDeployment() = {
       },
       to: {
         kind: "Service",
-        name: "macos-codesign",
+        name: name,
         weight: 100
       },
     }
@@ -30,13 +41,11 @@ local newDeployment() = {
   stagingroute: {
     apiVersion: "route.openshift.io/v1",
     kind: "Route",
-    metadata: {
+    metadata: metaData(stagingName(name)) + {
       annotations: {
         "haproxy.router.openshift.io/timeout": "600s",
         "haproxy.router.openshift.io/rewrite-target": "/macosx-signing-service"
       },
-      name: "macos-codesign-staging",
-      namespace: "foundation-codesigning"
     },
     spec: {
       host: "cbi-staging.eclipse.org",
@@ -50,7 +59,7 @@ local newDeployment() = {
       },
       to: {
         kind: "Service",
-        name: "macos-codesign-staging",
+        name: stagingName(name),
         weight: 100
       },
     }
@@ -58,10 +67,7 @@ local newDeployment() = {
   service: {
     apiVersion: "v1",
     kind: "Service",
-    metadata: {
-      name: "macos-codesign",
-      namespace: "foundation-codesigning"
-    },
+    metadata: metaData(name),
     spec: {
       type: "ClusterIP",
       ports: [
@@ -77,10 +83,7 @@ local newDeployment() = {
   stagingservice: {
     apiVersion: "v1",
     kind: "Service",
-    metadata: {
-      name: "macos-codesign-staging",
-      namespace: "foundation-codesigning"
-    },
+    metadata: metaData(stagingName(name)),
     spec: {
       type: "ClusterIP",
       ports: [
@@ -96,10 +99,7 @@ local newDeployment() = {
   endpoints: {
     apiVersion: "v1",
     kind: "Endpoints",
-    metadata: {
-      name: "macos-codesign",
-      namespace: "foundation-codesigning"
-    },
+    metadata: metaData(name),
     subsets: [
       {
         addresses: [
@@ -123,10 +123,7 @@ local newDeployment() = {
   stagingendpoints: {
     apiVersion: "v1",
     kind: "Endpoints",
-    metadata: {
-      name: "macos-codesign-staging",
-      namespace: "foundation-codesigning"
-    },
+    metadata: metaData(stagingName(name)),
     subsets: [
       {
         addresses: [

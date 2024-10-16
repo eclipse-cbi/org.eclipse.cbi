@@ -1,4 +1,11 @@
-local newDeployment() = {
+local newDeployment(name, namespace) = {
+  name: name,
+  namespace: namespace,
+
+  local labels(name) = {
+    "org.eclipse.cbi.service/name": name,
+  },
+
   route: {
     apiVersion: "route.openshift.io/v1",
     kind: "Route",
@@ -7,8 +14,9 @@ local newDeployment() = {
         "haproxy.router.openshift.io/timeout": "600s",
         "haproxy.router.openshift.io/rewrite-target": "/dmg-packaging-service"
       },
-      name: "macos-dmg-packaging",
-      namespace: "foundation-internal-infra-apps"
+      name: name,
+      labels: labels(name),
+      namespace: namespace,
     },
     spec: {
       host: "cbi.eclipse.org",
@@ -31,8 +39,9 @@ local newDeployment() = {
     apiVersion: "v1",
     kind: "Service",
     metadata: {
-      name: "macos-dmg-packaging",
-      namespace: "foundation-internal-infra-apps"
+      name: name,
+      labels: labels(name),
+      namespace: namespace,
     },
     spec: {
       type: "ClusterIP",
@@ -50,8 +59,9 @@ local newDeployment() = {
     apiVersion: "v1",
     kind: "Endpoints",
     metadata: {
-      name: "macos-dmg-packaging",
-      namespace: "foundation-internal-infra-apps"
+      name: name,
+      labels: labels(name),
+      namespace: namespace,
     },
     subsets: [
       {

@@ -8,7 +8,7 @@ local newDeployment() = {
         "haproxy.router.openshift.io/rewrite-target": "/macosx-signing-service"
       },
       name: "macos-codesign",
-      namespace: "foundation-internal-infra-apps"
+      namespace: "foundation-codesigning"
     },
     spec: {
       host: "cbi.eclipse.org",
@@ -36,7 +36,7 @@ local newDeployment() = {
         "haproxy.router.openshift.io/rewrite-target": "/macosx-signing-service"
       },
       name: "macos-codesign-staging",
-      namespace: "foundation-internal-infra-apps"
+      namespace: "foundation-codesigning"
     },
     spec: {
       host: "cbi-staging.eclipse.org",
@@ -60,7 +60,7 @@ local newDeployment() = {
     kind: "Service",
     metadata: {
       name: "macos-codesign",
-      namespace: "foundation-internal-infra-apps"
+      namespace: "foundation-codesigning"
     },
     spec: {
       type: "ClusterIP",
@@ -79,7 +79,7 @@ local newDeployment() = {
     kind: "Service",
     metadata: {
       name: "macos-codesign-staging",
-      namespace: "foundation-internal-infra-apps"
+      namespace: "foundation-codesigning"
     },
     spec: {
       type: "ClusterIP",
@@ -98,7 +98,7 @@ local newDeployment() = {
     kind: "Endpoints",
     metadata: {
       name: "macos-codesign",
-      namespace: "foundation-internal-infra-apps"
+      namespace: "foundation-codesigning"
     },
     subsets: [
       {
@@ -125,7 +125,7 @@ local newDeployment() = {
     kind: "Endpoints",
     metadata: {
       name: "macos-codesign-staging",
-      namespace: "foundation-internal-infra-apps"
+      namespace: "foundation-codesigning"
     },
     subsets: [
       {

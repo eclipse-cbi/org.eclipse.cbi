@@ -4,6 +4,12 @@ deployment.newDeployment("macosx-signing", std.extVar("artifactId"), std.extVar(
   pathspec: "/macos/codesign/sign",
   preDeploy: importstr "../keychain.sh",
 
+  rcodesign: {
+    repo: "indygreg/apple-platform-rs",
+    version: "0.28.0",
+    path: "/usr/local/bin/rcodesign",
+  },
+
   docker+: {
     registry: "ghcr.io",
     repository: "eclipse-cbi",
@@ -74,14 +80,12 @@ deployment.newDeployment("macosx-signing", std.extVar("artifactId"), std.extVar(
     ],
   },
 
-  rcodesignPath: "/usr/local/bin/rcodesign",
-
   Dockerfile: super.Dockerfile + |||
     RUN cd /usr/local/bin \
-      && curl -L -o codesign.tar.gz 'https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%%2F0.27.0/apple-codesign-0.27.0-x86_64-unknown-linux-musl.tar.gz' \
+      && curl -L -o codesign.tar.gz 'https://github.com/%(repo)s/releases/download/apple-codesign%%2F%(version)s/apple-codesign-%(version)s-x86_64-unknown-linux-musl.tar.gz' \
       && tar xzf codesign.tar.gz --strip-components=1 \
       && rm -f codesign.tar.gz
-  ||| % $,
+  ||| % self { repo: $.rcodesign.repo, version: $.rcodesign.version },
 
   configuration+: {
     content: |||
@@ -177,6 +181,7 @@ deployment.newDeployment("macosx-signing", std.extVar("artifactId"), std.extVar(
       log4j.appender.access-log.layout=org.apache.log4j.PatternLayout
       log4j.appender.access-log.layout.ConversionPattern=%%m%%n
     ||| % $ {
+      rcodesignPath: $.rcodesign.path,
       applicationKeychain: "%s/%s" % [ $.keystore.path, $.keystore.entries[0].keychain.filename ],
       applicationPasswordFile: "%s/%s" % [ $.keystore.path, $.keystore.entries[0].password.filename ],
       installerKeychain: "%s/%s" % [ $.keystore.path, $.keystore.entries[1].keychain.filename ],

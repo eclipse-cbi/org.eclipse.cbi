@@ -7,6 +7,7 @@ deployment.newDeployment("macosx-signing", std.extVar("artifactId"), std.extVar(
   rcodesign: {
     repo: "indygreg/apple-platform-rs",
     version: "0.28.0",
+    checksum: "1297317bfb22cdbe914f2819316978c8f75b8d7db9e3946ef11b26bc1a9530c1323c71c3eb0953de94ddfd43754636d5f947129564584bf733f07fbdcb910d21",
     path: "/usr/local/bin/rcodesign",
   },
 
@@ -82,10 +83,12 @@ deployment.newDeployment("macosx-signing", std.extVar("artifactId"), std.extVar(
 
   Dockerfile: super.Dockerfile + |||
     RUN cd /usr/local/bin \
+      && echo "%(checksum)s  codesign.tar.gz" > hash.txt \
       && curl -L -o codesign.tar.gz 'https://github.com/%(repo)s/releases/download/apple-codesign%%2F%(version)s/apple-codesign-%(version)s-x86_64-unknown-linux-musl.tar.gz' \
+      && sha512sum -c hash.txt \
       && tar xzf codesign.tar.gz --strip-components=1 \
       && rm -f codesign.tar.gz
-  ||| % self { repo: $.rcodesign.repo, version: $.rcodesign.version },
+  ||| % self { repo: $.rcodesign.repo, version: $.rcodesign.version, checksum: $.rcodesign.checksum },
 
   configuration+: {
     content: |||

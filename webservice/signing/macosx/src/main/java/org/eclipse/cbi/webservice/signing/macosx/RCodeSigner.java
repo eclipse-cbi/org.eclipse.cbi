@@ -126,7 +126,9 @@ public abstract class RCodeSigner extends CodeSigner {
 					.add("--p12-file", identityApplicationKeyChain().toString())
 					.add("--p12-password-file", identityApplicationKeyChainPasswordFile().toString())
 					.add("--code-signature-flags", "runtime")
-					.add("--for-notarization", "-v");
+			        // needed because of https://github.com/indygreg/apple-platform-rs/issues/170
+					.add("--exclude", "*.class")
+					.add("--for-notarization");
 
 			if (!timeStampAuthority().trim().isEmpty()) {
 				signApplicationCommandPrefix.add("--timestamp-url", timeStampAuthority().trim());
@@ -138,8 +140,9 @@ public abstract class RCodeSigner extends CodeSigner {
 					.add(rCodeSign().toString(), "sign")
 					.add("--p12-file", identityInstallerKeyChain().toString())
 					.add("--p12-password-file", identityInstallerKeyChainPasswordFile().toString())
-					.add("-v");
-
+					// needed because of https://github.com/indygreg/apple-platform-rs/issues/170
+					.add("--exclude", "*.class");
+			
 			if (!timeStampAuthority().trim().isEmpty()) {
 				signInstallerCommandPrefix.add("--timestamp-url", timeStampAuthority().trim());
 			}

@@ -1,10 +1,22 @@
-local newDeployment(name, artifactId, version) = {
+local newKubeResources(version) = {
+  limits: {
+    cpu: if std.endsWith(version, "SNAPSHOT") then "1" else "4",
+    memory: if std.endsWith(version, "SNAPSHOT") then "1Gi" else "2Gi"
+  },
+  requests: {
+    cpu: if std.endsWith(version, "SNAPSHOT") then "50m" else "500m",
+    memory: if std.endsWith(version, "SNAPSHOT") then "1Gi" else "2Gi"
+  },
+};
+
+local newDeployment(name, artifactId, version, routeTimeout = 60, maxMemory = 512, kubeResources = newKubeResources(version)) = {
   name: name,
   version: version,
   groupId: "org.eclipse.cbi",
   artifactId: artifactId,
   mavenRepoURL: "repo.eclipse.org",
   mavenRepoName: "cbi",
+  maxMemory: maxMemory,
   port: 8080,
   docker: {
     registry: "docker.io",
@@ -86,16 +98,7 @@ local newDeployment(name, artifactId, version) = {
                       containerPort: $.port,
                     }
                   ],
-                  resources: {
-                    limits: {
-                      cpu: if std.endsWith($.version, "SNAPSHOT") then "1" else "4",
-                      memory: if std.endsWith($.version, "SNAPSHOT") then "1Gi" else "2Gi"
-                    },
-                    requests: {
-                      cpu: if std.endsWith($.version, "SNAPSHOT") then "50m" else "500m",
-                      memory: if std.endsWith($.version, "SNAPSHOT") then "1Gi" else "2Gi"
-                    },
-                  },
+                  resources: kubeResources,
                   livenessProbe: {
                     failureThreshold: 3,
                     httpGet: {
@@ -172,7 +175,7 @@ local newDeployment(name, artifactId, version) = {
         kind: "Route",
         metadata: metadata(nameByEnv($.name)) + {
           annotations: {
-            "haproxy.router.openshift.io/timeout": "60s"
+            "haproxy.router.openshift.io/timeout": "%ds" % [routeTimeout]
           },
         },
         spec: {
@@ -215,7 +218,7 @@ local newDeployment(name, artifactId, version) = {
       && rm -f temurin11.tar.gz
 
     ENTRYPOINT [ "java", \
-      "-showversion", "-XshowSettings:vm", "-Xmx512m", \
+      "-showversion", "-XshowSettings:vm", "-Xmx%(maxMemory)dm", \
       "-jar", "/usr/local/%(name)s/%(artifactId)s-%(version)s.jar", \
       "-c", "%(configurationPath)s/%(configurationFilename)s" \
     ]
@@ -233,7 +236,7 @@ local newDeployment(name, artifactId, version) = {
       && rm -f temurin11.tar.gz
 
     ENTRYPOINT [ "java", \
-      "-showversion", "-XshowSettings:vm", "-Xmx512m", \
+      "-showversion", "-XshowSettings:vm", "-Xmx%(maxMemory)dm", \
       "-jar", "/usr/local/%(name)s/%(artifactId)s-%(version)s.jar", \
       "-c", "%(configurationPath)s/%(configurationFilename)s" \
     ]
@@ -243,4 +246,5 @@ local newDeployment(name, artifactId, version) = {
 };
 {
   newDeployment:: newDeployment,
+  newKubeResources:: newKubeResources,
 }

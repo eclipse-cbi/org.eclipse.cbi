@@ -1,13 +1,24 @@
 local deployment = import "../../deployment.libsonnet";
 
-deployment.newDeployment("macosx-signing", std.extVar("artifactId"), std.extVar("version")) {
+local kubeResources = deployment.newKubeResources(std.extVar("version")) + {
+  limits: {
+    cpu: "4",
+    memory: "3Gi"
+  },
+  requests: {
+    cpu: "500m",
+    memory: "1Gi"
+  },
+};
+
+deployment.newDeployment("macosx-signing", std.extVar("artifactId"), std.extVar("version"), 600, 2048, kubeResources) {
   pathspec: "/macos/codesign/sign",
   preDeploy: importstr "../keychain.sh",
 
   rcodesign: {
     repo: "indygreg/apple-platform-rs",
-    version: "0.28.0",
-    checksum: "1297317bfb22cdbe914f2819316978c8f75b8d7db9e3946ef11b26bc1a9530c1323c71c3eb0953de94ddfd43754636d5f947129564584bf733f07fbdcb910d21",
+    version: "0.29.0",
+    checksum: "b610b4e619af756e3c243c1999c37311bcfd9a383fd60734ddc20f134b8de111b2d36a084507fbd915eb780f9d79dc6c36fd9f38b15ba1423fbdfddf29937e95",
     path: "/usr/local/bin/rcodesign",
   },
 

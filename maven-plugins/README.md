@@ -1,13 +1,9 @@
 CBI plugins is a set of Maven plugins that enable projects to use the
 Eclipse infrastructure to sign their build artifacts via Maven.
 
-wiki: [http://wiki.eclipse.org/CBI](http://wiki.eclipse.org/CBI)
-
-mailing list: [https://dev.eclipse.org/mailman/listinfo/cbi-dev](https://dev.eclipse.org/mailman/listinfo/cbi-dev)
-
-bugzilla: [https://bugs.eclipse.org](https://bugs.eclipse.org/bugs/buglist.cgi?list_id=6321580&classification=Eclipse%20Foundation&query_format=advanced&bug_status=UNCONFIRMED&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&product=CBI)
-
-sitedocs: [http://www.eclipse.org/cbi/sitedocs](http://www.eclipse.org/cbi/sitedocs)
+* Wiki: [https://github.com/eclipse-cbi/cbi/wiki](https://github.com/eclipse-cbi/cbi/wiki)
+* Mailing list: [https://dev.eclipse.org/mailman/listinfo/cbi-dev](https://dev.eclipse.org/mailman/listinfo/cbi-dev)
+* Sitedocs: [https://eclipse-cbi.github.io/org.eclipse.cbi/](https://eclipse-cbi.github.io/org.eclipse.cbi/)
 
 Using the plugins
 =================

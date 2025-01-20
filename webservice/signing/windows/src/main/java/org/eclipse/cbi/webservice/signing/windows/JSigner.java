@@ -57,13 +57,22 @@ public abstract class JSigner implements CodeSigner {
 	@Override
 	public Path sign(Path file) {
 		try {
-			KeyStore keystore =
-					new KeyStoreBuilder()
-							.storetype(configuration().getStoreType())
-							.keystore(configuration().getKeystore())
-							.storepass(googleAccessToken())
-							.certfile(configuration().getCertificateChain().toFile())
-							.build();
+			KeyStoreBuilder keyStoreBuilder = new KeyStoreBuilder()
+					.storetype(configuration().getStoreType())
+					.keystore(configuration().getKeystore());
+			if (kmsCredentials!=null) {
+				keyStoreBuilder.storepass(googleAccessToken());
+			} else if (configuration().getStorePass() != null) {
+				keyStoreBuilder.storepass(configuration().getStorePass());
+			}
+			try {
+				if (configuration().getCertificateChain() != null) {
+					keyStoreBuilder.certfile(configuration().getCertificateChain().toFile());
+				}
+			} catch(IllegalArgumentException e){
+				// Ignore missing certficate chain;could be stored in keystore
+			}
+			KeyStore keystore =keyStoreBuilder.build();
 
 			AuthenticodeSigner signer =
 					new AuthenticodeSigner(keystore, configuration().getKeyAlias(), null)
@@ -105,7 +114,7 @@ public abstract class JSigner implements CodeSigner {
 				throw new RuntimeException(ex);
 			}
 		} else {
-			throw new RuntimeException("Tried to retrieve a Google Cloud Access Token while no credentials have been provided");
+			return "NONE";
 		}
 	}
 

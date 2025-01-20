@@ -114,7 +114,7 @@ public abstract class JSigner implements CodeSigner {
 				throw new RuntimeException(ex);
 			}
 		} else {
-			return "NONE";
+			throw new RuntimeException("Tried to retrieve a Google Cloud Access Token while no credentials have been provided");
 		}
 	}
 

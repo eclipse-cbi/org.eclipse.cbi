@@ -202,7 +202,7 @@ public abstract class CodeSigner {
 
 		public static Options.Builder builder() {
 			return new AutoValue_CodeSigner_Options.Builder()
-				.deep(true)
+				.deep(false)
 				.force(true);
 		}
 

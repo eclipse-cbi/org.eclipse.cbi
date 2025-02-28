@@ -45,6 +45,7 @@ public abstract class SigningServlet extends HttpServlet {
 
 	private static final String FILE_PART_NAME = "file";
 	private static final String ENTITLEMENTS_PART_NAME = "entitlements";
+	private static final String DEEP_PARAMETER_NAME = "deep";
 
 	@Serial
 	private static final long serialVersionUID = 523028904959736808L;
@@ -73,10 +74,11 @@ public abstract class SigningServlet extends HttpServlet {
 	private void doSign(RequestFacade requestFacade, final ResponseFacade answeringMachine) throws IOException, ServletException {
 		Path fileToBeSigned = requestFacade.getPartPath(FILE_PART_NAME, TEMP_FILE_PREFIX).get();
 		Optional<Path> entitlements = requestFacade.getPartPath(ENTITLEMENTS_PART_NAME, TEMP_FILE_PREFIX);
+		boolean deepSigning = requestFacade.getBooleanParameter(DEEP_PARAMETER_NAME);
 
 		CodeSigner.Options.Builder builder = CodeSigner.Options.builder();
         entitlements.ifPresent(builder::entitlements);
-		CodeSigner.Options codesignerOptions = builder.build();
+		CodeSigner.Options codesignerOptions = builder.deep(deepSigning).build();
 
 		if ("zip".equals(com.google.common.io.Files.getFileExtension(requestFacade.getSubmittedFileName(FILE_PART_NAME).get()))) {
 			signFilesInZip(requestFacade, answeringMachine, fileToBeSigned, codesignerOptions);

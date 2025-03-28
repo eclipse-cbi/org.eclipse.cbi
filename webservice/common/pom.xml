@@ -41,6 +41,10 @@
       <groupId>log4j</groupId>
       <artifactId>apache-log4j-extras</artifactId>
     </dependency>
+    <dependency>
+	    <groupId>com.github.spotbugs</groupId>
+	    <artifactId>spotbugs-annotations</artifactId>
+	</dependency>
 
     <!-- Test dependencies -->
 

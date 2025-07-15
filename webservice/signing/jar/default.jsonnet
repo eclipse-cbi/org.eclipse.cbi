@@ -11,7 +11,7 @@ jarsigner.newDeployment("jar-signing", std.extVar("artifactId"), std.extVar("ver
       filename: "gcloud-credentials.json",
     },
     keyRing: "projects/hsm-codesigning/locations/global/keyRings/eclipse_org",
-    defaultAlias: "codesigning-key",
+    defaultAlias: "codesigning-key/cryptoKeyVersions/1:RSA",
     entries: [
       {
         name: "eclipse.org",

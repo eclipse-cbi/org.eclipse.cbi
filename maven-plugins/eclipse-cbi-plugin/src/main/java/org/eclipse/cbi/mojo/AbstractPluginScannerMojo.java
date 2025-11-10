@@ -58,7 +58,9 @@ abstract class AbstractPluginScannerMojo extends AbstractMojo {
         processPlugins(properties, manifests);
       }
 
-      try (OutputStream os = new BufferedOutputStream(new FileOutputStream(getDestination()))) {
+      File destination = getDestination();
+      destination.getParentFile().mkdirs();
+      try (OutputStream os = new BufferedOutputStream(new FileOutputStream(destination))) {
         properties.store(os, null);
       }
     } catch (Exception e) {

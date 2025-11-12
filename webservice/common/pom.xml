@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.eclipse.cbi</groupId>
     <artifactId>cbi-build-parent</artifactId>
-    <version>1.5.3-SNAPSHOT</version>
+    <version>1.5.4-SNAPSHOT</version>
     <relativePath>../../build-parent/pom.xml</relativePath>
   </parent>
 

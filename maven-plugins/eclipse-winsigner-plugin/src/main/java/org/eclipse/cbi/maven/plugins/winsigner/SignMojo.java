@@ -244,8 +244,20 @@ public class SignMojo extends AbstractMojo {
 	@Parameter(property = "cbi.winsigner.timeoutMillis", defaultValue = "0")
 	private int timeoutMillis;
 
+	/**
+	 * Skips the execution of this plugin.
+	 * 
+	 * @since 1.5.4
+	 */
+	@Parameter(property = "cbi.winsigner.skip", defaultValue = "false")
+	private boolean skip;
+
 	@Override
 	public void execute() throws MojoExecutionException {
+		if (skip) {
+			getLog().info("Skip Windows signing");
+			return;
+		}
 		HttpClient httpClient = RetryHttpClient.retryRequestOn(ApacheHttpClient.create(new MavenLogger(getLog())))
 			.maxRetries(retryLimit())
 			.waitBeforeRetry(retryTimer(), TimeUnit.SECONDS)

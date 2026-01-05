@@ -26,7 +26,7 @@ pipeline {
   }
 
   tools {
-    jdk 'temurin-jdk17-latest'
+    jdk 'temurin-jdk21-latest'
   }
 
   options {

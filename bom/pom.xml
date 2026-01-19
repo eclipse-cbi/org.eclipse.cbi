@@ -17,7 +17,7 @@
     <apache-httpclient-version>4.5.14</apache-httpclient-version>
     <maven-api-version>3.9.12</maven-api-version>
     <jackson.version>2.20.1</jackson.version>
-    <jackson.annotation.version>2.20</jackson.annotation.version>
+    <jackson.annotation.version>2.21</jackson.annotation.version>
   </properties>
 
   <dependencyManagement>

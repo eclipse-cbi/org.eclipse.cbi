@@ -12,6 +12,7 @@ on:
 
 jobs:
   update_release_draft:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       # Drafts your next Release notes as Pull Requests are merged into "master"
@@ -21,3 +22,13 @@ jobs:
         #   config-name: my-config.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+		  
+  autolabel:
+    if: github.event_name == 'pull_request'
+      runs-on: ubuntu-latest
+        steps:
+          - uses: release-drafter/release-drafter@v7
+            with:
+              disable-releaser: true   # only run the labeler, skip draft update
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

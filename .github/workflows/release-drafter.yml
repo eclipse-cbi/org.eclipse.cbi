@@ -22,7 +22,7 @@ jobs:
         #   config-name: my-config.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-		  
+
   autolabel:
     if: github.event_name == 'pull_request'
       runs-on: ubuntu-latest

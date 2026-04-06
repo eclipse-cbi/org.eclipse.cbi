@@ -1,7 +1,7 @@
 package org.eclipse.cbi.maven.plugins.jarsigner;
 
 import static org.eclipse.cbi.maven.plugins.jarsigner.RemoteJarSignerTest.dummyOptions;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -19,28 +19,24 @@ import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
 import org.eclipse.cbi.common.util.Paths;
 import org.eclipse.cbi.common.util.Zips;
 import org.eclipse.cbi.maven.common.test.util.NullMavenLog;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.theories.DataPoints;
-import org.junit.experimental.theories.Theories;
-import org.junit.experimental.theories.Theory;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.google.common.io.ByteStreams;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 
-@RunWith(Theories.class)
 public class RecursiveJarSignerTest {
 
 	private static Log log;
 
-	@BeforeClass
+	@BeforeAll
 	public static void beforeClass() {
 		log = new NullMavenLog();
 	}
 	
-	@DataPoints
 	public static Configuration[] configurations() {
 		return new Configuration[] {
 				Configuration.unix(),
@@ -49,7 +45,8 @@ public class RecursiveJarSignerTest {
 		};
 	}
 	
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningNestedJarFile(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 			JarSigner jarSigner = createJarSigner(0);
@@ -58,7 +55,8 @@ public class RecursiveJarSignerTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testRecursiveSigningNestedJarFile1(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 			JarSigner jarSigner = createJarSigner(Integer.MAX_VALUE);
@@ -67,7 +65,8 @@ public class RecursiveJarSignerTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testRecursiveSigningNestedJarFile2(Configuration fsConf) throws IOException, MojoExecutionException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 			JarSigner jarSigner = createJarSigner(Integer.MAX_VALUE);
@@ -76,7 +75,8 @@ public class RecursiveJarSignerTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testRecursiveSigningNestedJarFile3(Configuration fsConf) throws IOException, MojoExecutionException {
 			try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 				JarSigner jarSigner = createJarSigner(Integer.MAX_VALUE);
@@ -85,7 +85,8 @@ public class RecursiveJarSignerTest {
 		}
 	}
 	
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testRecursiveSigningNestedJarFile4(Configuration fsConf) throws IOException, MojoExecutionException {
 			try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 				JarSigner jarSigner = createJarSigner(0);
@@ -94,7 +95,8 @@ public class RecursiveJarSignerTest {
 		}
 	}
 	
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testRecursiveSigningNestedJarFile5(Configuration fsConf) throws IOException, MojoExecutionException {
 			try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 				JarSigner jarSigner = createJarSigner(1);
@@ -103,7 +105,8 @@ public class RecursiveJarSignerTest {
 		}
 	}
 	
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testRecursiveSigningNestedJarFile6(Configuration fsConf) throws IOException, MojoExecutionException {
 			try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 				JarSigner jarSigner = createJarSigner(2);

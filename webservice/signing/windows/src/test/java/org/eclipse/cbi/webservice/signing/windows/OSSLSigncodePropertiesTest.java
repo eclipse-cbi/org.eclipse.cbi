@@ -12,7 +12,8 @@ package org.eclipse.cbi.webservice.signing.windows;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import org.eclipse.cbi.webservice.util.PropertiesReader;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.net.URI;
@@ -20,7 +21,7 @@ import java.nio.file.FileSystem;
 import java.util.List;
 import java.util.Properties;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class OSSLSigncodePropertiesTest {
 
@@ -38,14 +39,13 @@ public class OSSLSigncodePropertiesTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void noTimeServerURI() throws IOException {
         try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
             final OSSLSigncodeProperties conf =
                     new OSSLSigncodeProperties(new PropertiesReader(createEmptyTestProperties(), fs));
 
-            conf.getTimestampURIs();
-            fail();
+            assertThrows(IllegalArgumentException.class, () -> conf.getTimestampURIs());
         }
     }
 

@@ -12,12 +12,12 @@
  *******************************************************************************/
 package org.eclipse.cbi.common.util;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,13 +45,10 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
-import org.junit.Test;
-import org.junit.experimental.theories.DataPoints;
-import org.junit.experimental.theories.Theories;
-import org.junit.experimental.theories.Theory;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Theories.class)
 public class ZipsTest {
 
 	private static final long modTime;
@@ -62,7 +59,6 @@ public class ZipsTest {
 		modTime = c.getTimeInMillis();
 	}
 	
-	@DataPoints
 	public static Configuration[] fsConfiguration() {
 		return new Configuration[] {
 				Configuration.unix().toBuilder().setAttributeViews("basic", "owner", "unix", "posix").build(),
@@ -71,7 +67,8 @@ public class ZipsTest {
 		};
 	}
 	
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfiguration")
 	public void testPackSingleFile(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
 			Path path = createLoremIpsumFile(fs.getPath("workDir/Test.java"), 3);
@@ -85,7 +82,8 @@ public class ZipsTest {
 		}
 	}
 	
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfiguration")
 	public void testUnpackZipPreserveFilePerms(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {
 			Path zip = fs.getPath("fileperm.zip");
@@ -133,7 +131,8 @@ public class ZipsTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfiguration")
 	public void testPackTwoFiles(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
 			Path path1 = createLoremIpsumFile(fs.getPath("folder", "Test1.java"), 3);
@@ -149,7 +148,8 @@ public class ZipsTest {
 		}
 	}
 	
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfiguration")
 	public void testPackWithFolders(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
 			Path path1 = createLoremIpsumFile(fs.getPath("folder", "t1", "Test1.java"), 3);
@@ -216,7 +216,8 @@ public class ZipsTest {
 		}
 	}
 	
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfiguration")
 	public void testPackWithFoldersPreservingRoot(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
 			Path path1 = createLoremIpsumFile(fs.getPath("folder", "t1", "Test1.java"), 3);
@@ -268,7 +269,8 @@ public class ZipsTest {
 		}
 	}
 	
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfiguration")
 	public void testUnpack(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
 			try (InputStream is = this.getClass().getResource("/folder.zip").openStream()) {
@@ -282,7 +284,8 @@ public class ZipsTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfiguration")
 	public void testUnpackZipWithLinks(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
 			try (InputStream is = this.getClass().getResource("/withsymlinks.zip").openStream()) {
@@ -328,7 +331,8 @@ public class ZipsTest {
 		return link.getParent().resolve(Files.readSymbolicLink(link));
 	}
 	
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfiguration")
 	public void testUnpackRepackOverwriteZip(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {
 			Path unpackPath = fs.getPath("unpack");
@@ -344,7 +348,8 @@ public class ZipsTest {
 		}
 	}
 	
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfiguration")
 	public void testUnpackRepackOverwriteJar(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {
 			Path unpackPath = fs.getPath("unpack");
@@ -369,7 +374,8 @@ public class ZipsTest {
 		}
 	}
 	
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfiguration")
 	public void testUnpackStream(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
 			try (InputStream zipStream = this.getClass().getResourceAsStream("/folder.zip")) {
@@ -383,7 +389,8 @@ public class ZipsTest {
 		}
 	}
 	
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfiguration")
 	public void testPackUnpackZip(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
 			Path path1 = createLoremIpsumFile(fs.getPath("folder", "t1", "Test1.java"), 3);
@@ -399,7 +406,8 @@ public class ZipsTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfiguration")
 	public void testPackJar(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
 			createLoremIpsumFile(fs.getPath("c", "Afolder", "t1", "Test1.java"), 3);
@@ -423,7 +431,8 @@ public class ZipsTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfiguration")
 	public void testPackUnPackJar(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf)) {	
 			createLoremIpsumFile(fs.getPath("c", "Afolder", "t1", "Test1.java"), 3);
@@ -434,7 +443,8 @@ public class ZipsTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfiguration")
 	public void testUnpackTarGz(Configuration conf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(conf); 
 			TarArchiveInputStream is = new TarArchiveInputStream(new GZIPInputStream(this.getClass().getResource("/test.tar.gz").openStream()))) {

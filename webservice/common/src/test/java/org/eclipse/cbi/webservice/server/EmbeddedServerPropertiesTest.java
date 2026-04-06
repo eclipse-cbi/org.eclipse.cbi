@@ -19,12 +19,13 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 import org.eclipse.cbi.webservice.util.PropertiesReader;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("javadoc")
 public class EmbeddedServerPropertiesTest {
@@ -37,11 +38,11 @@ public class EmbeddedServerPropertiesTest {
 		}
 	}
 
-	@Test(expected=IllegalStateException.class)
+	@Test
 	public void testEmptyPropertiesGetServicePathSpec() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			EmbeddedServerConfiguration propertiesReader = new EmbeddedServerProperties(new PropertiesReader(new Properties(), fs));
-			propertiesReader.getServicePathSpec();
+			assertThrows(IllegalStateException.class, () -> propertiesReader.getServicePathSpec());
 		}
 	}
 

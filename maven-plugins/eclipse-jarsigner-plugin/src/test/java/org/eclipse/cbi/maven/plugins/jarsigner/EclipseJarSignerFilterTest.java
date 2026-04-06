@@ -1,7 +1,7 @@
 package org.eclipse.cbi.maven.plugins.jarsigner;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -13,22 +13,18 @@ import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
 import org.eclipse.cbi.common.util.Paths;
 import org.eclipse.cbi.common.util.Zips;
 import org.eclipse.cbi.maven.common.test.util.NullMavenLog;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.theories.DataPoints;
-import org.junit.experimental.theories.Theories;
-import org.junit.experimental.theories.Theory;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 
-@RunWith(Theories.class)
 public class EclipseJarSignerFilterTest {
 
 	private static Log log;
 
-	@DataPoints
 	public static Configuration[] configurations() {
 		return new Configuration[] {
 				Configuration.unix(),
@@ -37,7 +33,7 @@ public class EclipseJarSignerFilterTest {
 		};
 	}
 
-	@BeforeClass
+	@BeforeAll
 	public static void beforeClass() {
 		log = new NullMavenLog();
 	}
@@ -47,7 +43,8 @@ public class EclipseJarSignerFilterTest {
 		assertFalse(new EclipseJarSignerFilter(log).shouldBeSigned(null));
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningTxtFile(Configuration fsConf) throws IOException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 			Path fileToSign = fs.getPath("testFile.txt");
@@ -56,7 +53,8 @@ public class EclipseJarSignerFilterTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningDeactivatedJar1(Configuration fsConf) throws IOException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 			Path jarToSign = createJarWithEclipseInf(fs.getPath("path").resolve("to").resolve("jarToSign.jar"), "jarprocessor.exclude=true");
@@ -64,7 +62,8 @@ public class EclipseJarSignerFilterTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningDeactivatedJar2(Configuration fsConf) throws IOException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 			Path jarToSign = createJarWithEclipseInf(fs.getPath("path").resolve("to").resolve("jarToSign.jar"), "jarprocessor.exclude.sign=true");
@@ -72,7 +71,8 @@ public class EclipseJarSignerFilterTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningDeactivatedJar3(Configuration fsConf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			Path jarToSign = createJarWithEclipseInf(fs.getPath("path").resolve("to").resolve("jarToSign.jar"), "jarprocessor.exclude.sign=true\n"
@@ -81,7 +81,8 @@ public class EclipseJarSignerFilterTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningDeactivatedJar4(Configuration fsConf) throws IOException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 			Path jarToSign = createJarWithEclipseInf(fs.getPath("path").resolve("to").resolve("jarToSign.jar"), "jarprocessor.exclude.sign=false\n"
@@ -90,7 +91,8 @@ public class EclipseJarSignerFilterTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningDeactivatedJar5(Configuration fsConf) throws IOException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 			Path jarToSign = createJarWithEclipseInf(fs.getPath("path").resolve("to").resolve("jarToSign.jar"), "jarprocessor.exclude.sign=true\n"
@@ -99,7 +101,8 @@ public class EclipseJarSignerFilterTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningDeactivatedJar6(Configuration fsConf) throws IOException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 			Path jarToSign = createJarWithEclipseInf(fs.getPath("path").resolve("to").resolve("jarToSign.jar"), "jarprocessor.exclude.sign=false");
@@ -107,7 +110,8 @@ public class EclipseJarSignerFilterTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningDeactivatedJar7(Configuration fsConf) throws IOException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 			Path jarToSign = createJarWithEclipseInf(fs.getPath("path").resolve("to").resolve("jarToSign.jar"), "jarprocessor.exclude=false");

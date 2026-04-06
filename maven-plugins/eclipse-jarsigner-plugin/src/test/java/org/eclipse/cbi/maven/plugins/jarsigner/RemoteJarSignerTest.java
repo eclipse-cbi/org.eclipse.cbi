@@ -1,6 +1,6 @@
 package org.eclipse.cbi.maven.plugins.jarsigner;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.net.URI;
@@ -16,22 +16,19 @@ import org.eclipse.cbi.common.util.Zips;
 import org.eclipse.cbi.maven.common.test.util.HttpClients;
 import org.eclipse.cbi.maven.common.test.util.NullMavenLog;
 import org.eclipse.cbi.maven.plugins.jarsigner.JarSigner.Options;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.theories.DataPoints;
-import org.junit.experimental.theories.Theories;
-import org.junit.experimental.theories.Theory;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 
-@RunWith(Theories.class)
 public class RemoteJarSignerTest {
 
 	private static Log log;
 
-	@DataPoints
 	public static Configuration[] configurations() {
 		return new Configuration[] {
 				Configuration.unix(),
@@ -40,12 +37,13 @@ public class RemoteJarSignerTest {
 		};
 	}
 
-	@BeforeClass
+	@BeforeAll
 	public static void beforeClass() {
 		log = new NullMavenLog();
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningSimpleJarFile(Configuration fsConf) throws IOException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 			JarSigner jarSigner = createJarSigner(HttpClients.DUMMY);
@@ -54,7 +52,8 @@ public class RemoteJarSignerTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningSimpleJarAbsoluteFile(Configuration fsConf) throws IOException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 			JarSigner jarSigner = createJarSigner(HttpClients.DUMMY);
@@ -63,18 +62,18 @@ public class RemoteJarSignerTest {
 		}
 	}
 
-	@Theory
-	@Test(expected=IOException.class)
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testNotSigningSimpleJarFile1(Configuration fsConf) throws IOException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 			JarSigner jarSigner = createJarSigner(HttpClients.ERROR);
 			Path jarToSign = createJar(fs.getPath("path").resolve("to").resolve("jarToSign.jar"));
-			jarSigner.sign(jarToSign, dummyOptions());
+			assertThrows(IOException.class, () -> jarSigner.sign(jarToSign, dummyOptions()));
 		}
 	}
 
-	@Theory
-	@Test
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testNotSigningSimpleJarFile2(Configuration fsConf) throws IOException {
 		try (FileSystem fs= Jimfs.newFileSystem(fsConf)) {
 			JarSigner jarSigner = createJarSigner(HttpClients.FAILING);

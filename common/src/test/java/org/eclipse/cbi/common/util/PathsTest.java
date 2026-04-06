@@ -12,33 +12,30 @@
  *******************************************************************************/
 package org.eclipse.cbi.common.util;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.junit.Test;
-import org.junit.experimental.theories.DataPoints;
-import org.junit.experimental.theories.Theories;
-import org.junit.experimental.theories.Theory;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 
-@RunWith(Theories.class)
 public class PathsTest {
 
-	@DataPoints
 	public static Configuration[] fsConfigurations() {
 		return new Configuration[] { Configuration.unix(), Configuration.osX(), Configuration.windows(), };
 	}
 
-	@Test(expected = NullPointerException.class)
-	public void testDeleteNullPath() throws IOException {
-		Paths.delete(null);
+	@Test
+	public void testDeleteNullPath() {
+		assertThrows(NullPointerException.class, () -> Paths.delete(null));
 	}
 
 	@Test
@@ -46,16 +43,17 @@ public class PathsTest {
 		Paths.deleteQuietly(null);
 	}
 
-	@Theory
-	@Test(expected = IOException.class)
+	@ParameterizedTest
+	@MethodSource("fsConfigurations")
 	public void testDeleteNonExistingFile(Configuration fsConf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			Path path = fs.getPath("test");
-			Paths.delete(path);
+			assertThrows(IOException.class, () -> Paths.delete(path));
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfigurations")
 	public void testQDeleteNonExistingFile(Configuration fsConf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			Path path = fs.getPath("test");
@@ -64,7 +62,8 @@ public class PathsTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfigurations")
 	public void testDeleteSimpleFile(Configuration fsConf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			Path path = fs.getPath("test");
@@ -74,7 +73,8 @@ public class PathsTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfigurations")
 	public void testQDeleteSimpleFile(Configuration fsConf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			Path path = fs.getPath("test");
@@ -84,7 +84,8 @@ public class PathsTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfigurations")
 	public void testDeleteDirectory(Configuration fsConf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			Path path = fs.getPath("test");
@@ -94,7 +95,8 @@ public class PathsTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfigurations")
 	public void testQDeleteDirectory(Configuration fsConf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			Path path = fs.getPath("test");
@@ -104,7 +106,8 @@ public class PathsTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfigurations")
 	public void testDeleteDirectories(Configuration fsConf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			Path path = sampleFileHierarchy(fs);
@@ -113,7 +116,8 @@ public class PathsTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("fsConfigurations")
 	public void testQDeleteDirectories(Configuration fsConf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			Path path = sampleFileHierarchy(fs);

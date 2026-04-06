@@ -1,9 +1,9 @@
 package org.eclipse.cbi.maven.common.http.apache;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -26,9 +26,10 @@ import org.eclipse.jetty.server.NetworkConnector;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
@@ -42,7 +43,7 @@ public class ApacheHttpClientTest {
 
 	private NullLog log;
 
-	@Before
+	@BeforeEach
 	public void before() {
 		log = new NullLog();
 	}
@@ -63,13 +64,13 @@ public class ApacheHttpClientTest {
 		}
 	}
 
-	@Test(expected = IOException.class)
+	@Test
 	public void testProcessOfflineServer() throws Exception {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			Path file = SampleFilesGenerators.createLoremIpsumFile(fs.getPath("/pathto/fileToProcess"), 10);
 			HttpClient client = ApacheHttpClient.create(log);
 			HttpRequest request = newRequest("localhost", 8080).withParam("file", file).build();
-			client.send(request, new FailTestOnError());
+			assertThrows(IOException.class, () -> client.send(request, new FailTestOnError()));
 		}
 	}
 
@@ -85,7 +86,7 @@ public class ApacheHttpClientTest {
 
 					@Override
 					public void onError(HttpResult error) throws IOException {
-						Assert.fail();
+						Assertions.fail();
 					}
 
 					@Override
@@ -170,7 +171,7 @@ public class ApacheHttpClientTest {
 	private static final class FailTestOnError implements CompletionListener {
 		@Override
 		public void onError(HttpResult error) throws IOException {
-			Assert.fail();
+			Assertions.fail();
 		}
 
 		@Override
@@ -186,7 +187,7 @@ public class ApacheHttpClientTest {
 
 		@Override
 		public void onSuccess(HttpResult result) throws IOException {
-			Assert.fail();
+			Assertions.fail();
 		}
 	}
 

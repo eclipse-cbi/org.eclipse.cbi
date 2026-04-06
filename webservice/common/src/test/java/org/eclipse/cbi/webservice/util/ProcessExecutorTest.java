@@ -12,12 +12,12 @@
  *******************************************************************************/
 package org.eclipse.cbi.webservice.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.google.common.collect.ImmutableList;
 

@@ -1,10 +1,10 @@
 package org.eclipse.cbi.maven.plugins.jarsigner;
 
 import static org.eclipse.cbi.maven.plugins.jarsigner.RemoteJarSignerTest.dummyOptions;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -21,8 +21,9 @@ import org.apache.maven.plugin.logging.Log;
 import org.eclipse.cbi.common.security.MessageDigestAlgorithm;
 import org.eclipse.cbi.maven.common.test.util.NullMavenLog;
 import org.eclipse.cbi.maven.plugins.jarsigner.JarSigner.Options;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
@@ -31,7 +32,7 @@ public class JarResignerTest {
 
 	private static Log log;
 	
-	@BeforeClass
+	@BeforeAll
 	public static void beforeClass() {
 		log = new NullMavenLog();
 	}
@@ -53,11 +54,11 @@ public class JarResignerTest {
 		}
 	}
 	
-	@Test(expected = IllegalStateException.class)
+	@Test
 	public void testThrowException() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			Path jar = copyResource("/unsigned.jar", fs.getPath("/unsigned.jar"));
-			((JarResigner) JarResigner.throwException(new DummyJarSigner(), log)).resign(jar, dummyOptions());
+			assertThrows(IllegalStateException.class, () -> ((JarResigner) JarResigner.throwException(new DummyJarSigner(), log)).resign(jar, dummyOptions()));
 		}
 	}
 	
@@ -89,11 +90,11 @@ public class JarResignerTest {
 		}
 	}
 	
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void testGetDigestAlgorithmToReuseEmpty() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			Path unsigned = copyResource("/unsigned.jar", fs.getPath("/unsigned.jar"));
-			JarResigner.getDigestAlgorithmToReuse(unsigned);
+			assertThrows(IllegalArgumentException.class, () -> JarResigner.getDigestAlgorithmToReuse(unsigned));
 		}
 	}
 	
@@ -108,11 +109,11 @@ public class JarResignerTest {
 		}
 	}
 	
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void testGetDigestAlgorithmToReuseTooMany() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			Path signed_sha1_sha256 = copyResource("/signed-sha1-sha256.jar", fs.getPath("/signed-sha1-sha256.jar"));
-			JarResigner.getDigestAlgorithmToReuse(signed_sha1_sha256);
+			assertThrows(IllegalArgumentException.class, () -> JarResigner.getDigestAlgorithmToReuse(signed_sha1_sha256));
 		}
 	}
 	
@@ -157,12 +158,12 @@ public class JarResignerTest {
 		}
 	}
 	
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void testOverwriteWithSameDigestAlgStrategyOnUnsignerd() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			Path unsigned = copyResource("/unsigned.jar", fs.getPath("/unsigned.jar"));
 			JarResigner jarResigner = (JarResigner)JarResigner.overwriteWithSameDigestAlgorithm(new DummyJarSigner(), log);
-			jarResigner.resign(unsigned, options(MessageDigestAlgorithm.MD5));
+			assertThrows(IllegalArgumentException.class, () -> jarResigner.resign(unsigned, options(MessageDigestAlgorithm.MD5)));
 		}
 	}
 	
@@ -194,13 +195,12 @@ public class JarResignerTest {
 		}
 	}
 	
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void testOverwriteWithSameDigestAlgStrategyOnDoubleSigned() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			Path signed_sha1_sha256 = copyResource("/signed-sha1-sha256.jar", fs.getPath("/signed-sha1-sha256.jar"));
 			JarResigner jarResigner = (JarResigner)JarResigner.overwriteWithSameDigestAlgorithm(new DummyJarSigner(), log);
-			
-			jarResigner.resign(signed_sha1_sha256, options(MessageDigestAlgorithm.MD5));
+			assertThrows(IllegalArgumentException.class, () -> jarResigner.resign(signed_sha1_sha256, options(MessageDigestAlgorithm.MD5)));
 		}
 	}
 	
@@ -237,12 +237,12 @@ public class JarResignerTest {
 		}
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void testResignWithSameDigestAlgStrategyOnUnsigned() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			Path unsigned = copyResource("/unsigned.jar", fs.getPath("/unsigned.jar"));
 			JarResigner jarResigner = (JarResigner)JarResigner.resignWithSameDigestAlgorithm(new DummyJarSigner(), log);
-			jarResigner.resign(unsigned, options(MessageDigestAlgorithm.MD5));
+			assertThrows(IllegalArgumentException.class, () -> jarResigner.resign(unsigned, options(MessageDigestAlgorithm.MD5)));
 		}
 	}
 	
@@ -270,12 +270,12 @@ public class JarResignerTest {
 		}
 	}
 	
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void testResignWithSameDigestAlgStrategyOnDoubleSigned() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			Path signed = copyResource("/signed-sha1-sha256.jar", fs.getPath("/signed-sha1-sha256.jar"));
 			JarResigner jarResigner = (JarResigner)JarResigner.resignWithSameDigestAlgorithm(new DummyJarSigner(), log);
-			jarResigner.resign(signed, options(MessageDigestAlgorithm.MD5));
+			assertThrows(IllegalArgumentException.class, () -> jarResigner.resign(signed, options(MessageDigestAlgorithm.MD5)));
 		}
 	}
 	

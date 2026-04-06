@@ -13,15 +13,15 @@
 package org.eclipse.cbi.webservice.util;
 
 import static java.lang.String.format;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
 import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.google.common.jimfs.Jimfs;
 
@@ -57,7 +57,7 @@ public class PropertiesReaderTest {
 			final Path relative = fs.getPath("relative");
 			final Path absolute = fs.getPath("/absolute");
 
-			assertNotEquals("Test is flawed!", relative.toAbsolutePath(), relative);
+			assertNotEquals(relative.toAbsolutePath(), relative, "Test is flawed!");
 
 			Path propertiesFile = SampleFilesGenerators.writeFile(fs.getPath("test.properties"),format( "path1=%s\npath2=%s", relative, absolute));
 			PropertiesReader properties = PropertiesReader.create(propertiesFile);

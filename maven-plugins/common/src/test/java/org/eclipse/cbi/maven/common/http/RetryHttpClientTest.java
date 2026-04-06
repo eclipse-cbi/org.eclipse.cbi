@@ -1,6 +1,6 @@
 package org.eclipse.cbi.maven.common.http;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.net.URI;
@@ -14,24 +14,25 @@ import org.eclipse.cbi.maven.http.HttpRequest;
 import org.eclipse.cbi.maven.http.HttpRequest.Config;
 import org.eclipse.cbi.maven.http.HttpResult;
 import org.eclipse.cbi.maven.http.RetryHttpClient;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class RetryHttpClientTest {
 
-	@Test(expected=IllegalArgumentException.class)
-	public void testRetryNegativeTimes() throws Exception {
-		RetryHttpClient.retryRequestOn(HttpClients.DUMMY).maxRetries(-1).waitBeforeRetry(1, TimeUnit.SECONDS).log(new NullLog()).build();
+	@Test
+	public void testRetryNegativeTimes() {
+		assertThrows(IllegalArgumentException.class, () -> RetryHttpClient.retryRequestOn(HttpClients.DUMMY).maxRetries(-1).waitBeforeRetry(1, TimeUnit.SECONDS).log(new NullLog()).build());
 	}
 
-	@Test(expected=IllegalArgumentException.class)
-	public void testRetryNegativeInterval() throws Exception {
-		RetryHttpClient.retryRequestOn(HttpClients.DUMMY).maxRetries(5).waitBeforeRetry(-1, TimeUnit.SECONDS).log(new NullLog()).build();
+	@Test
+	public void testRetryNegativeInterval() {
+		assertThrows(IllegalArgumentException.class, () -> RetryHttpClient.retryRequestOn(HttpClients.DUMMY).maxRetries(5).waitBeforeRetry(-1, TimeUnit.SECONDS).log(new NullLog()).build());
 	}
 
-	@Test(expected=NullPointerException.class)
-	public void testRetryNullUnit() throws Exception {
-		RetryHttpClient.retryRequestOn(HttpClients.DUMMY).maxRetries(3).waitBeforeRetry(1, null).log(new NullLog()).build();
+	@Test
+	public void testRetryNullUnit() {
+		assertThrows(NullPointerException.class, () -> RetryHttpClient.retryRequestOn(HttpClients.DUMMY).maxRetries(3).waitBeforeRetry(1, null).log(new NullLog()).build());
 	}
 	
 	@Test
@@ -43,19 +44,19 @@ public class RetryHttpClientTest {
 			client.send(HttpRequest.on(URI.create("locahost")).build(), new CompletionListener() {
 				@Override
 				public void onError(HttpResult error) throws IOException {
-					Assert.fail();
+					Assertions.fail();
 				}
 				
 				@Override
 				public void onSuccess(HttpResult result) throws IOException {
-					Assert.fail();
+					Assertions.fail();
 				}
 			});
 		} catch (IOException e) {
 			assertEquals(4, countingClient.count());
 			return;
 		}
-		Assert.fail();
+		Assertions.fail();
 	}
 	
 	@Test
@@ -66,12 +67,12 @@ public class RetryHttpClientTest {
 		client.send(HttpRequest.on(URI.create("locahost")).build(), new CompletionListener() {
 			@Override
 			public void onError(HttpResult error) throws IOException {
-				Assert.fail();
+				Assertions.fail();
 			}
 			
 			@Override
 			public void onSuccess(HttpResult result) throws IOException {
-				Assert.fail();
+				Assertions.fail();
 			}
 		});
 		assertEquals(4, countingClient.count());

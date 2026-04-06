@@ -12,7 +12,8 @@
  *******************************************************************************/
 package org.eclipse.cbi.webservice.servlet;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayInputStream;
@@ -26,43 +27,43 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.Part;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.google.common.jimfs.Jimfs;
 
 @SuppressWarnings("javadoc")
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RequestFacadeTest {
 
 	@Mock HttpServletRequest request;
 	@Mock Part part;
 
-	@Test(expected=NullPointerException.class)
+	@Test
 	public void testNullTempFolder() {
-		RequestFacade.builder(null).request(request).build();
+		assertThrows(NullPointerException.class, () -> RequestFacade.builder(null).request(request).build());
 	}
 
-	@Test(expected=IllegalStateException.class)
+	@Test
 	public void testNonExistingTempFolder() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem()) {
-			RequestFacade.builder(fs.getRootDirectories().iterator().next().resolve("tmp")).request(request).build();
+			assertThrows(IllegalStateException.class, () -> RequestFacade.builder(fs.getRootDirectories().iterator().next().resolve("tmp")).request(request).build());
 		}
 	}
 
-	@Test(expected=IllegalStateException.class)
+	@Test
 	public void testPlainFileTempFolder() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem()) {
-			RequestFacade.builder(Files.createFile(fs.getRootDirectories().iterator().next().resolve("tmp"))).request(request).build();
+			assertThrows(IllegalStateException.class, () -> RequestFacade.builder(Files.createFile(fs.getRootDirectories().iterator().next().resolve("tmp"))).request(request).build());
 		}
 	}
 
-	@Test(expected=NullPointerException.class)
+	@Test
 	public void testNullRequest() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem()) {
-			RequestFacade.builder(Files.createDirectory(fs.getRootDirectories().iterator().next().resolve("tmp"))).request(null).build();
+			assertThrows(NullPointerException.class, () -> RequestFacade.builder(Files.createDirectory(fs.getRootDirectories().iterator().next().resolve("tmp"))).request(null).build());
 		}
 	}
 

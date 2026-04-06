@@ -1,8 +1,8 @@
 package org.eclipse.cbi.maven.plugins.winsigner;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.net.URI;
@@ -23,19 +23,16 @@ import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
 import org.eclipse.cbi.maven.ExceptionHandler;
 import org.eclipse.cbi.maven.common.test.util.HttpClients;
 import org.eclipse.cbi.maven.common.test.util.NullMavenLog;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.theories.DataPoints;
-import org.junit.experimental.theories.Theories;
-import org.junit.experimental.theories.Theory;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@RunWith(Theories.class)
 public class WindowsExeSignerTest {
 
 	private static Log log;
 
-	@DataPoints
 	public static Configuration[] configurations() {
 		return new Configuration[] {
 				Configuration.unix(),
@@ -44,36 +41,37 @@ public class WindowsExeSignerTest {
 		};
 	}
 
-	@BeforeClass
+	@BeforeAll
 	public static void beforeClass() {
 		log = new NullMavenLog();
 	}
 
-	@Test(expected=NullPointerException.class)
-	public void testSigningNullFiles() throws MojoExecutionException {
+	@Test
+	public void testSigningNullFiles() {
 		WindowsExeSigner winExeSigner = createSigner(HttpClients.DUMMY);
-		winExeSigner.signExecutable(null);
+		assertThrows(NullPointerException.class, () -> winExeSigner.signExecutable(null));
 	}
 
-	@Theory
-	@Test(expected=MojoExecutionException.class)
-	public void testSigningNonExistingFile(Configuration fsConf) throws MojoExecutionException, IOException {
+	@ParameterizedTest
+	@MethodSource("configurations")
+	public void testSigningNonExistingFile(Configuration fsConf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			WindowsExeSigner winExeSigner = createSigner(HttpClients.DUMMY);
-			winExeSigner.signExecutable(fs.getPath("test"));
+			assertThrows(MojoExecutionException.class, () -> winExeSigner.signExecutable(fs.getPath("test")));
 		}
 	}
 
-	@Theory
-	@Test(expected=MojoExecutionException.class)
-	public void testSigningFolder(Configuration fsConf) throws MojoExecutionException, IOException {
+	@ParameterizedTest
+	@MethodSource("configurations")
+	public void testSigningFolder(Configuration fsConf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			WindowsExeSigner winExeSigner = createSigner(HttpClients.DUMMY);
-			winExeSigner.signExecutable(Files.createDirectories(fs.getPath("test")));
+			assertThrows(MojoExecutionException.class, () -> winExeSigner.signExecutable(Files.createDirectories(fs.getPath("test"))));
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningFile(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			WindowsExeSigner winExeSigner = createSigner(HttpClients.DUMMY);
@@ -82,17 +80,18 @@ public class WindowsExeSignerTest {
 		}
 	}
 
-	@Theory
-	@Test(expected=MojoExecutionException.class)
-	public void testSigningFileWithNotSigningSigner(Configuration fsConf) throws MojoExecutionException, IOException {
+	@ParameterizedTest
+	@MethodSource("configurations")
+	public void testSigningFileWithNotSigningSigner(Configuration fsConf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			WindowsExeSigner winExeSigner = createSigner(HttpClients.FAILING);
 			Path path = SampleFilesGenerators.writeFile(fs.getPath("path").resolve("to").resolve("file.txt"), "content of the file");
-			assertFalse(winExeSigner.signExecutable(path));
+			assertThrows(MojoExecutionException.class, () -> winExeSigner.signExecutable(path));
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningFileWithNotSigningSignerButContinueOnFail(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			WindowsExeSigner winExeSigner = createSigner(HttpClients.FAILING, true);
@@ -101,17 +100,18 @@ public class WindowsExeSignerTest {
 		}
 	}
 
-	@Theory
-	@Test(expected=MojoExecutionException.class)
-	public void testSigningFileWithErrorSigner(Configuration fsConf) throws MojoExecutionException, IOException {
+	@ParameterizedTest
+	@MethodSource("configurations")
+	public void testSigningFileWithErrorSigner(Configuration fsConf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			WindowsExeSigner winExeSigner = createSigner(HttpClients.ERROR);
 			Path path = SampleFilesGenerators.writeFile(fs.getPath("path").resolve("to").resolve("file.txt"), "content of the file");
-			assertFalse(winExeSigner.signExecutable(path));
+			assertThrows(MojoExecutionException.class, () -> winExeSigner.signExecutable(path));
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningFileWithErrorSignerButContinueOnFail(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			WindowsExeSigner winExeSigner = createSigner(HttpClients.ERROR, true);
@@ -120,7 +120,8 @@ public class WindowsExeSignerTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningFiles(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			WindowsExeSigner winExeSigner = createSigner(HttpClients.DUMMY);
@@ -129,7 +130,8 @@ public class WindowsExeSignerTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningFiles2(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			WindowsExeSigner winExeSigner = createSigner(HttpClients.DUMMY);
@@ -138,7 +140,8 @@ public class WindowsExeSignerTest {
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningMsiAndDll(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			WindowsExeSigner winExeSigner = createSigner(HttpClients.DUMMY);
@@ -147,17 +150,18 @@ public class WindowsExeSignerTest {
 		}
 	}
 
-	@Theory
-	@Test(expected=MojoExecutionException.class)
-	public void testSigningFiles3(Configuration fsConf) throws MojoExecutionException, IOException {
+	@ParameterizedTest
+	@MethodSource("configurations")
+	public void testSigningFiles3(Configuration fsConf) throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			WindowsExeSigner winExeSigner = createSigner(HttpClients.DUMMY);
 			Path baseDir = createTestAppFolders(fs.getPath("test"));
-			winExeSigner.signExecutables(newSet(baseDir.resolve("app1.exe"), baseDir.resolve("subFolder/appX.exe")));
+			assertThrows(MojoExecutionException.class, () -> winExeSigner.signExecutables(newSet(baseDir.resolve("app1.exe"), baseDir.resolve("subFolder/appX.exe"))));
 		}
 	}
 
-	@Theory
+	@ParameterizedTest
+	@MethodSource("configurations")
 	public void testSigningFiles3ButContinueOnFail(Configuration fsConf) throws MojoExecutionException, IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(fsConf)) {
 			WindowsExeSigner winExeSigner = createSigner(HttpClients.DUMMY, true);

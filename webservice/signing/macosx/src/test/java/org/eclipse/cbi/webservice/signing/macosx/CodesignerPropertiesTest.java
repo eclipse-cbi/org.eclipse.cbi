@@ -1,6 +1,6 @@
 package org.eclipse.cbi.webservice.signing.macosx;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -13,32 +13,33 @@ import com.google.common.jimfs.Jimfs;
 
 import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
 import org.eclipse.cbi.webservice.util.PropertiesReader;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings("javadoc")
 public class CodesignerPropertiesTest {
 
-	@Test(expected=IllegalStateException.class)
+	@Test
 	public void testEmptyPropertiesgetIdentityApplication() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			CodesignerProperties propertiesReader = new CodesignerProperties(new PropertiesReader(new Properties(), fs));
-			propertiesReader.getIdentityApplication();
+			assertThrows(IllegalStateException.class, () -> propertiesReader.getIdentityApplication());
 		}
 	}
 
-	@Test(expected=IllegalStateException.class)
+	@Test
 	public void testEmptyPropertiesGetKeychain() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			CodesignerProperties propertiesReader = new CodesignerProperties(new PropertiesReader(new Properties(), fs));
-			propertiesReader.getKeychain();
+			assertThrows(IllegalStateException.class, () -> propertiesReader.getKeychain());
 		}
 	}
 
-	@Test(expected=IllegalStateException.class)
+	@Test
 	public void testEmptyPropertiesGetKeychainPassword() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			CodesignerProperties propertiesReader = new CodesignerProperties(new PropertiesReader(new Properties(), fs));
-			propertiesReader.getKeychainPassword();
+			assertThrows(IllegalStateException.class, () -> propertiesReader.getKeychainPassword());
 		}
 	}
 
@@ -61,19 +62,19 @@ public class CodesignerPropertiesTest {
 		}
 	}
 
-	@Test(expected=IllegalStateException.class)
+	@Test
 	public void testGetNonExistingKeychain() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			CodesignerProperties propertiesReader = new CodesignerProperties(new PropertiesReader(createTestProperties(), fs));
-			propertiesReader.getKeychain();
+			assertThrows(IllegalStateException.class, () -> propertiesReader.getKeychain());
 		}
 	}
 
-	@Test(expected=IllegalStateException.class)
+	@Test
 	public void testNonExistingGetKeychainPassword() throws IOException {
 		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 			CodesignerProperties propertiesReader = new CodesignerProperties(new PropertiesReader(createTestProperties(), fs));
-			propertiesReader.getKeychainPassword();
+			assertThrows(IllegalStateException.class, () -> propertiesReader.getKeychainPassword());
 		}
 	}
 

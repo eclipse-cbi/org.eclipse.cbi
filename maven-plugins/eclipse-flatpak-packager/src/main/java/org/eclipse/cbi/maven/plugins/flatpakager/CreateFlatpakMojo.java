@@ -33,11 +33,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -413,7 +414,7 @@ public class CreateFlatpakMojo extends AbstractMojo {
 	@Parameter(defaultValue = "${session}", required = true, readonly = true)
 	private MavenSession session;
 
-	@Component
+	@Inject
 	private ArtifactResolver artifactResolver;
 
 	@Override

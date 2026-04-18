@@ -288,8 +288,8 @@
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
-        <artifactId>bcpg-jdk15on</artifactId>
-        <version>1.70</version>
+        <artifactId>bcpg-jdk18on</artifactId>
+        <version>1.84</version>
       </dependency>
 
       <dependency>

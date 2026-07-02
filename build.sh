@@ -113,9 +113,9 @@ build() {
 # Push all changes made to the pom and the release tag
 push_release() {
   if [ "${DRY_RUN}" = true ]; then
-    >&2 echo "DRY RUN: git push origin \"v${RELEASE_VERSION}\""
-  else 
-    git push origin "v${RELEASE_VERSION}"
+    >&2 echo "DRY RUN: git push --atomic origin \"HEAD:${GIT_BRANCH}\" \"v${RELEASE_VERSION}\""
+  else
+    git push --atomic origin "HEAD:${GIT_BRANCH}" "v${RELEASE_VERSION}"
   fi
 }
 

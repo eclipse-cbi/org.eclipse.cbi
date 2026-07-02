@@ -110,7 +110,12 @@ build() {
   fi
 }
 
-# Push all changes made to the pom and the release tag
+# Atomically push everything to the remote as the very last release step:
+# the release commit, the release tag and the next development commit. Doing
+# this last (and only once) avoids triggering a webhook build that would abort
+# the still-running release build (disableConcurrentBuilds(abortPrevious: true)).
+# At this point HEAD is the next development commit and the tag points at HEAD~1
+# (the release commit).
 push_release() {
   if [ "${DRY_RUN}" = true ]; then
     >&2 echo "DRY RUN: git push --atomic origin \"HEAD:${GIT_BRANCH}\" \"v${RELEASE_VERSION}\""
@@ -128,6 +133,9 @@ deploy() {
   fi
 }
 
+# Set the next development (SNAPSHOT) version and commit it locally. The commit
+# is not pushed here; push_release publishes it together with the release commit
+# and tag as the last release step.
 prepare_next_dev() {
   # clean and prepare for next iteration
   git-clean-reset
@@ -135,12 +143,10 @@ prepare_next_dev() {
   if [ "${DRY_RUN}" = true ]; then
     >&2 echo "DRY RUN: git add --all"
     >&2 echo "DRY RUN: git commit -m \"Prepare for next development iteration (${GROUP_ID}:${ARTIFACT_ID}:${NEXT_DEVELOPMENT_VERSION})\""
-    >&2 echo "DRY RUN: git push origin \"HEAD:${GIT_BRANCH}\""
   else
     # commit next iteration changes
     >&2 git add --all
     >&2 git commit -m "Prepare for next development iteration (${GROUP_ID}:${ARTIFACT_ID}:${NEXT_DEVELOPMENT_VERSION})"
-    >&2 git push origin "HEAD:${GIT_BRANCH}"
   fi
 }
 
@@ -157,14 +163,14 @@ main() {
   echo "Build"
   build
   echo
-  echo "Push tag to repository"
-  push_release
-  echo
   echo "Deploy"
   deploy
   echo
-  echo "Prepare and push next development cycle"
+  echo "Prepare next development cycle"
   prepare_next_dev
+  echo
+  echo "Push release and next development to repository"
+  push_release
 }
 
 "${@}"

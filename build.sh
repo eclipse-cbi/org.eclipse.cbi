@@ -135,12 +135,12 @@ prepare_next_dev() {
   if [ "${DRY_RUN}" = true ]; then
     >&2 echo "DRY RUN: git add --all"
     >&2 echo "DRY RUN: git commit -m \"Prepare for next development iteration (${GROUP_ID}:${ARTIFACT_ID}:${NEXT_DEVELOPMENT_VERSION})\""
-    >&2 echo "DRY RUN: git push origin \"${GIT_BRANCH}\""
+    >&2 echo "DRY RUN: git push origin \"HEAD:${GIT_BRANCH}\""
   else
     # commit next iteration changes
     >&2 git add --all
     >&2 git commit -m "Prepare for next development iteration (${GROUP_ID}:${ARTIFACT_ID}:${NEXT_DEVELOPMENT_VERSION})"
-    >&2 git push origin "${GIT_BRANCH}"
+    >&2 git push origin "HEAD:${GIT_BRANCH}"
   fi
 }
 

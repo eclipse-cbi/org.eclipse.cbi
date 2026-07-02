@@ -54,7 +54,7 @@ SERVICE_JSON=$(jsonnet \
 # Build & push docker image
 echo
 echo "Build & push docker image..."
-jq -r '.Dockerfile' <<<"${SERVICE_JSON}" | docker build --pull --rm -t "$(jq -r '.docker.image' <<<"${SERVICE_JSON}")" -f - "$(dirname "${SERVICE_JSON_FILE}")"
+jq -r '.Dockerfile' <<<"${SERVICE_JSON}" | docker build --platform linux/amd64 --pull --rm -t "$(jq -r '.docker.image' <<<"${SERVICE_JSON}")" -f - "$(dirname "${SERVICE_JSON_FILE}")"
 docker push "$(jq -r '.docker.image' <<<"${SERVICE_JSON}")"
 
 # Execute pre-deploy script

@@ -11,13 +11,13 @@ jarsigner.newDeployment("jar-signing", std.extVar("artifactId"), std.extVar("ver
       filename: "gcloud-credentials.json",
     },
     keyRing: "projects/hsm-codesigning/locations/global/keyRings/eclipse_org",
-    defaultAlias: "codesigning-key/cryptoKeyVersions/1:RSA",
+    defaultAlias: "codesigning-key/cryptoKeyVersions/2:RSA",
     entries: [
       {
         name: "eclipse.org",
         certificates: [
-          { pass: "IT/CBI/PKI/codesigning/eclipse.org.crt-2024-2025-KMS", },
-          { pass: "IT/CBI/PKI/codesigning/digicert-codesigning.crt-2024-2026", },
+          { pass: "IT/CBI/PKI/codesigning/eclipse.org.crt-2026-2027-KMS", },
+          { pass: "IT/CBI/PKI/codesigning/digicert-codesigning.crt", },
           { pass: "IT/CBI/PKI/codesigning/digicert-root.crt", },
         ],
       },

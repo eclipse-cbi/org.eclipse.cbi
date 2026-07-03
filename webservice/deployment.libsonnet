@@ -4,7 +4,7 @@ local newDeployment(name, artifactId, version) = {
   groupId: "org.eclipse.cbi",
   artifactId: artifactId,
   mavenRepoURL: "repo.eclipse.org",
-  mavenRepoName: "cbi",
+  mavenRepoName: "cbi-maven2-releases",
   port: 8080,
   docker: {
     registry: "docker.io",
@@ -224,8 +224,15 @@ local newDeployment(name, artifactId, version) = {
     FROM %(from)s
 
     RUN mkdir -p /usr/local/%(name)s/ \
-      && curl -sSLf -o /usr/local/%(name)s/%(artifactId)s-%(version)s.jar "https://%(mavenRepoURL)s/service/local/artifact/maven/content?r=%(mavenRepoName)s&g=%(groupId)s&a=%(artifactId)s&v=%(version)s"
-
+      && curl -G -sSLf "https://%(mavenRepoURL)s/service/rest/v1/search/assets" \
+        -d repository=%(mavenRepoName)s \
+        -d maven.groupId=%(groupId)s \
+        -d maven.artifactId=%(artifactId)s \
+        -d maven.baseVersion=%(version)s \
+        -d maven.extension=jar \
+      | grep -Po '"downloadUrl" : "\K.+(?=",)' \
+      | xargs curl -sSLf -o /usr/local/%(name)s/%(artifactId)s-%(version)s.jar
+    
     RUN mkdir -p /opt/java/openjdk11 \
       && cd /opt/java/openjdk11 \
       && curl -L -o temurin11.tar.gz 'https://api.adoptium.net/v3/binary/latest/11/ga/linux/x64/jdk/hotspot/normal/eclipse?project=jdk' \

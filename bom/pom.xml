@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.eclipse.cbi</groupId>
     <artifactId>cbi-parent</artifactId>
-    <version>1.5.5-SNAPSHOT</version>
+    <version>1.5.8-SNAPSHOT</version>
   </parent>
 
   <artifactId>cbi-bom</artifactId>
@@ -15,9 +15,9 @@
     <jetty-version>11.0.26</jetty-version>
     <auto-value.version>1.11.1</auto-value.version> <!-- also defined in parent pom for annotation processor -->
     <apache-httpclient-version>4.5.14</apache-httpclient-version>
-    <maven-api-version>3.9.15</maven-api-version>
-    <jackson.version>2.21.3</jackson.version>
-    <jackson.annotation.version>2.21</jackson.annotation.version>
+    <maven-api-version>3.9.16</maven-api-version>
+    <jackson.version>2.22.0</jackson.version>
+    <jackson.annotation.version>2.22</jackson.annotation.version>
   </properties>
 
   <dependencyManagement>
@@ -176,7 +176,7 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-reload4j</artifactId>
-        <version>2.0.17</version>
+        <version>2.0.18</version>
       </dependency>
       <dependency>
         <groupId>ch.qos.reload4j</groupId>
@@ -205,7 +205,7 @@
       <dependency>
         <groupId>org.eclipse.tycho</groupId>
         <artifactId>tycho-core</artifactId>
-        <version>5.0.2</version>
+        <version>5.0.3</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven</groupId>
@@ -225,7 +225,7 @@
       <dependency>
         <groupId>org.slf4j</groupId> <!-- Required dependency convergence enforcer rule -->
         <artifactId>slf4j-api</artifactId>
-        <version>2.0.17</version>
+        <version>2.0.18</version>
       </dependency>
       <dependency>
         <groupId>commons-io</groupId> <!-- Required dependency convergence enforcer rule -->
@@ -300,7 +300,7 @@
       <dependency>
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-annotations</artifactId>
-        <version>4.9.8</version>
+        <version>4.10.2</version>
       </dependency>
 
       <!-- Signing using Google KMS -->
@@ -317,14 +317,14 @@
       <dependency>
         <groupId>com.google.auth</groupId>
         <artifactId>google-auth-library-oauth2-http</artifactId>
-        <version>1.47.0</version>
+        <version>1.48.0</version>
       </dependency>
 
       <!-- Dependency scope: test -->
       <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter</artifactId>
-        <version>6.0.3</version>
+        <version>6.1.1</version>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>

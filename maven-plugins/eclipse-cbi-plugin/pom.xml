@@ -20,7 +20,7 @@
   <parent>
     <groupId>org.eclipse.cbi.maven.plugins</groupId>
     <artifactId>maven-plugin-parent</artifactId>
-    <version>1.5.5-SNAPSHOT</version>
+    <version>1.5.8-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   
@@ -42,7 +42,7 @@
     <dependency>
         <groupId>org.eclipse.platform</groupId>
         <artifactId>org.eclipse.osgi</artifactId>
-        <version>3.24.100</version>
+        <version>3.24.200</version>
     </dependency>
         <dependency>
         <groupId>de.pdark</groupId>

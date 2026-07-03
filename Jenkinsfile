@@ -65,19 +65,6 @@ pipeline {
       }
     }
 
-    stage('Push tag to repository') {
-      when {
-        expression {
-          env.BRANCH_NAME == 'main' && params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != ''
-        }
-      }
-      steps {
-        sshagent(['github-bot-ssh']) {
-            sh './build.sh push_release "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"'
-        }
-      }
-    }
-
     stage('Deploy') {
       when {
         expression {
@@ -89,7 +76,22 @@ pipeline {
       }
     }
 
-    stage('Prepare and push next development cycle') {
+    stage('Prepare next development cycle') {
+      when {
+        expression {
+          env.BRANCH_NAME == 'main' && params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != ''
+        }
+      }
+      steps {
+        sh './build.sh prepare_next_dev "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"'
+      }
+    }
+
+    // Push everything (release commit, release tag and next development commit)
+    // atomically as the very last stage. Pushing earlier would trigger a webhook
+    // build that aborts this still-running release build
+    // (disableConcurrentBuilds(abortPrevious: true)).
+    stage('Push release and next development to repository') {
       when {
         expression {
           env.BRANCH_NAME == 'main' && params.RELEASE_VERSION != '' && params.NEXT_DEVELOPMENT_VERSION != ''
@@ -97,7 +99,7 @@ pipeline {
       }
       steps {
         sshagent(['github-bot-ssh']) {
-            sh './build.sh prepare_next_dev "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"'
+            sh './build.sh push_release "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"'
         }
       }
     }

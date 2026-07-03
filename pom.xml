@@ -3,7 +3,7 @@
 
   <groupId>org.eclipse.cbi</groupId>
   <artifactId>cbi-parent</artifactId>
-  <version>1.5.5-SNAPSHOT</version>
+  <version>1.5.8-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <url>https://wiki.eclipse.org/CBI</url>
@@ -92,7 +92,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-site-plugin</artifactId>
-          <version>3.21.0</version>
+          <version>3.22.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -125,7 +125,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.6.2</version>
+        <version>3.6.3</version>
         <executions>
           <execution>
             <id>cbi-enforcer-rules</id>

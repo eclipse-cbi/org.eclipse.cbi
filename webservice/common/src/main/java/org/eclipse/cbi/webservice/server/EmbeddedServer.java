@@ -28,10 +28,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.apache.log4j.PropertyConfigurator;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.DefaultHandler;
-import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.server.handler.RequestLogHandler;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.ee9.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee9.servlet.ServletHolder;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
@@ -262,8 +260,6 @@ public abstract class EmbeddedServer {
 		contextHandler.addServlet(createHeartbeatServlet(), "/heartbeat");
 		contextHandler.addServlet(createVersionServlet(), "/version");
 
-		RequestLogHandler requestLogHandler = new RequestLogHandler();
-
 		final RequestLog.Writer logWriter;
 		if (accessLogFile() != null) {
 			RequestLogWriter myLogWriter = new RequestLogWriter(accessLogFile().toString());
@@ -279,14 +275,12 @@ public abstract class EmbeddedServer {
 		// do not log requests for the heartbeat servlet
 		requestLog.setIgnorePaths(new String[] {"/heartbeat"});
 
-		requestLogHandler.setRequestLog(requestLog);
+		server.setRequestLog(requestLog);
 
-		HandlerCollection handlers = new HandlerCollection();
-		handlers.setHandlers(new Handler[] {
-				contextHandler,
-				new DefaultHandler(),
-				requestLogHandler
-		});
+		Handler.Sequence handlers = new Handler.Sequence(
+				contextHandler.get(),
+				new DefaultHandler()
+		);
 		server.setHandler(handlers);
 
 		server.start();

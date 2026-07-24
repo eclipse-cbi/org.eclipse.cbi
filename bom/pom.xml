@@ -12,7 +12,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jetty-version>11.0.26</jetty-version>
+    <jetty-version>12.0.37</jetty-version>
     <auto-value.version>1.11.1</auto-value.version> <!-- also defined in parent pom for annotation processor -->
     <apache-httpclient-version>4.5.14</apache-httpclient-version>
     <maven-api-version>3.9.16</maven-api-version>
@@ -169,8 +169,8 @@
         <version>${jetty-version}</version>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-servlet</artifactId>
+        <groupId>org.eclipse.jetty.ee9</groupId>
+        <artifactId>jetty-ee9-servlet</artifactId>
         <version>${jetty-version}</version>
       </dependency>
       <dependency>

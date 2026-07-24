@@ -77,5 +77,10 @@
       <artifactId>jetty-server</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty.ee9</groupId>
+      <artifactId>jetty-ee9-servlet</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

@@ -26,10 +26,10 @@ import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.http.MimeTypes;
-import org.eclipse.jetty.server.Dispatcher;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.server.handler.ErrorHandler;
+import org.eclipse.jetty.ee9.nested.Dispatcher;
+import org.eclipse.jetty.ee9.nested.Request;
+import org.eclipse.jetty.ee9.nested.Response;
+import org.eclipse.jetty.ee9.nested.ErrorHandler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

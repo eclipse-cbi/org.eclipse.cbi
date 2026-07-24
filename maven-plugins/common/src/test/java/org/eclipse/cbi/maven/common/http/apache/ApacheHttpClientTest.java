@@ -3,6 +3,7 @@ package org.eclipse.cbi.maven.common.http.apache;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
@@ -20,16 +21,16 @@ import org.eclipse.cbi.maven.http.HttpRequest;
 import org.eclipse.cbi.maven.http.HttpRequest.Builder;
 import org.eclipse.cbi.maven.http.HttpResult;
 import org.eclipse.cbi.maven.http.apache.ApacheHttpClient;
+import org.eclipse.jetty.ee9.nested.AbstractHandler;
+import org.eclipse.jetty.ee9.nested.ContextHandler;
+import org.eclipse.jetty.ee9.nested.Handler;
+import org.eclipse.jetty.ee9.nested.Request;
 import org.eclipse.jetty.http.HttpMethod;
-import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.NetworkConnector;
-import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
@@ -127,7 +128,8 @@ public class ApacheHttpClientTest {
 
 	private static Server createProcessingServer(Handler handler) throws Exception {
 		Server server = new Server(0);
-        server.setHandler(handler);
+        ContextHandler context = new ContextHandler("/", handler);
+        server.setHandler(context.get());
         server.start();
         return server;
 	}
@@ -140,7 +142,7 @@ public class ApacheHttpClientTest {
 		return new AbstractHandler() {
 			@Override
 			public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-				baseRequest.setAttribute(Request.__MULTIPART_CONFIG_ELEMENT, new MultipartConfigElement(""));
+            baseRequest.setAttribute(Request.MULTIPART_CONFIG_ELEMENT, new MultipartConfigElement(""));
 				assertEquals("/processing-service", target);
 				assertTrue(request.getContentType().startsWith(ContentType.MULTIPART_FORM_DATA.getMimeType()));
 				assertTrue(HttpMethod.POST.is(request.getMethod()));

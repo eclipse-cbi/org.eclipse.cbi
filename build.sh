@@ -96,11 +96,6 @@ check_snapshot_deps() {
   fi
 }
 
-show_dep_updates() {
-  "${SCRIPT_FOLDER}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:display-plugin-updates" -f "${POM}"
-  "${SCRIPT_FOLDER}/mvnw" "${VERSIONS_MAVEN_PLUGIN}:display-dependency-updates" -f "${POM}"
-}
-
 # build artifacts to be deployed
 build() {
   if [ "${DRY_RUN}" = true ]; then
@@ -156,9 +151,6 @@ main() {
   echo
   echo "Check snapshots dependencies"
   check_snapshot_deps
-  echo
-  echo "Display plugin/dependency updates"
-  show_dep_updates
   echo
   echo "Build"
   build

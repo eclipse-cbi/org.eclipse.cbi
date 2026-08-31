@@ -49,14 +49,6 @@ pipeline {
       }
     }
 
-    stage('Display plugin/dependency updates') {
-      steps {
-        sh '''
-          ./build.sh show_dep_updates "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"
-        '''
-      }
-    }
-
     stage('Build') {
       steps {
         sh './build.sh build "${RELEASE_VERSION}" "${NEXT_DEVELOPMENT_VERSION}"'

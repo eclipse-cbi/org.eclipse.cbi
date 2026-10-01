@@ -30,6 +30,7 @@ public class JSignerProperties {
 	private static final String JSIGN_DESCRIPTION = "windows.jsign.description";
 
 	private static final String JSIGN_STORETYPE = "windows.jsign.storetype";
+	private static final String JSIGN_STOREPASS = "windows.jsign.storepass";
 	private static final String JSIGN_KEYSTORE = "windows.jsign.keystore";
 	private static final String JSIGN_KEY_ALIAS = "windows.jsign.keyalias";
 	private static final String JSIGN_CERTCHAIN = "windows.jsign.certchain";
@@ -65,6 +66,10 @@ public class JSignerProperties {
 
 	public String getStoreType() {
 		return propertiesReader.getString(JSIGN_STORETYPE);
+	}
+
+	public String getStorePass() {
+		return propertiesReader.getString(JSIGN_STOREPASS);
 	}
 
 	public String getKeystore() {

@@ -10,6 +10,7 @@ local newDeployment(name, artifactId, version) = {
     registry: "docker.io",
     repository: "eclipsecbi",
     baseImage: "eclipse-temurin:17-jdk",
+    jdk11Image: "eclipse-temurin:11-jdk",
     imageName: $.name,
     tag: $.version,
     image: "%s/%s/%s:%s" % [self.registry, self.repository, self.imageName, self.tag,],
@@ -208,18 +209,14 @@ local newDeployment(name, artifactId, version) = {
 
     COPY target/%(artifactId)s-%(version)s.jar /usr/local/%(name)s/
 
-    RUN mkdir -p /opt/java/openjdk11 \
-      && cd /opt/java/openjdk11 \
-      && curl -L -o temurin11.tar.gz 'https://api.adoptium.net/v3/binary/latest/11/ga/linux/x64/jdk/hotspot/normal/eclipse?project=jdk' \
-      && tar xzf temurin11.tar.gz --strip-components=1 \
-      && rm -f temurin11.tar.gz
+    COPY --from=%(jdk11Image)s /opt/java/openjdk /opt/java/openjdk11
 
     ENTRYPOINT [ "java", \
       "-showversion", "-XshowSettings:vm", "-Xmx512m", \
       "-jar", "/usr/local/%(name)s/%(artifactId)s-%(version)s.jar", \
       "-c", "%(configurationPath)s/%(configurationFilename)s" \
     ]
-  ||| % self { from: $.docker.baseImage, configurationPath: $.configuration.path, configurationFilename: $.configuration.filename }
+  ||| % self { from: $.docker.baseImage, jdk11Image: $.docker.jdk11Image, configurationPath: $.configuration.path, configurationFilename: $.configuration.filename }
   else |||
     FROM %(from)s
 
@@ -233,18 +230,14 @@ local newDeployment(name, artifactId, version) = {
       | grep -Po '"downloadUrl" : "\K.+(?=",)' \
       | xargs curl -sSLf -o /usr/local/%(name)s/%(artifactId)s-%(version)s.jar
     
-    RUN mkdir -p /opt/java/openjdk11 \
-      && cd /opt/java/openjdk11 \
-      && curl -L -o temurin11.tar.gz 'https://api.adoptium.net/v3/binary/latest/11/ga/linux/x64/jdk/hotspot/normal/eclipse?project=jdk' \
-      && tar xzf temurin11.tar.gz --strip-components=1 \
-      && rm -f temurin11.tar.gz
+    COPY --from=%(jdk11Image)s /opt/java/openjdk /opt/java/openjdk11
 
     ENTRYPOINT [ "java", \
       "-showversion", "-XshowSettings:vm", "-Xmx512m", \
       "-jar", "/usr/local/%(name)s/%(artifactId)s-%(version)s.jar", \
       "-c", "%(configurationPath)s/%(configurationFilename)s" \
     ]
-  ||| % self { from: $.docker.baseImage, configurationPath: $.configuration.path, configurationFilename: $.configuration.filename },
+  ||| % self { from: $.docker.baseImage, jdk11Image: $.docker.jdk11Image, configurationPath: $.configuration.path, configurationFilename: $.configuration.filename },
 
   "kube.yml": std.manifestYamlStream($.kube.resources, true, c_document_end=false),
 };

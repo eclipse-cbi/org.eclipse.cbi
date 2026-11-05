@@ -9,6 +9,7 @@
  *
  * Contributors:
  *   Thomas Neidhart - initial implementation
+ *   Sebastian Ratz - made replacement of existing signatures configurable
  *******************************************************************************/
 package org.eclipse.cbi.webservice.signing.windows;
 
@@ -19,5 +20,5 @@ import java.nio.file.Path;
  * Interface for different tools to implement code signing.
  */
 public interface CodeSigner {
-	Path sign(Path file) throws IOException;
+	Path sign(Path file, boolean replaceExistingSignatures) throws IOException;
 }

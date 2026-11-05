@@ -55,7 +55,7 @@ public abstract class JSigner implements CodeSigner {
 	}
 
 	@Override
-	public Path sign(Path file) {
+	public Path sign(Path file, boolean replaceExistingSignatures) {
 		try {
 			KeyStore keystore =
 					new KeyStoreBuilder()
@@ -69,6 +69,7 @@ public abstract class JSigner implements CodeSigner {
 					new AuthenticodeSigner(keystore, configuration().getKeyAlias(), null)
 							.withProgramURL(configuration().getURI().toString())
 							.withProgramName(configuration().getDescription())
+							.withSignaturesReplaced(replaceExistingSignatures)
 							.withTimestamping(true)
 							.withTimestampingAuthority(configuration().getTimestampURIs().stream().map(URI::toString).toList().toArray(new String[0]))
 							.withTimestampingRetries(3);

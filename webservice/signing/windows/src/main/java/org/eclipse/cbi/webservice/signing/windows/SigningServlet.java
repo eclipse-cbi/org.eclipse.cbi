@@ -58,7 +58,7 @@ public abstract class SigningServlet extends HttpServlet {
 			String submittedFileName = requestFacade.getSubmittedFileName(FILE_PART_NAME).get();
 			if (submittedFileName.endsWith(".exe") || submittedFileName.endsWith(".dll") || submittedFileName.endsWith(".msi")) {
 				Path unsignedExe = requestFacade.getPartPath(FILE_PART_NAME, TEMP_FILE_PREFIX).get();
-				Path signedFile = codesigner().sign(unsignedExe);
+				Path signedFile = codesigner().sign(unsignedExe, requestFacade.getBooleanParameter("replace"));
 				responseFacade.replyWithFile(PORTABLE_EXECUTABLE_MEDIA_TYPE, submittedFileName, signedFile);
 			} else {
 				responseFacade.replyError(HttpServletResponse.SC_BAD_REQUEST, "Submitted '" + FILE_PART_NAME + "' '" + submittedFileName + "' must ends with '.exe' ");

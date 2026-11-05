@@ -36,14 +36,15 @@ public abstract class OSSLCodesigner implements CodeSigner {
 	private static final String TEMP_FILE_PREFIX = OSSLCodesigner.class.getSimpleName() + "-";
 	private static final Logger logger = LoggerFactory.getLogger(OSSLCodesigner.class);
 
-	public Path sign(Path file) throws IOException {
+	@Override
+	public Path sign(Path file, boolean replaceExistingSignatures) throws IOException {
 		Path out = null;
 		try {
 			out = Files.createTempFile(tempFolder(), TEMP_FILE_PREFIX, file.getFileName().toString());
 			// osslsigncode requires non existent file
 			Files.delete(out);
 			StringBuilder output = new StringBuilder();
-			int osslsigncodeExitValue = processExecutor().exec(createCommand(file, out), output, timeout(), TimeUnit.SECONDS);
+			int osslsigncodeExitValue = processExecutor().exec(createCommand(file, out, replaceExistingSignatures), output, timeout(), TimeUnit.SECONDS);
 			if (osslsigncodeExitValue != 0) {
 				throw new IOException(Joiner.on('\n').join(
 						"The '" + osslsigncode().toString() + "' command exited with value '" + osslsigncodeExitValue + "'",
@@ -67,10 +68,14 @@ public abstract class OSSLCodesigner implements CodeSigner {
 		return file;
 	}
 
-	private ImmutableList<String> createCommand(Path in, Path out) {
-		return ImmutableList.<String>builder()
+	private ImmutableList<String> createCommand(Path in, Path out, boolean replaceExistingSignatures) {
+		ImmutableList.Builder<String> command = ImmutableList.<String>builder()
 				.add(osslsigncode().toString())
-				.add("sign")
+				.add("sign");
+		if (!replaceExistingSignatures) {
+			command.add("-nest");
+		}
+		return command
 				.add("-pkcs12", pkcs12().toString())
 				.add("-pass", pkcs12Password())
 				.add("-n", description())

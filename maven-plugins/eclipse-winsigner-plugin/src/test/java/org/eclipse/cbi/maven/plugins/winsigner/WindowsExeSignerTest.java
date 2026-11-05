@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
@@ -23,10 +24,15 @@ import org.eclipse.cbi.common.test.util.SampleFilesGenerators;
 import org.eclipse.cbi.maven.ExceptionHandler;
 import org.eclipse.cbi.maven.common.test.util.HttpClients;
 import org.eclipse.cbi.maven.common.test.util.NullMavenLog;
+import org.eclipse.cbi.maven.http.CompletionListener;
+import org.eclipse.cbi.maven.http.HttpClient;
+import org.eclipse.cbi.maven.http.HttpRequest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class WindowsExeSignerTest {
@@ -50,6 +56,30 @@ public class WindowsExeSignerTest {
 	public void testSigningNullFiles() {
 		WindowsExeSigner winExeSigner = createSigner(HttpClients.DUMMY);
 		assertThrows(NullPointerException.class, () -> winExeSigner.signExecutable(null));
+	}
+
+	@ParameterizedTest
+	@ValueSource(booleans = {false, true})
+	public void testReplaceRequestParameter(boolean replace) throws IOException, MojoExecutionException {
+	  AtomicReference<String> replaceParam = new AtomicReference<>();
+		try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
+			Path file = SampleFilesGenerators.writeFile(fs.getPath("test/test.exe"), "executable");
+			HttpClient client = new HttpClient() {
+				@Override
+				public boolean send(HttpRequest request, CompletionListener listener) throws IOException {
+					return send(request, HttpRequest.Config.defaultConfig(), listener);
+				}
+
+				@Override
+				public boolean send(HttpRequest request, HttpRequest.Config config, CompletionListener listener) throws IOException {
+				  replaceParam.set(request.stringParameters().get("replace"));
+					return HttpClients.DUMMY.send(request, config, listener);
+				}
+			};
+			WindowsExeSigner.Builder builder = createSignerBuilder(client, false).replace(replace);
+			assertTrue(builder.build().signExecutable(file));
+			assertEquals(Boolean.toString(replace), replaceParam.get());
+		}
 	}
 
 	@ParameterizedTest
@@ -211,13 +241,16 @@ public class WindowsExeSignerTest {
 	}
 	
 	private WindowsExeSigner createSigner(HttpClients client, boolean continueOnFail) {
+		return createSignerBuilder(client, continueOnFail).replace(false).build();
+	}
+
+	private WindowsExeSigner.Builder createSignerBuilder(HttpClient client, boolean continueOnFail) {
 		return WindowsExeSigner.builder()
 				.serverUri(URI.create("http://localhost"))
 				.httpClient(client)
 				.timeout(Duration.ZERO)
 				.exceptionHandler(new ExceptionHandler(log, continueOnFail))
-				.log(log)
-				.build();
+				.log(log);
 	}
 
 	private Path createTestAppFolders(Path baseDir) throws IOException {

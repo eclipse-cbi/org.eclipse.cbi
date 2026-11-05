@@ -252,6 +252,14 @@ public class SignMojo extends AbstractMojo {
 	@Parameter(property = "cbi.winsigner.skip", defaultValue = "false")
 	private boolean skip;
 
+	/**
+	 * Remove existing signatures.
+	 *
+	 * @since 1.5.8
+	 */
+	@Parameter(property = "cbi.winsigner.replace", defaultValue = "false")
+	private boolean replace;
+
 	@Override
 	public void execute() throws MojoExecutionException {
 		if (skip) {
@@ -268,6 +276,7 @@ public class SignMojo extends AbstractMojo {
 			.serverUri(URI.create(signerUrl))
 			.httpClient(httpClient)
 			.timeout(Duration.ofMillis(timeoutMillis))
+			.replace(replace)
 			.exceptionHandler(exceptionHandler)
 			.log(getLog())
 			.build();

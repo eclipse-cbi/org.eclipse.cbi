@@ -42,12 +42,18 @@ public abstract class WindowsExeSigner {
 	 * The name of the part as it will be send to the signing server.
 	 */
 	private static final String PART_NAME = "file";
+
+	/**
+	 * Parameter sent to the signing server indicating whether pre-existing signatures shall be removed.
+	 */
+	private static final String REPLACE = "replace";
 	
 	abstract HttpClient httpClient();
 	abstract Log log();
 	abstract ExceptionHandler exceptionHandler();
 	abstract URI serverUri();
 	abstract Duration timeout();
+	abstract boolean replace();
 	
 	WindowsExeSigner() {
 		
@@ -95,7 +101,10 @@ public abstract class WindowsExeSigner {
     }
     
     private boolean processOnSigningServer(final Path file) throws IOException {
-		final HttpRequest request = HttpRequest.on(serverUri()).withParam(PART_NAME, file).build();
+		final HttpRequest request = HttpRequest.on(serverUri())
+				.withParam(PART_NAME, file)
+				.withParam(REPLACE, Boolean.toString(replace()))
+				.build();
 		HttpRequest.Config requestConfig = HttpRequest.Config.builder().timeout(timeout()).build();
 		log().debug("Windows exe signing request: " + request.toString());
 		boolean success = httpClient().send(request, requestConfig, new AbstractCompletionListener(file.getParent(), file.getFileName().toString(), WindowsExeSigner.class.getSimpleName(), new MavenLogger(log())) {
@@ -151,6 +160,13 @@ public abstract class WindowsExeSigner {
 		public abstract Builder serverUri(URI uri);
 		public abstract Builder httpClient(HttpClient httpClient);
 		public abstract Builder timeout(Duration timeout);
+
+		/**
+		 * Whether to remove existing signatures when signing.
+		 *
+		 * @return this builder for chained calls.
+		 */
+		public abstract Builder replace(boolean replace);
 
 		/**
 		 * Creates and returns a new WindowsExeSigner configured with the options

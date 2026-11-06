@@ -14,11 +14,14 @@ package org.eclipse.cbi.webservice.signing.jar;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.google.auth.oauth2.GoogleCredentials;
@@ -259,9 +262,50 @@ public abstract class JarSigner {
 				checkState(configuration.getHttpsProxyPort() > 0, "The HTTPS proxy port must be specified and strictly positive when HTTPS proxy host is");
 			}
 
+			// The JVM silently ignores classpath entries that do not exist, so a wrong entry
+			// would only surface at signing time with a misleading error from jarsigner
+			// (e.g., 'Provider "..." not found' when the provider jar is missing).
+			for (String entry : classpathEntries(configuration.getJavaArgs())) {
+				// a wildcard entry ('dir/*') denotes all the jars in 'dir'
+				Path path = Path.of(entry.endsWith("*") ? entry.substring(0, entry.length() - 1) : entry);
+				checkState(Files.exists(path), "The classpath entry '%s' from the jarsigner Java arguments does not exist", entry);
+			}
+
 			jarSigner.initKmsCredentialsIfNeeded();
 			return jarSigner;
 		}
+	}
+
+	private static final Set<String> CLASSPATH_OPTIONS = Set.of("-cp", "-classpath", "--class-path");
+	private static final String CLASSPATH_OPTION_PREFIX = "--class-path=";
+
+	/**
+	 * Returns the classpath entries set by the given Java arguments (the ones
+	 * passed to the jarsigner JVM, without the {@code -J} prefix).
+	 *
+	 * @param javaArgs
+	 *            the space separated Java arguments, may be <code>null</code>.
+	 * @return the classpath entries, never <code>null</code>.
+	 */
+	static List<String> classpathEntries(String javaArgs) {
+		List<String> arguments = Splitter.on(' ')
+				.trimResults()
+				.omitEmptyStrings()
+				.splitToList(Strings.nullToEmpty(javaArgs));
+		ImmutableList.Builder<String> entries = ImmutableList.builder();
+		for (int i = 0; i < arguments.size(); i++) {
+			String argument = arguments.get(i);
+			String classpath = null;
+			if (CLASSPATH_OPTIONS.contains(argument) && i + 1 < arguments.size()) {
+				classpath = arguments.get(++i);
+			} else if (argument.startsWith(CLASSPATH_OPTION_PREFIX)) {
+				classpath = argument.substring(CLASSPATH_OPTION_PREFIX.length());
+			}
+			if (classpath != null) {
+				entries.addAll(Splitter.on(File.pathSeparatorChar).omitEmptyStrings().split(classpath));
+			}
+		}
+		return entries.build();
 	}
 
 }

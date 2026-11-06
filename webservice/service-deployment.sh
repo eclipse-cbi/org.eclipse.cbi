@@ -78,6 +78,25 @@ if [[ "${PROJECT_VERSION}" == *-SNAPSHOT ]]; then
   kubectl rollout restart deployment -n "${DEPLOYMENT_NAMESPACE}" "${DEPLOYMENT_NAME}"
 fi
 
+# ConfigMap names embed a hash of their content, so each configuration change creates a new one.
+# Delete the ones that are no longer referenced by any ReplicaSet of the deployment (i.e., that
+# cannot be rolled back to anymore).
+echo
+echo "Clean up unused ConfigMaps..."
+SERVICE_LABEL="org.eclipse.cbi.service/name=${DEPLOYMENT_NAME}"
+CURRENT_CONFIGMAP="$(jq -r '.kube.configMapName' <<<"${SERVICE_JSON}")"
+REFERENCED_CONFIGMAPS="$(kubectl get replicasets -n "${DEPLOYMENT_NAMESPACE}" -l "${SERVICE_LABEL}" -o json \
+  | jq -r '.items[].spec.template.spec.volumes[]?.configMap.name // empty' | sort -u)"
+if ! grep -qxF "${CURRENT_CONFIGMAP}" <<<"${REFERENCED_CONFIGMAPS}"; then
+  echo "WARNING: ConfigMap '${CURRENT_CONFIGMAP}' is not referenced by any ReplicaSet with label '${SERVICE_LABEL}', skipping cleanup"
+else
+  for CONFIGMAP in $(kubectl get configmaps -n "${DEPLOYMENT_NAMESPACE}" -l "${SERVICE_LABEL}" -o json | jq -r '.items[].metadata.name'); do
+    if ! grep -qxF "${CONFIGMAP}" <<<"${REFERENCED_CONFIGMAPS}"; then
+      kubectl delete configmap -n "${DEPLOYMENT_NAMESPACE}" "${CONFIGMAP}"
+    fi
+  done
+fi
+
 # Execute post-deploy script
 echo
 echo "Execute post-deploy script..."

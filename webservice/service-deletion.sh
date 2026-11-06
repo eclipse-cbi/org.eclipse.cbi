@@ -56,4 +56,6 @@ kubectl rollout pause deployment -n "${DEPLOYMENT_NAMESPACE}" "${DEPLOYMENT_NAME
 # Delete
 echo
 echo "Delete..."
-jq -r '.["kube.yml"]' <<<"${SERVICE_JSON}" | kubectl delete -f -
+jq -r '.["kube.yml"]' <<<"${SERVICE_JSON}" | kubectl delete --ignore-not-found -f -
+# ConfigMaps from previous configurations are not part of kube.yml (their name embeds a hash of their content)
+kubectl delete configmaps -n "${DEPLOYMENT_NAMESPACE}" -l "org.eclipse.cbi.service/name=${DEPLOYMENT_NAME}"

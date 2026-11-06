@@ -28,7 +28,12 @@ local newDeployment(name, artifactId, version) = {
   kube: {
     namespace: "foundation-internal-infra-apps",
     servicePortName: "http",
-    configMapName: nameByEnv($.name),
+    # The ConfigMap name embeds a hash of its content so that a pod can only
+    # ever mount the configuration that was generated alongside its pod
+    # template. Reusing a single ConfigMap name lets pods of a new rollout start
+    # with the previous configuration (e.g., pointing to the jar of the previous
+    # version), as the service only reads its configuration at startup.
+    configMapName: "%s-%s" % [nameByEnv($.name), std.substr(std.md5($.configuration.content), 0, 10)],
     serviceName: nameByEnv($.name),
     local nameByEnv(name) = (
       if std.endsWith($.version, "SNAPSHOT") then "%s-staging" else "%s"
@@ -45,7 +50,21 @@ local newDeployment(name, artifactId, version) = {
       },
     },
     metadata:: metadata,
+    # Resources are applied in order: the ConfigMap must exist before the
+    # Deployment that references it is updated.
     resources: [
+      {
+        apiVersion: "v1",
+        kind: "ConfigMap",
+        # labelled with the service name (not the hashed ConfigMap name) so
+        # that all generations can be listed for cleanup
+        metadata: metadata($.kube.configMapName) + {
+          labels: labels(nameByEnv($.name)),
+        },
+        data: {
+          [$.configuration.filename]: $.configuration.content,
+        }
+      },
       {
         apiVersion: "apps/v1",
         kind: "Deployment",
@@ -192,14 +211,6 @@ local newDeployment(name, artifactId, version) = {
             weight: 100
           }
         },
-      },
-      {
-        apiVersion: "v1",
-        kind: "ConfigMap",
-        metadata: metadata($.kube.configMapName),
-        data: {
-          [$.configuration.filename]: $.configuration.content,
-        }
       },
     ],
   },

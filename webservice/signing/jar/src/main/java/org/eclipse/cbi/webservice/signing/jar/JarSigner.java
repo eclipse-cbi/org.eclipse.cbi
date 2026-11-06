@@ -268,6 +268,7 @@ public abstract class JarSigner {
 			for (String entry : classpathEntries(configuration.getJavaArgs())) {
 				// a wildcard entry ('dir/*') denotes all the jars in 'dir'
 				Path path = Path.of(entry.endsWith("*") ? entry.substring(0, entry.length() - 1) : entry);
+				checkState(!entry.endsWith("*") || Files.isDirectory(path), "The wildcard classpath entry '%s' from the jarsigner Java arguments does not refer to a directory", entry);
 				checkState(Files.exists(path), "The classpath entry '%s' from the jarsigner Java arguments does not exist", entry);
 			}
 
